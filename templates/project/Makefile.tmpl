@@ -1,0 +1,11 @@
+{{ if .Resources }}
+app_bins = {{ range $r := .Resources -}}{{ range $f := $r.Functions}}bin/{{$r.Ident.Camelize}}/{{ $f.Name }} {{ end }}{{ end }}
+{{ end -}}
+
+bin/% : functions/%.go
+		env GOOS=linux go build -ldflags="-s -w" -o $@
+
+build: vendor {{ if .Resources }}| $(app_bins){{ end }}
+
+vendor: Gopkg.toml
+	    dep ensure

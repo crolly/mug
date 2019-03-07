@@ -1,0 +1,59 @@
+service: {{.ProjectName}}
+
+provider:
+  name: aws
+  runtime: go1.x
+  {{- if .Resources }}
+  environment:
+    {{ range $i, $r := .Resources }}
+      {{- $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
+    {{ end }}
+  {{- end }}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:*:*:*"
+
+package:
+ exclude:
+   - ./**
+ include:
+   - ./bin/**
+
+{{ if .Resources -}}
+functions:
+  {{ range $r := .Resources }}{{ range $f := $r.Functions -}}
+  {{$f.Name}}:
+    handler: bin/{{$r.Ident.Camelize}}/{{$f.Name}}
+    events:
+      - http:
+        path: {{$f.Path}}
+        method: {{$f.Method}}
+  {{ end }}
+  {{- end }}
+resources:
+  Resources:
+    {{- range $r := .Resources }}
+    {{$r.Ident.Pascalize}}DynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: '{{$r.Ident.Pluralize}}-${opt:stage, self:provider.stage}'
+    {{- end }}
+{{ end }}
