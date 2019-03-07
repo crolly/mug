@@ -27,9 +27,10 @@ type Resource struct {
 
 // Function represents a Function
 type Function struct {
-	Name   string `json:"name"`
-	Path   string `json:"path"`
-	Method string `json:"method"`
+	Name    string `json:"name"`
+	Handler string `json:"handler"`
+	Path    string `json:"path"`
+	Method  string `json:"method"`
 }
 
 func readConfig() ResourceConfig {

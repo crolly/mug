@@ -1,6 +1,6 @@
 ## mug
 
-mug takes AWS Lambda for golang one step furhter.
+microservices understand golang - easily creating serverless AWS Lambda CRUDL apps
 
 ### Synopsis
 

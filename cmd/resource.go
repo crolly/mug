@@ -83,11 +83,11 @@ func addResourceConfig(m Model) {
 		// Name:  m.Name,
 		Ident: flect.New(m.Name),
 		Functions: []Function{
-			Function{Name: "create" + "_" + singular, Path: plural, Method: "post"},
-			Function{Name: "read" + "_" + singular, Path: fmt.Sprintf("%s/{id}", plural), Method: "get"},
-			Function{Name: "update" + "_" + singular, Path: fmt.Sprintf("%s/{id}", plural), Method: "put"},
-			Function{Name: "delete" + "_" + singular, Path: fmt.Sprintf("%s/{id}", plural), Method: "delete"},
-			Function{Name: "list" + "_" + plural, Path: plural, Method: "get"},
+			Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
+			Function{Name: "read" + "_" + singular, Handler: "read", Path: fmt.Sprintf("%s/{id}", plural), Method: "get"},
+			Function{Name: "update" + "_" + singular, Handler: "update", Path: fmt.Sprintf("%s/{id}", plural), Method: "put"},
+			Function{Name: "delete" + "_" + singular, Handler: "delete", Path: fmt.Sprintf("%s/{id}", plural), Method: "delete"},
+			Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
 		},
 	}
 	config.Resources[m.Name] = resource

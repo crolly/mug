@@ -31,11 +31,11 @@ package:
 functions:
   {{ range $r := .Resources }}{{ range $f := $r.Functions -}}
   {{$f.Name}}:
-    handler: bin/{{$r.Ident.Camelize}}/{{$f.Name}}
+    handler: bin/{{$r.Ident.Camelize}}/{{$f.Handler}}
     events:
       - http:
-        path: {{$f.Path}}
-        method: {{$f.Method}}
+          path: {{$f.Path}}
+          method: {{$f.Method}}
   {{ end }}
   {{- end }}
 resources:
