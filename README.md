@@ -70,7 +70,7 @@ The add resource command lets you define a new resource. The CRUDL functions wil
 
 For example, let's create a course resource, which has a couple of simple attributes. `cd` into the project directory and run:
 ```
-mug add resource course -a name,subtile,description
+mug add resource course -a name,subtitle,description
 ```
 
 This will generate the following files in the folder `functions/course/`:
