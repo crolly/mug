@@ -31,13 +31,13 @@ func dirExists(path string) bool {
 // awsType returns the AWS datatype for a given golang type
 func awsType(s string) string {
 	switch strings.ToLower(s) {
-	case "string", "time.Time", "uuid.UUID":
+	case "string", "time.Time", "*time.Time", "uuid.UUID":
 		return "S"
 	case "[]string":
 		return "SS"
-	case "int":
+	case "int", "float":
 		return "N"
-	case "[]int":
+	case "[]int", "[]float":
 		return "NS"
 	case "map[string]string", "map[string]int", "map[string]interface{}":
 		return "M"
@@ -53,7 +53,7 @@ func awsType(s string) string {
 }
 
 // LoadTemplateFromBox loads a *text/template.Template from a packr.Box
-func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
+func loadTemplateFromBox(b *packr.Box, file string) *template.Template {
 	// load string from template
 	ts, err := b.FindString(file)
 	if err != nil {
@@ -67,4 +67,14 @@ func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
 	}
 
 	return t
+}
+
+// appendIfMissing appends an element to a slice, if it doesn't contain the element already
+func appendStringIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
 }

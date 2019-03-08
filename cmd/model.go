@@ -103,12 +103,12 @@ func newModel(name string, slice bool, attributes string, withID bool, withDates
 	}
 
 	if withID {
-		m.Imports = append(m.Imports, "github.com/satori/go.uuid")
+		m.Imports = appendStringIfMissing(m.Imports, "github.com/satori/go.uuid")
 		m.addAttribute(Attribute{Name: "id", Ident: flect.New("id"), AwsType: "S", GoType: "uuid.UUID", Hash: true})
 	}
 
 	if withDates {
-		m.Imports = append(m.Imports, "time")
+		m.Imports = appendStringIfMissing(m.Imports, "time")
 		m.addAttribute(Attribute{Name: "createdAt", Ident: flect.New("createdAt"), AwsType: "S", GoType: "time.Time", Hash: false})
 		m.addAttribute(Attribute{Name: "updatedAt", Ident: flect.New("updatedAt"), AwsType: "S", GoType: "time.Time", Hash: false})
 	}
@@ -226,7 +226,19 @@ func (m *Model) parseAttributes(attrs string) {
 			Hash:    hash,
 		}
 
+		m.addImport(goType)
+
 		m.addAttribute(attr)
+	}
+}
+
+// addImport will add an import directive if the given type requires it
+func (m *Model) addImport(goType string) {
+	switch goType {
+	case "time.Time", "*time.Time":
+		m.Imports = appendStringIfMissing(m.Imports, "time")
+	case "uuid.UUID":
+		m.Imports = appendStringIfMissing(m.Imports, "github.com/satori/go.uuid")
 	}
 }
 

@@ -121,7 +121,7 @@ func renderTemplates(m Model) {
 		defer f.Close()
 
 		// load template
-		t := LoadTemplateFromBox(functionsBox, tmpl)
+		t := loadTemplateFromBox(functionsBox, tmpl)
 
 		// execute template and save to file
 		err = t.Execute(f, m)
@@ -135,7 +135,7 @@ func renderMakefile(name string) {
 	config := readConfig()
 
 	// load Makefile template
-	t := LoadTemplateFromBox(projectBox, "Makefile.tmpl")
+	t := loadTemplateFromBox(projectBox, "Makefile.tmpl")
 
 	// open file and execute template
 	f, err := os.OpenFile(filepath.Join(getWorkingDir(), "Makefile"), os.O_WRONLY, 0755)
@@ -162,7 +162,7 @@ func renderSLS() {
 	config := readConfig()
 
 	// load Makefile template
-	t := LoadTemplateFromBox(projectBox, "serverless.yml.tmpl")
+	t := loadTemplateFromBox(projectBox, "serverless.yml.tmpl")
 
 	// open file and execute template
 	f, err := os.OpenFile(filepath.Join(getWorkingDir(), strings.Replace(t.Name(), ".tmpl", "", 1)), os.O_WRONLY, 0755)

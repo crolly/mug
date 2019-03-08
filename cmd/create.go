@@ -83,7 +83,7 @@ func createProjectStructure(projectName string) {
 		defer f.Close()
 
 		// load template
-		t := LoadTemplateFromBox(projectBox, tmpl)
+		t := loadTemplateFromBox(projectBox, tmpl)
 
 		// execute template and save to file
 		err = t.Execute(f, config)
