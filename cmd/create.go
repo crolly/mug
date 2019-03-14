@@ -41,8 +41,7 @@ var (
 		},
 	}
 
-	//db represents the flag variable whether a db should be added
-	// db bool
+	region string
 )
 
 func init() {
@@ -50,9 +49,9 @@ func init() {
 		Use:    "no-help",
 		Hidden: true,
 	})
-	rootCmd.AddCommand(createCmd)
+	createCmd.Flags().StringVarP(&region, "region", "r", "eu-central-1", "Region the project will be deployed to (e.g. us-east-1 or eu-central-1)")
 
-	// rootCmd.Flags().BoolVarP(&db, "database", "db", true, "Flag whether or not a db should be added as resource")
+	rootCmd.AddCommand(createCmd)
 }
 
 // createsProjectStructure creates the project structure with serverless.yml and mug.config.json
@@ -69,6 +68,7 @@ func createProjectStructure(projectName string) {
 	// set data
 	config := ResourceConfig{
 		ProjectName: projectName,
+		Region:      region,
 	}
 
 	// iterate over templates and execute

@@ -1,0 +1,29 @@
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+
+  ListCourses:
+    # This resource creates a Lambda function.
+    Type: 'AWS::Serverless::Function'
+    
+    Properties:
+      
+      # This function uses the Nodejs v6.10 runtime.
+      Runtime: go1.x
+        
+      # This is the Lambda function's handler.
+      Handler: list
+      
+      # The location of the Lambda function code.
+      CodeUri: ./debug/course
+      
+      # Event sources to attach to this function. In this case, we are attaching
+      # one API Gateway endpoint to the Lambda function. The function is
+      # called when a HTTP request is made to the API Gateway endpoint.
+      Events:
+
+        CreateCourseApi:
+            # Define an API Gateway endpoint that responds to HTTP GET at /thumbnail
+            Type: Api
+            Properties:
+                Path: /courses
+                Method: GET

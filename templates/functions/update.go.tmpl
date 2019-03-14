@@ -21,8 +21,17 @@ import (
 
 // put extracts the {{.Type}} from JSON and writes it to DynamoDB
 func put(body string) ({{.Type}}, error) {
-    // Create the dynamo client object
-	sess := session.Must(session.NewSession())
+    
+		return User{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+	} else {
+		sess = session.Must(session.NewSession())
+	}
 	svc := dynamodb.New(sess)
 
 	// Marshall the requrest body
@@ -30,8 +39,8 @@ func put(body string) ({{.Type}}, error) {
 	json.Unmarshal([]byte(body), &{{.Ident.Camelize}})
 
 	// Generate new UUID to store {{.Type}} in case {{.Ident.Camelize}} doesn't have one
-    if ({{.Ident.Camelize}}.ID.String() == "") {
-        id := uuid.Must(uuid.NewV4())
+    if {{.Ident.Camelize}}.ID == uuid.Nil {
+        id, _ := uuid.NewV4()
         {{.Ident.Camelize}}.ID = id
     }
 

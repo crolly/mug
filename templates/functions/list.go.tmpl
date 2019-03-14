@@ -21,8 +21,19 @@ import (
 
 // list returns the {{.Ident.Pluralize.Capitalize}} from DynamoDB
 func list() ([]{{.Type}}, error){
-    // Build the Dynamo client object
-	sess := session.Must(session.NewSession())
+    var sess *session.Session
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return User{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+	} else {
+		sess = session.Must(session.NewSession())
+	}
 	svc := dynamodb.New(sess)
 
     params := &dynamodb.ScanInput{

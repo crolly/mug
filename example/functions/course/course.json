@@ -1,0 +1,46 @@
+{
+  "name": "course",
+  "type": "Course",
+  "ident": "course",
+  "attributes": [
+    {
+      "name": "id",
+      "ident": "id",
+      "goType": "uuid.UUID",
+      "awsType": "S",
+      "hash": true
+    },
+    {
+      "name": "name",
+      "ident": "name",
+      "goType": "string",
+      "awsType": "S",
+      "hash": false
+    },
+    {
+      "name": "subtitle",
+      "ident": "subtitle",
+      "goType": "string",
+      "awsType": "S",
+      "hash": false
+    },
+    {
+      "name": "description",
+      "ident": "description",
+      "goType": "string",
+      "awsType": "S",
+      "hash": false
+    },
+    {
+      "name": "price",
+      "ident": "price",
+      "goType": "float64",
+      "awsType": "N",
+      "hash": false
+    }
+  ],
+  "nested": null,
+  "imports": [
+    "github.com/satori/go.uuid"
+  ]
+}

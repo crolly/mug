@@ -3,6 +3,8 @@ service: {{.ProjectName}}
 provider:
   name: aws
   runtime: go1.x
+  region: "{{.Region}}"
+  stage: ${opt:stage, 'dev'}
   {{- if .Resources }}
   environment:
     {{ range $i, $r := .Resources }}
@@ -47,7 +49,7 @@ resources:
       Properties:
         AttributeDefinitions:
           - AttributeName: id
-            AttributeType: S
+            AttributeType: B
         KeySchema:
           - AttributeName: id
             KeyType: HASH

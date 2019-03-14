@@ -35,18 +35,24 @@ func awsType(s string) string {
 		return "S"
 	case "[]string":
 		return "SS"
-	case "int", "float":
+	case "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64",
+		"byte", "rune",
+		"float32", "float64", "complex64", "complex128":
 		return "N"
-	case "[]int", "[]float":
+	case "[]int", "[]int8", "[]int16", "[]int32", "[]int64",
+		"[]uint", "[]uint8", "[]uint16", "[]uint32", "[]uint64",
+		"[]rune", "[]float32", "[]float64", "[]complex64", "[]complex128":
 		return "NS"
 	case "map[string]string", "map[string]int", "map[string]interface{}":
 		return "M"
 	case "[]byte":
 		return "B"
-	case "bool":
-		return "BOOL"
 	case "[][]byte":
 		return "BS"
+	case "bool":
+		return "BOOL"
+
 	default:
 		return s
 	}
