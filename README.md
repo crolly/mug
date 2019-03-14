@@ -19,6 +19,7 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [ ] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
 - [ ] resource generation from JSON
 - [ ] remove resource/ functions from project
+- [ ] support local debug of generated code (with aws-sam-cli)
 
 ## Getting Started
 
@@ -70,7 +71,7 @@ The add resource command lets you define a new resource. The CRUDL functions wil
 
 For example, let's create a course resource, which has a couple of simple attributes. `cd` into the project directory and run:
 ```
-mug add resource course -a name,subtile,description
+mug add resource course -a name,subtitle,description
 ```
 
 This will generate the following files in the folder `functions/course/`:
