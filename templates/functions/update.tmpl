@@ -34,7 +34,7 @@ func put(body string) ({{.Type}}, error) {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 		}))
-		tableName = {{.Ident.Pluralize.ToLower}}
+		tableName = "{{.Ident.Pluralize.ToLower}}"
 	} else {
 		sess = session.Must(session.NewSession())
 		tableName = os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")
