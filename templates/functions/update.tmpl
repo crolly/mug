@@ -23,6 +23,8 @@ import (
 // put extracts the {{.Type}} from JSON and writes it to DynamoDB
 func put(body string) ({{.Type}}, error) {
     var sess *session.Session
+	var tableName string
+	
 	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
 	if err != nil {
 		return {{.Type}}{}, err
@@ -32,8 +34,10 @@ func put(body string) ({{.Type}}, error) {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 		}))
+		tableName = {{.Ident.Pluralize.ToLower}}
 	} else {
 		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")
 	}
 	svc := dynamodb.New(sess)
 
@@ -58,7 +62,7 @@ func put(body string) ({{.Type}}, error) {
 	// Create Item in table and return
 	input := &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String(os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")),
+		TableName: aws.String(tableName),
 	}
 	_, err = svc.PutItem(input)
 	return {{.Ident.Camelize}}, err

@@ -23,6 +23,8 @@ import (
 // read gets the {{.Type}} from DynamoDB
 func read(id string) ({{.Type}}, error) {
     var sess *session.Session
+	var tableName string
+	
 	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
 	if err != nil {
 		return {{.Type}}{}, err
@@ -32,8 +34,10 @@ func read(id string) ({{.Type}}, error) {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 		}))
+		tableName = {{.Ident.Pluralize.ToLower}}
 	} else {
 		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")
 	}
 	svc := dynamodb.New(sess)
 	{{.Ident.Camelize}} := {{.Type}}{}
@@ -41,7 +45,7 @@ func read(id string) ({{.Type}}, error) {
 	// Perform the query
 	fmt.Println("Trying to read from table: ", "{{.Ident.Pluralize}}")
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")),
+		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
 				B: []byte(aws.StringValue(aws.String(id))),

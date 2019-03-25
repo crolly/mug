@@ -23,6 +23,8 @@ import (
 // list returns the {{.Ident.Pluralize.Capitalize}} from DynamoDB
 func list() ([]{{.Type}}, error){
     var sess *session.Session
+	var tableName string
+	
 	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
 	if err != nil {
 		return []{{.Type}}{}, err
@@ -32,13 +34,15 @@ func list() ([]{{.Type}}, error){
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 		}))
+		tableName = {{.Ident.Pluralize.ToLower}}
+		tableName = os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")
 	} else {
 		sess = session.Must(session.NewSession())
 	}
 	svc := dynamodb.New(sess)
 
     params := &dynamodb.ScanInput{
-        TableName: aws.String(os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")),
+        TableName: aws.String(tableName),
     }
     result, err := svc.Scan(params)
     if err != nil {
