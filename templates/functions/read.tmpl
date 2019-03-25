@@ -1,0 +1,89 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+    {{ range $i := .Imports -}}
+    "{{$i}}"
+    {{ end -}}
+)
+
+{{.String}}
+
+// read gets the {{.Type}} from DynamoDB
+func read(id string) ({{.Type}}, error) {
+    var sess *session.Session
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return {{.Type}}{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+	} else {
+		sess = session.Must(session.NewSession())
+	}
+	svc := dynamodb.New(sess)
+	{{.Ident.Camelize}} := {{.Type}}{}
+
+	// Perform the query
+	fmt.Println("Trying to read from table: ", "{{.Ident.Pluralize}}")
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				B: []byte(aws.StringValue(aws.String(id))),
+			},
+		},
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+		return {{.Ident.Camelize}}, err
+	}
+
+	// Unmarshall the result in to an Item
+	err = dynamodbattribute.UnmarshalMap(result.Item, &{{.Ident.Camelize}})
+	if err != nil {
+		fmt.Println(err.Error())
+		return {{.Ident.Camelize}}, err
+	}
+
+	return {{.Ident.Camelize}}, nil
+}
+
+// ReadHandler handles the GET request to retrieve a {{.Ident.Camelize}} from the database returning it on success
+func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Pass the call to the model with params found in the path
+	fmt.Println("Path vars: ", request.PathParameters["id"])
+	{{.Ident.Camelize}}, err := read(request.PathParameters["id"])
+	if err != nil {
+		panic(fmt.Sprintf("Failed to find {{.Ident.Camelize}}, %v", err))
+	}
+
+	// Make sure the {{.Ident.Camelize}} isn't empty
+	if {{.Ident.Camelize}}.ID == uuid.Nil {
+		fmt.Println("Could not find {{.Ident.Camelize}}")
+		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500}, nil
+	}
+
+	// Log and return result
+	jsonItem, _ := json.MarshalIndent({{.Ident.Camelize}}, "", "  ")
+	stringItem := string(jsonItem)
+	fmt.Println("Found item: ", stringItem)
+	return events.APIGatewayProxyResponse{Body: stringItem, StatusCode: 200}, nil
+}
+
+func main() {
+	lambda.Start(ReadHandler)
+}

@@ -48,7 +48,7 @@ var (
 			// add resource to mug.config.json
 			addResourceConfig(m)
 			// create resource directory
-			createResourceDirectory(modelName)
+			// createResourceDirectory(modelName)
 			// render templates with data
 			renderTemplates(m)
 			// update Makefile
@@ -103,18 +103,15 @@ func createResourceDirectory(name string) {
 }
 
 func renderTemplates(m Model) {
-	// // load templates
-	// ts, err := template.ParseGlob("./templates/functions/*.tmpl")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// iterate over templates and execute
 	for _, tmpl := range functionsBox.List() {
 
-		// create file
-		fileName := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String(), strings.Replace(tmpl, ".tmpl", "", 1))
-		f, err := os.Create(fileName)
+		// create the function folder and main file for function
+		folder := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String(), strings.Replace(tmpl, ".tmpl", "", 1))
+		os.MkdirAll(folder, 0755)
+
+		f, err := os.Create(filepath.Join(folder, "main.go"))
 		if err != nil {
 			log.Fatal(err)
 		}

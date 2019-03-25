@@ -9,21 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceRoot}/main.go",
+            "program": "${workspaceFolder}",
             "env": {},
-            "args": ["create", "example", "-r", "us-east-1"]
-        },
-        {
-            "name": "Lambda",
-            "type": "go",
-            "request": "launch",
-            "mode": "remote",
-            "remotePath": "",
-            "port": 5986,
-            "host": "127.0.0.1",
-            "program": "${workspaceRoot}/example/functions/course/list.go",
-            "env": {},
-            "args": []
+            "args": ["add", "resource", "course", "-a", "name,subtitle,description"]
+            // "args": ["create", "example"]
         }
     ]
 }

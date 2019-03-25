@@ -1,0 +1,81 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+    {{ range $i := .Imports -}}
+    "{{$i}}"
+    {{ end -}}
+)
+
+{{.String}}
+
+// list returns the {{.Ident.Pluralize.Capitalize}} from DynamoDB
+func list() ([]{{.Type}}, error){
+    var sess *session.Session
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return []{{.Type}}{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+	} else {
+		sess = session.Must(session.NewSession())
+	}
+	svc := dynamodb.New(sess)
+
+    params := &dynamodb.ScanInput{
+        TableName: aws.String(os.Getenv("{{.Ident.ToUpper}}_TABLE_NAME")),
+    }
+    result, err := svc.Scan(params)
+    if err != nil {
+        fmt.Println(err.Error())
+        return nil, err
+    } 
+
+   var {{.Ident.Pluralize}} []{{.Type}}
+   dynamodbattribute.UnmarshalListOfMaps(result.Items, &{{.Ident.Pluralize}}) 
+   if err != nil {
+       fmt.Println(err.Error())
+       return nil, err
+   }
+
+   return {{.Ident.Pluralize}}, nil 
+}
+
+// ListHandler handles the GET request and retrieves all {{.Ident.Pluralize}} from the database returning the items on success
+func ListHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Pass the call to the model
+	{{.Ident.Pluralize}}, err := list()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to find {{.Ident.Pluralize}}, %v", err))
+	}
+
+	// Make sure the {{.Ident.Pluralize}} slice isn't empty
+	if len({{.Ident.Pluralize}}) == 0 {
+		fmt.Println("Could not find {{.Ident.Pluralize}}")
+		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500}, nil
+	}
+
+	// Log and return result
+	jsonItems, _ := json.MarshalIndent({{.Ident.Pluralize}}, "", "  ")
+	stringItems := string(jsonItems)
+	fmt.Println("Found items: ", stringItems)
+	return events.APIGatewayProxyResponse{Body: stringItems, StatusCode: 200}, nil
+}
+
+func main() {
+	lambda.Start(ListHandler)
+}
