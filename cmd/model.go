@@ -16,6 +16,7 @@ import (
 // ResourceConfig represents mu's configuration for resources
 type ResourceConfig struct {
 	ProjectName string              `json:"projectName"`
+	ProjectPath string              `json:"projectPath"`
 	Region      string              `json:"region"`
 	Resources   map[string]Resource `json:"resources"`
 }
