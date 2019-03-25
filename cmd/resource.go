@@ -45,10 +45,11 @@ var (
 			modelName := args[0]
 			m := newModel(modelName, false, attributes, !noID, addDates)
 
+			// get all imports
+			m.Imports = m.getImports()
+
 			// add resource to mug.config.json
 			addResourceConfig(m)
-			// create resource directory
-			// createResourceDirectory(modelName)
 			// render templates with data
 			renderTemplates(m)
 			// update Makefile
@@ -94,12 +95,6 @@ func addResourceConfig(m Model) {
 
 	writeConfig(config)
 
-}
-
-func createResourceDirectory(name string) {
-	wd := getWorkingDir()
-
-	os.MkdirAll(filepath.Join(wd, "functions", name), 0755)
 }
 
 func renderTemplates(m Model) {

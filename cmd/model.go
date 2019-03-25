@@ -243,6 +243,28 @@ func (m *Model) addImport(goType string) {
 	}
 }
 
+// getImports recursively iterates through all import slices and adds the import to the root model
+func (m *Model) getImports() []string {
+	var imports []string
+	if len(m.Nested) > 0 {
+		for _, n := range m.Nested {
+			// get all imports of the nested model
+			nI := n.getImports()
+
+			// iterate over imports and append new ones to imports slice
+			for _, i := range nI {
+				imports = appendStringIfMissing(imports, i)
+			}
+		}
+	}
+
+	for _, i := range m.Imports {
+		imports = appendStringIfMissing(imports, i)
+	}
+
+	return imports
+}
+
 // addAttribute adds an attribute to a resource model
 func (m *Model) addAttribute(a Attribute) {
 	// make sure all attributes have names

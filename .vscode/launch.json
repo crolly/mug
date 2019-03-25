@@ -11,7 +11,8 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "env": {},
-            "args": ["add", "resource", "course", "-a", "name,subtitle,description"]
+            // "args": ["add", "resource", "course", "-a", "name,subtitle,description"]
+            "args": ["add", "resource", "user", "-a", "name,isActive:bool,email,address:{street,zip,city},enrollments:[courseID:uuid.UUID,startDate:time.Time,EndDate:time.Time]"]
             // "args": ["create", "example"]
         }
     ]

@@ -74,14 +74,14 @@ For example, let's create a course resource, which has a couple of simple attrib
 mug add resource course -a name,subtitle,description
 ```
 
-This will generate the following files in the folder `functions/course/`:
+This will generate the following files / subdirectories in the folder `functions/course/`:
 ```
 -rw-r--r-- course.json
--rw-r--r-- create.go
--rw-r--r-- delete.go
--rw-r--r-- list.go
--rw-r--r-- read.go
--rw-r--r-- update.go
+-rw-r--r-- create/main.go
+-rw-r--r-- delete/main.go
+-rw-r--r-- list/main.go
+-rw-r--r-- read/main.go
+-rw-r--r-- update/main.go
 ```
 
 The resource definition is kept track of in the `course.json` like this. I use this as a development step to eventually enable definition through json input:
