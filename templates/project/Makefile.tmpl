@@ -9,7 +9,7 @@ bin/% : functions/%/main.go
 debug/%: functions/%/main.go
 		 env GOARCH=amd64 GOOS=linux go build -gcflags='-N -l' -o $@ $<
 
-build: vendor 
+build: vendor {{ if .Resources }}| $(app_bins){{ end }}
 
 debug: vendor {{ if .Resources }}| $(app_debugs){{ end }}
 

@@ -47,7 +47,7 @@ func put(body string) ({{.Type}}, error) {
 
 	// Generate new UUID to store {{.Type}} in case {{.Ident.Camelize}} doesn't have one
     if {{.Ident.Camelize}}.ID == uuid.Nil {
-        id, _ := uuid.NewV4()
+        id := uuid.NewV4()
         {{.Ident.Camelize}}.ID = id
     }
 
