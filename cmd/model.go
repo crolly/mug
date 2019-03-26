@@ -17,6 +17,7 @@ import (
 type ResourceConfig struct {
 	ProjectName string              `json:"projectName"`
 	ProjectPath string              `json:"projectPath"`
+	ImportPath  string              `json:"importPath"`
 	Region      string              `json:"region"`
 	Resources   map[string]Resource `json:"resources"`
 }
@@ -63,9 +64,9 @@ func readConfig() ResourceConfig {
 }
 
 func writeConfig(config ResourceConfig) {
-	wd := getWorkingDir()
+	// wd := getWorkingDir()
 
-	fileName := filepath.Join(wd, "mug.config.json")
+	fileName := filepath.Join(config.ProjectPath, "mug.config.json")
 
 	configJSON, _ := json.MarshalIndent(config, "", "  ")
 	_ = ioutil.WriteFile(fileName, configJSON, 0644)

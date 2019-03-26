@@ -61,6 +61,10 @@ func createProjectStructure(projectName string) {
 	config := newConfig(projectName)
 
 	// create folder for project if it doesn't exist already
+	if _, err := os.Stat(config.ProjectPath); !os.IsNotExist(err) {
+		// projectPath exists already
+		log.Fatal("folder already exists")
+	}
 	os.MkdirAll(config.ProjectPath, 0755)
 
 	// iterate over templates and execute
@@ -87,19 +91,20 @@ func createProjectStructure(projectName string) {
 }
 
 func newConfig(projectName string) ResourceConfig {
-	projectPath := getProjectPath(projectName)
+	pName, pPath, iPath := getPaths(projectName)
 
 	config := ResourceConfig{
-		ProjectName: projectName,
-		ProjectPath: projectPath,
+		ProjectName: pName,
+		ProjectPath: pPath,
+		ImportPath:  iPath,
 		Region:      region,
 	}
 
 	return config
 }
 
-func getProjectPath(projectName string) string {
-	projectPath := ""
+func getPaths(projectName string) (string, string, string) {
+	projectPath, importPath := "", ""
 
 	// environments GOPATH
 	goPath := os.Getenv("GOPATH")
@@ -108,20 +113,25 @@ func getProjectPath(projectName string) string {
 	}
 	srcPath := filepath.Join(goPath, "src")
 
-	if filepath.IsAbs(projectName) {
+	if strings.Contains(projectName, "/") {
 		// project is created with full path to GOPATH src e.g. github.com/crolly/mug-example
 		projectPath = filepath.Join(srcPath, projectName)
+		importPath = projectName
+
+		i := strings.LastIndex(projectName, "/")
+		projectName = projectName[i+1 : len(projectName)]
 	} else {
 		// project is created with project name only
 		wd := getWorkingDir()
 		if filepathHasPrefix(wd, srcPath) {
 			projectPath = filepath.Join(wd, projectName)
+			importPath = strings.TrimPrefix(strings.ReplaceAll(projectPath, srcPath, ""), "/")
 		} else {
 			log.Fatal("You must either create the project inside of $GOPATH or provide the full path (e.g. github.com/crolly/mug-example")
 		}
 	}
 
-	return projectPath
+	return projectName, projectPath, importPath
 }
 
 func filepathHasPrefix(path string, prefix string) bool {

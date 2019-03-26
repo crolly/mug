@@ -1,0 +1,66 @@
+package {{.Model.Ident.Singularize.ToLower}}
+
+import (
+	"encoding/json"
+	"fmt"
+    "os"
+	"strconv"
+
+    "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+    {{ range $i := .Model.Imports -}}
+    "{{$i}}"
+    {{ end -}}
+)
+
+{{.Model.String}}
+
+// Put extracts the {{.Model.Type}} from JSON and writes it to DynamoDB
+func Put(body string) ({{.Model.Type}}, error) {
+	var sess *session.Session
+	var tableName string
+
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return {{.Model.Type}}{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
+	} else {
+		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+	}
+	svc := dynamodb.New(sess)
+
+	// Marshall the requrest body
+	var {{.Model.Ident.Camelize}} {{.Model.Type}}
+	json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
+
+	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one
+    if {{.Model.Ident.Camelize}}.ID == uuid.Nil {
+        id := uuid.NewV4()
+        {{.Model.Ident.Camelize}}.ID = id
+    }
+
+	// Marshall the Item into a Map DynamoDB can deal with
+	av, err := dynamodbattribute.MarshalMap({{.Model.Ident.Camelize}})
+	if err != nil {
+		fmt.Println("Got error marshalling map:", err.Error())
+		return {{.Model.Ident.Camelize}}, err
+	}
+
+	// Create Item in table and return
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(tableName),
+	}
+	_, err = svc.PutItem(input)
+	return {{.Model.Ident.Camelize}}, err
+}
