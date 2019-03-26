@@ -98,15 +98,23 @@ func addResourceConfig(m Model) {
 }
 
 func renderTemplates(m Model) {
+	config := readConfig()
 
 	// iterate over templates and execute
 	for _, tmpl := range functionsBox.List() {
-
-		// create the function folder and main file for function
-		folder := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String(), strings.Replace(tmpl, ".tmpl", "", 1))
+		// create the function folder for function templete (except model)
+		folder := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String())
+		if tmpl != "model.go.tmpl" {
+			folder = filepath.Join(folder, strings.Replace(tmpl, ".tmpl", "", 1))
+		}
 		os.MkdirAll(folder, 0755)
 
-		f, err := os.Create(filepath.Join(folder, "main.go"))
+		// create files
+		file := "main.go"
+		if tmpl == "model.go.tmpl" {
+			file = m.Ident.Camelize().String() + ".go"
+		}
+		f, err := os.Create(filepath.Join(folder, file))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -116,7 +124,11 @@ func renderTemplates(m Model) {
 		t := loadTemplateFromBox(functionsBox, tmpl)
 
 		// execute template and save to file
-		err = t.Execute(f, m)
+		data := map[string]interface{}{
+			"Model":  m,
+			"Config": config,
+		}
+		err = t.Execute(f, data)
 		if err != nil {
 			log.Fatal(err)
 		}

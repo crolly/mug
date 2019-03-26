@@ -9,11 +9,9 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
+            "program": "${workspaceRoot}/main.go",
             "env": {},
-            // "args": ["add", "resource", "course", "-a", "name,subtitle,description"]
-            "args": ["add", "resource", "user", "-a", "name,isActive:bool,email,address:{street,zip,city},enrollments:[courseID:uuid.UUID,startDate:time.Time,EndDate:time.Time]"]
-            // "args": ["create", "example"]
+            "args": ["add", "resource", "course", "-a", "name,description"]
         }
     ]
 }

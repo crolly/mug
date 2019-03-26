@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -56,26 +57,21 @@ func init() {
 
 // createsProjectStructure creates the project structure with serverless.yml and mug.config.json
 func createProjectStructure(projectName string) {
-	// get working directory
-	wd := getWorkingDir()
+	// create new config from project name
+	config := newConfig(projectName)
 
-	// create root directory if it doesn't exist already, else fail
-	if dirExists(filepath.Join(wd, projectName)) {
+	// create folder for project if it doesn't exist already
+	if _, err := os.Stat(config.ProjectPath); !os.IsNotExist(err) {
+		// projectPath exists already
 		log.Fatal("folder already exists")
 	}
-	os.Mkdir(projectName, 0755)
-
-	// set data
-	config := ResourceConfig{
-		ProjectName: projectName,
-		Region:      region,
-	}
+	os.MkdirAll(config.ProjectPath, 0755)
 
 	// iterate over templates and execute
 	for _, tmpl := range projectBox.List() {
 
 		// create file
-		fileName := fmt.Sprintf("%s/%s/%s", wd, projectName, strings.Replace(tmpl, ".tmpl", "", 1))
+		fileName := fmt.Sprintf("%s/%s", config.ProjectPath, strings.Replace(tmpl, ".tmpl", "", 1))
 		f, err := os.Create(fileName)
 		if err != nil {
 			log.Fatal(err)
@@ -91,5 +87,61 @@ func createProjectStructure(projectName string) {
 			log.Fatal(err)
 		}
 	}
+
+}
+
+func newConfig(projectName string) ResourceConfig {
+	pName, pPath, iPath := getPaths(projectName)
+
+	config := ResourceConfig{
+		ProjectName: pName,
+		ProjectPath: pPath,
+		ImportPath:  iPath,
+		Region:      region,
+	}
+
+	return config
+}
+
+func getPaths(projectName string) (string, string, string) {
+	projectPath, importPath := "", ""
+
+	// environments GOPATH
+	goPath := os.Getenv("GOPATH")
+	if len(goPath) == 0 {
+		log.Fatal("$GOPATH is not set")
+	}
+	srcPath := filepath.Join(goPath, "src")
+
+	if strings.Contains(projectName, "/") {
+		// project is created with full path to GOPATH src e.g. github.com/crolly/mug-example
+		projectPath = filepath.Join(srcPath, projectName)
+		importPath = projectName
+
+		i := strings.LastIndex(projectName, "/")
+		projectName = projectName[i+1 : len(projectName)]
+	} else {
+		// project is created with project name only
+		wd := getWorkingDir()
+		if filepathHasPrefix(wd, srcPath) {
+			projectPath = filepath.Join(wd, projectName)
+			importPath = strings.TrimPrefix(strings.ReplaceAll(projectPath, srcPath, ""), "/")
+		} else {
+			log.Fatal("You must either create the project inside of $GOPATH or provide the full path (e.g. github.com/crolly/mug-example")
+		}
+	}
+
+	return projectName, projectPath, importPath
+}
+
+func filepathHasPrefix(path string, prefix string) bool {
+	if len(path) <= len(prefix) {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// Paths in windows are case-insensitive.
+		return strings.EqualFold(path[0:len(prefix)], prefix)
+	}
+	return path[0:len(prefix)] == prefix
 
 }
