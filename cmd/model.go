@@ -241,7 +241,7 @@ func (m *Model) addImport(goType string) {
 	case "time.Time", "*time.Time":
 		m.Imports = appendStringIfMissing(m.Imports, "time")
 	case "uuid.UUID":
-		m.Imports = appendStringIfMissing(m.Imports, "github.com/satori/go.uuid")
+		m.Imports = appendStringIfMissing(m.Imports, "github.com/gofrs/uuid")
 	}
 }
 

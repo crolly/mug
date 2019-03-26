@@ -125,7 +125,7 @@ The resource definition is kept track of in the `course.json` like this. I use t
   ],
   "nested": null,
   "imports": [
-    "github.com/satori/go.uuid"
+    "github.com/gofrs/uuid"
   ]
 }
 ```
