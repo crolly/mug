@@ -1,0 +1,36 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+)
+
+// ListHandler handles the GET request and retrieves all {{.Model.Ident.Pluralize}} from the database returning the items on success
+func ListHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Pass the call to the model
+	{{.Model.Ident.Pluralize}}, err := {{.Model.Ident.Singularize.ToLower}}.List()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to find {{.Model.Ident.Pluralize}}, %v", err))
+	}
+
+	// Make sure the {{.Model.Ident.Pluralize}} slice isn't empty
+	if len({{.Model.Ident.Pluralize}}) == 0 {
+		fmt.Println("Could not find {{.Model.Ident.Pluralize}}")
+		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500}, nil
+	}
+
+	// Log and return result
+	jsonItems, _ := json.MarshalIndent({{.Model.Ident.Pluralize}}, "", "  ")
+	stringItems := string(jsonItems)
+	fmt.Println("Found items: ", stringItems)
+	return events.APIGatewayProxyResponse{Body: stringItems, StatusCode: 200}, nil
+}
+
+func main() {
+	lambda.Start(ListHandler)
+}

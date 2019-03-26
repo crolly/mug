@@ -64,3 +64,129 @@ func Put(body string) ({{.Model.Type}}, error) {
 	_, err = svc.PutItem(input)
 	return {{.Model.Ident.Camelize}}, err
 }
+
+// Read gets the {{.Model.Type}} from DynamoDB
+func Read(id string) ({{.Model.Type}}, error) {
+    var sess *session.Session
+	var tableName string
+	
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return {{.Model.Type}}{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
+	} else {
+		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+	}
+	svc := dynamodb.New(sess)
+	{{.Model.Ident.Camelize}} := {{.Type}}{}
+
+	// Perform the query
+	fmt.Println("Trying to read from table: ", "{{.Model.Ident.Pluralize}}")
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				B: []byte(aws.StringValue(aws.String(id))),
+			},
+		},
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+		return {{.Model.Ident.Camelize}}, err
+	}
+
+	// Unmarshall the result in to an Item
+	err = dynamodbattribute.UnmarshalMap(result.Item, &{{.Model.Ident.Camelize}})
+	if err != nil {
+		fmt.Println(err.Error())
+		return {{.Model.Ident.Camelize}}, err
+	}
+
+	return {{.Model.Ident.Camelize}}, nil
+}
+
+// Delete erases the {{.Model.Type}} from DynamoDB
+func Delete(id string) error {
+    var sess *session.Session
+	var tableName string
+
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
+	} else {
+		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+	}
+	svc := dynamodb.New(sess)
+
+	// Perform the delete
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				B: []byte(aws.StringValue(aws.String(id))),
+			},
+		},
+		TableName: aws.String(tableName),
+	}
+
+	_, err = svc.DeleteItem(input)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
+// List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB
+func List() ([]{{.Model.Type}}, error){
+    var sess *session.Session
+	var tableName string
+	
+	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
+	if err != nil {
+		return []{{.Model.Type}}{}, err
+	}
+	// Create dynamo client object locally if running SAM CLI
+	if local {
+		sess = session.Must(session.NewSession(&aws.Config{
+			Endpoint: aws.String("http://dynamodb:8000"),
+		}))
+		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
+	} else {
+		sess = session.Must(session.NewSession())
+		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+	}
+	svc := dynamodb.New(sess)
+
+    params := &dynamodb.ScanInput{
+        TableName: aws.String(tableName),
+    }
+    result, err := svc.Scan(params)
+    if err != nil {
+        fmt.Println(err.Error())
+        return nil, err
+    } 
+
+   var {{.Ident.Pluralize}} []{{.Model.Type}}
+   dynamodbattribute.UnmarshalListOfMaps(result.Items, &{{.Model.Ident.Pluralize}}) 
+   if err != nil {
+       fmt.Println(err.Error())
+       return nil, err
+   }
+
+   return {{.Model.Ident.Pluralize}}, nil 
+}

@@ -1,0 +1,33 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+)
+
+// UpdateHandler handles the PUT request and updates a {{.Model.Ident.Camelize}} in the database returning the item on success
+func UpdateHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Log body and pass to the model
+	fmt.Println("Received body: ", request.Body)
+	{{.Model.Ident.Camelize}}, err := {{.Model.Ident.Singularize.ToLower}}.Put(request.Body)
+	if err != nil {
+		fmt.Println("Got error calling Put method")
+		fmt.Println(err.Error())
+		return events.APIGatewayProxyResponse{Body: "Error", StatusCode: 500}, nil
+	}
+
+	// Log and return result
+	fmt.Println("Updated item: ", {{.Model.Ident.Camelize}})
+	jsonItem, _ := json.MarshalIndent({{.Model.Ident.Camelize}}, "", "  ")
+	stringItem := string(jsonItem)
+	return events.APIGatewayProxyResponse{Body: stringItem, StatusCode: 200}, nil
+}
+
+func main() {
+	lambda.Start(UpdateHandler)
+}
