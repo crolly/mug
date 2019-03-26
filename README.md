@@ -16,7 +16,7 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [ ] support for custom HASH key
 - [ ] support for RANGE and SORT keys
 - [ ] function selection (e.g. only generate list and get method)
-- [ ] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
+- [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
 - [ ] resource generation from JSON
 - [ ] remove resource/ functions from project
 - [ ] support local debug of generated code (with aws-sam-cli)
@@ -39,6 +39,7 @@ In order to be able to deploy the generated code please make sure to have the fo
 * [serverless framework](https://serverless.com/framework/docs/getting-started/)
 * [dep](https://golang.github.io/dep/) (golang dependancy management tool)
 * [aws-cli](https://docs.aws.amazon.com/de_de/cli/latest/userguide/cli-chap-welcome.html) wouldn't hurt, but is not necessarily required
+* [aws-sam-cli]() in case you want to locally debug your code
 
 ### Installation
 
@@ -61,7 +62,7 @@ This will create the directory in case it doesn't already exist. The structure w
 * mug.config.json - used to register the project and resource generation as base for Makefile and serverless updates
 * Gopkg.toml - keeps track of the dependencies
 
-In general everything generated can be ammended afterwards to adjust to your personal requirements before deployment. If you require some help setting up server less, [follow the instructions here](https://serverless.com/blog/anatomy-of-a-serverless-app/#setup).
+In general everything generated can be ammended afterwards to adjust to your personal requirements before deployment. If you require some help setting up serverless, [follow the instructions here](https://serverless.com/blog/anatomy-of-a-serverless-app/#setup).
 
 ### Add a Resource
 
@@ -77,6 +78,7 @@ mug add resource course -a name,subtitle,description
 This will generate the following files / subdirectories in the folder `functions/course/`:
 ```
 -rw-r--r-- course.json
+-rw-r--r-- course.go
 -rw-r--r-- create/main.go
 -rw-r--r-- delete/main.go
 -rw-r--r-- list/main.go
@@ -127,7 +129,7 @@ The resource definition is kept track of in the `course.json` like this. I use t
   ]
 }
 ```
-The course's struct looks like this:
+The course's struct in the `course.go` looks like this:
 ```
 // Course defines the Course model
 type Course struct {
@@ -141,6 +143,7 @@ As you can see an `ID` attribute of type `uuid.UUID` is automatically added. Thi
 ```
 mug add resource course -a "name,subtitle,description,price:float"
 ```
+The `course.go` file will also contain all the wrapper methods to interact with the database, just in case you want to have another solution as DynamoDB as persistence layer. The `main.go` files in the function subdirectories will contain the actual lambda functionality.
 
 #### Complex Resource Definition with Nested Objects
 
@@ -188,16 +191,16 @@ Of course, you can also reference the `ID` in an object, however, you will have 
 To deploy your application just run `make` and `sls deploy`:
 ```
 ➜  mug-example git:(master) ✗ make       
-env GOOS=linux go build -ldflags="-s -w" -o bin/course/create
-env GOOS=linux go build -ldflags="-s -w" -o bin/course/read
-env GOOS=linux go build -ldflags="-s -w" -o bin/course/update
-env GOOS=linux go build -ldflags="-s -w" -o bin/course/delete
-env GOOS=linux go build -ldflags="-s -w" -o bin/course/list
-env GOOS=linux go build -ldflags="-s -w" -o bin/user/create
-env GOOS=linux go build -ldflags="-s -w" -o bin/user/read
-env GOOS=linux go build -ldflags="-s -w" -o bin/user/update
-env GOOS=linux go build -ldflags="-s -w" -o bin/user/delete
-env GOOS=linux go build -ldflags="-s -w" -o bin/user/list
+env GOOS=linux go build -ldflags="-s -w" -o bin/course/create functions/course/create/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/course/read functions/course/read/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/course/update functions/course/update/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/course/delete functions/course/delete/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/course/list functions/course/list/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/user/create functions/user/create/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/user/read functions/user/read/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/user/update functions/user/update/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/user/delete functions/user/delete/main.go
+env GOOS=linux go build -ldflags="-s -w" -o bin/user/list functions/user/list/main.go
 
 ➜  mug-example git:(master) ✗ sls deploy
 Serverless: Packaging service...
