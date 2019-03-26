@@ -45,7 +45,7 @@ func Put(body string) ({{.Model.Type}}, error) {
 
 	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one
     if {{.Model.Ident.Camelize}}.ID == uuid.Nil {
-        id := uuid.NewV4()
+        id, _ := uuid.NewV4()
         {{.Model.Ident.Camelize}}.ID = id
     }
 
@@ -85,7 +85,7 @@ func Read(id string) ({{.Model.Type}}, error) {
 		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
 	}
 	svc := dynamodb.New(sess)
-	{{.Model.Ident.Camelize}} := {{.Type}}{}
+	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 
 	// Perform the query
 	fmt.Println("Trying to read from table: ", "{{.Model.Ident.Pluralize}}")
@@ -181,7 +181,7 @@ func List() ([]{{.Model.Type}}, error){
         return nil, err
     } 
 
-   var {{.Ident.Pluralize}} []{{.Model.Type}}
+   var {{.Model.Ident.Pluralize}} []{{.Model.Type}}
    dynamodbattribute.UnmarshalListOfMaps(result.Items, &{{.Model.Ident.Pluralize}}) 
    if err != nil {
        fmt.Println(err.Error())
