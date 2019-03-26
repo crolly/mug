@@ -101,7 +101,7 @@ func renderTemplates(m Model) {
 	config := readConfig()
 
 	// iterate over templates and execute
-	for _, tmpl := range functionsBox.List() {
+	for _, tmpl := range resourceBox.List() {
 		// create the function folder for function templete (except model)
 		folder := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String())
 		if tmpl != "model.go.tmpl" {
@@ -121,7 +121,7 @@ func renderTemplates(m Model) {
 		defer f.Close()
 
 		// load template
-		t := loadTemplateFromBox(functionsBox, tmpl)
+		t := loadTemplateFromBox(resourceBox, tmpl)
 
 		// execute template and save to file
 		data := map[string]interface{}{

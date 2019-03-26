@@ -31,8 +31,8 @@ import (
 var (
 	cfgFile string
 
-	functionsBox = packr.New("functions", "../templates/functions")
-	projectBox   = packr.New("project", "../templates/project")
+	resourceBox = packr.New("resource", "../templates/resource")
+	projectBox  = packr.New("project", "../templates/project")
 )
 
 // rootCmd represents the base command when called without any subcommands
