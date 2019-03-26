@@ -106,7 +106,7 @@ func newModel(name string, slice bool, attributes string, withID bool, withDates
 	}
 
 	if withID {
-		m.Imports = appendStringIfMissing(m.Imports, "github.com/satori/go.uuid")
+		m.Imports = appendStringIfMissing(m.Imports, "github.com/gofrs/uuid")
 		m.addAttribute(Attribute{Name: "id", Ident: flect.New("id"), AwsType: "S", GoType: "uuid.UUID", Hash: true})
 	}
 
