@@ -33,6 +33,7 @@ var (
 
 	resourceBox = packr.New("resource", "../templates/resource")
 	projectBox  = packr.New("project", "../templates/project")
+	functionBox = packr.New("function", "../templates/function")
 )
 
 // rootCmd represents the base command when called without any subcommands

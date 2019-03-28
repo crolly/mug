@@ -21,9 +21,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -53,7 +51,7 @@ var (
 			// render templates with data
 			renderTemplates(m)
 			// update Makefile
-			renderMakefile(modelName)
+			renderMakefile()
 			// update serverless.yml
 			renderSLS()
 
@@ -93,7 +91,7 @@ func addResourceConfig(m Model) {
 	}
 	config.Resources[m.Name] = resource
 
-	writeConfig(config)
+	config.Write()
 
 }
 
@@ -132,52 +130,5 @@ func renderTemplates(m Model) {
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
-}
-
-func renderMakefile(name string) {
-	config := readConfig()
-
-	// load Makefile template
-	t := loadTemplateFromBox(projectBox, "Makefile.tmpl")
-
-	// open file and execute template
-	f, err := os.OpenFile(filepath.Join(getWorkingDir(), "Makefile"), os.O_WRONLY, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	// execote template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func writeResourceDefinition(m Model, name string) {
-	wd := getWorkingDir()
-
-	json, _ := json.MarshalIndent(m, "", "  ")
-	_ = ioutil.WriteFile(filepath.Join(wd, "functions", name, fmt.Sprintf("%s.json", name)), json, 0644)
-}
-
-func renderSLS() {
-	config := readConfig()
-
-	// load Makefile template
-	t := loadTemplateFromBox(projectBox, "serverless.yml.tmpl")
-
-	// open file and execute template
-	f, err := os.OpenFile(filepath.Join(getWorkingDir(), strings.Replace(t.Name(), ".tmpl", "", 1)), os.O_WRONLY, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	// execote template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
 	}
 }

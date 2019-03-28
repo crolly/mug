@@ -63,19 +63,18 @@ func readConfig() ResourceConfig {
 	return config
 }
 
-func writeConfig(config ResourceConfig) {
-	// wd := getWorkingDir()
+// Write method to write the config back to disk
+func (c *ResourceConfig) Write() {
+	fileName := filepath.Join(c.ProjectPath, "mug.config.json")
 
-	fileName := filepath.Join(config.ProjectPath, "mug.config.json")
-
-	configJSON, _ := json.MarshalIndent(config, "", "  ")
+	configJSON, _ := json.MarshalIndent(c, "", "  ")
 	_ = ioutil.WriteFile(fileName, configJSON, 0644)
 }
 
 // AddFunction adds a given function to the given resource name of the configuration
-func AddFunction(resourceName string, functionName string, path string, method string) {
-	c := readConfig()
+func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) {
 	r := c.Resources[resourceName]
+
 	f := Function{
 		Name:    functionName + "_" + r.Ident.Singularize().String(),
 		Handler: functionName,
@@ -84,7 +83,22 @@ func AddFunction(resourceName string, functionName string, path string, method s
 	}
 	r.Functions = append(r.Functions, f)
 
-	writeConfig(c)
+	c.Resources[resourceName] = r
+}
+
+// RemoveFunction removes a given function from the given resource name of the configuration
+func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string) {
+	r := c.Resources[resourceName]
+
+	name := functionName + "_" + resourceName
+	for i, f := range r.Functions {
+		if name == f.Name {
+			r.Functions = append(r.Functions[:i], r.Functions[i+1:]...)
+			c.Resources[resourceName] = r
+
+			return
+		}
+	}
 }
 
 // Model represents a resource model object

@@ -1,8 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -83,4 +88,105 @@ func appendStringIfMissing(slice []string, i string) []string {
 		}
 	}
 	return append(slice, i)
+}
+
+func runCmd(name string, args ...string) {
+	cmd := exec.Command(name, args...)
+
+	err := execCmd(cmd)
+	if err != nil {
+		log.Fatalf("Executing %s failed with %s\n", name, err)
+	}
+}
+
+func runCmdWithEnv(envs []string, name string, args ...string) {
+	cmdEnv := append(os.Environ(), envs...)
+	cmd := exec.Command(name, args...)
+	cmd.Env = cmdEnv
+
+	err := execCmd(cmd)
+	if err != nil {
+		log.Fatalf("Executing %s failed with %s\n", name, err)
+	}
+}
+
+func execCmd(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+func renderMakefile() {
+	log.Println("Generating Makefile...")
+	config := readConfig()
+
+	// load Makefile template
+	t := loadTemplateFromBox(projectBox, "Makefile.tmpl")
+
+	// open file and execute template
+	f, err := os.OpenFile(filepath.Join(config.ProjectPath, "Makefile"), os.O_WRONLY, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// execote template and save to file
+	err = t.Execute(f, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Makefile generated.")
+}
+
+func writeResourceDefinition(m Model, name string) {
+	wd := getWorkingDir()
+
+	json, _ := json.MarshalIndent(m, "", "  ")
+	_ = ioutil.WriteFile(filepath.Join(wd, "functions", name, fmt.Sprintf("%s.json", name)), json, 0644)
+}
+
+func renderSLS() {
+	log.Println("Generating serverless.yml...")
+	config := readConfig()
+
+	// load Makefile template
+	t := loadTemplateFromBox(projectBox, "serverless.yml.tmpl")
+
+	// open file and execute template
+	f, err := os.OpenFile(filepath.Join(config.ProjectPath, strings.Replace(t.Name(), ".tmpl", "", 1)), os.O_WRONLY, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// execote template and save to file
+	err = t.Execute(f, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("serverless.yml generated.")
+}
+
+func generateSAMTemplate() {
+	log.Println("Generating template.yml...")
+	config := readConfig()
+
+	// load Makefile template
+	t := loadTemplateFromBox(projectBox, "template.yml.tmpl")
+
+	// open file and execute template
+	f, err := os.Create(filepath.Join(config.ProjectPath, "template.yml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// execote template and save to file
+	err = t.Execute(f, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("template.yml generated.")
 }

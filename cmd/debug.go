@@ -46,7 +46,7 @@ var (
 			// make debug binaries overwriting previous
 			makeDebug()
 			// generate new template.yml overwriting previous
-			generateTemplate()
+			generateSAMTemplate()
 			// create lambda-local network if it doesn't exist already
 			createLambdaNetwork()
 			// start dynamodb-local
@@ -75,63 +75,9 @@ func makeDebug() {
 		log.Fatal("no Makefile found - cannout build binaries")
 	}
 
-	// delete debug binaries if they exists
-	if _, err := os.Stat(filepath.Join(wd, "debug")); os.IsNotExist(err) {
-		runCmd("rm", "-rf", "debug/")
-	}
 	// run make debug
 	log.Println("Building Debug Binaries...")
 	runCmd("make", "debug")
-}
-
-func runCmd(name string, args ...string) {
-	cmd := exec.Command(name, args...)
-
-	err := execCmd(cmd)
-	if err != nil {
-		log.Fatalf("Executing %s failed with %s\n", name, err)
-	}
-}
-
-func runCmdWithEnv(envs []string, name string, args ...string) {
-	cmdEnv := append(os.Environ(), envs...)
-	cmd := exec.Command(name, args...)
-	cmd.Env = cmdEnv
-
-	err := execCmd(cmd)
-	if err != nil {
-		log.Fatalf("Executing %s failed with %s\n", name, err)
-	}
-}
-
-func execCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
-}
-
-func generateTemplate() {
-	log.Println("Generating template.yml...")
-	config := readConfig()
-
-	// load Makefile template
-	t := loadTemplateFromBox(projectBox, "template.yml.tmpl")
-
-	// open file and execute template
-	f, err := os.Create(filepath.Join(getWorkingDir(), "template.yml"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	// execote template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("template.yml generated.")
 }
 
 func createLambdaNetwork() {
