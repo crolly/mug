@@ -44,9 +44,9 @@ func Put(body string) ({{.Model.Type}}, error) {
 	json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
 
 	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one
-    if {{.Model.Ident.Camelize}}.ID == uuid.Nil {
+    if uuid.Must(uuid.FromString({{.Model.Ident.Camelize}}.ID)) == uuid.Nil {
         id, _ := uuid.NewV4()
-        {{.Model.Ident.Camelize}}.ID = id
+        {{.Model.Ident.Camelize}}.ID = id.String()
     }
 
 	// Marshall the Item into a Map DynamoDB can deal with

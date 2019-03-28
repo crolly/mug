@@ -21,7 +21,7 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	}
 
 	// Make sure the {{.Model.Ident.Camelize}} isn't empty
-	if {{.Model.Ident.Camelize}}.ID == uuid.Nil {
+	if uuid.Must(uuid.FromString({{.Model.Ident.Camelize}}.ID)) == uuid.Nil {
 		fmt.Println("Could not find {{.Model.Ident.Camelize}}")
 		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500}, nil
 	}

@@ -240,9 +240,9 @@ func startLocalAPI() {
 	if remoteDebugger {
 		ensureDebugger()
 		args = append(args, "--debugger-path", "./dlv", "-d", debugPort)
+		log.Printf("Starting local API at port 3000 with debugger at %s...\n", debugPort)
 	}
 
-	log.Printf("Starting local API at port %s...\n", debugPort)
 	runCmd("sam", args...)
 }
 
