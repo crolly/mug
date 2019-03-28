@@ -19,7 +19,7 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
 - [ ] resource generation from JSON
 - [ ] remove resource/ functions from project
-- [ ] support local debug of generated code (with aws-sam-cli)
+- [x] support local debug of generated code (with aws-sam-cli)
 
 ## Getting Started
 
@@ -185,6 +185,44 @@ type Enrollments struct {
 ```
 
 Of course, you can also reference the `ID` in an object, however, you will have to manage this in your own code - getting the `ID` or multiple `IDs` for `m-n` relationships and fetching the referenced objects afterwards.
+
+### Debug functions locally
+
+You can use the `mug debug` command to locally debug the generated functions or whatever modifications you have made. The command will simply do the following:
+
+1. Build binaries in the `debug` folder using `make debug` defined in the `Makefile`.
+2. Generate a `template.yml` later required by **aws-sam-cli** to provide the API Gateway.
+3. Create a local docker network for **aws-sam** and **dynamodb** to talk to each other.
+4. Start/ Restart a daemon of `amazon/dynamodb-local` container.
+5. Create the tables in the database.
+6. Start the API with `sam local start-api`. 
+
+The command has two flags:
+
+- `--remoteDebugger` or `-r` indicating whether you want to additionally initiate a delve debug process to be hooking into with e.g. Visual Studio Code
+- `debuggPort` or `-p` overwriting the default port of **5986** for the remote debugger
+
+When you start with the remote debugger enabled you can easily step through your functions using breakpoints etc. Make sure you have a propper launch configuration beforehand. For Visual Studio Code it may look like this:
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+    {
+        "name": "lambda debug",
+        "type": "go",
+        "request": "launch",
+        "mode": "remote",
+        "remotePath": "",
+        "port": 5986,
+        "host": "127.0.0.1",
+        "program": "${file}",
+        "env": {},
+        "args": [],
+      },
+    ]
+  }
+```
 
 ### Deploy to AWS
 
