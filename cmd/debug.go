@@ -44,7 +44,7 @@ var (
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// make debug binaries overwriting previous
-			makeDebug()
+			// makeDebug()
 			// generate new template.yml overwriting previous
 			generateTemplate()
 			// create lambda-local network if it doesn't exist already
@@ -112,13 +112,14 @@ func execCmd(cmd *exec.Cmd) error {
 }
 
 func generateTemplate() {
+	log.Println("Generating template.yml...")
 	config := readConfig()
 
 	// load Makefile template
 	t := loadTemplateFromBox(projectBox, "template.yml.tmpl")
 
 	// open file and execute template
-	f, err := os.OpenFile(filepath.Join(getWorkingDir(), "template.yml"), os.O_WRONLY, 0755)
+	f, err := os.Create(filepath.Join(getWorkingDir(), "template.yml"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,6 +130,8 @@ func generateTemplate() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println("template.yml generated.")
 }
 
 func createLambdaNetwork() {
@@ -141,6 +144,8 @@ func createLambdaNetwork() {
 	if len(out) == 0 {
 		log.Println("Creating lambda-local docker network")
 		runCmd("docker", "network", "create", "lambda-local")
+	} else {
+		log.Println("Docker network lambda-local already exists, skipping creation...")
 	}
 }
 
@@ -162,17 +167,20 @@ func startLocalDynamoDB() {
 		wd := getWorkingDir()
 		runCmd("docker", "run", "-v", fmt.Sprintf("%s:/dynamodb_local_db", wd), "-p", "8000:8000", "--net=lambda-local", "--name", "dynamodb", "-d", "amazon/dynamodb-local")
 	}
+
+	log.Println("dynamodb-local running.")
 }
 
 func createResourceTables() {
-	// create service to dynamodb
-	sess := session.Must(session.NewSession(&aws.Config{
-		Endpoint: aws.String("http://dynamodb:8000"),
-	}))
-	svc := dynamodb.New(sess)
-
 	// read the resource config
 	config := readConfig()
+
+	// create service to dynamodb
+	sess := session.Must(session.NewSession(&aws.Config{
+		Endpoint: aws.String("http://localhost:8000"),
+		Region:   aws.String(config.Region),
+	}))
+	svc := dynamodb.New(sess)
 
 	// iterate over resources
 	for _, r := range config.Resources {
@@ -191,14 +199,18 @@ func createResourceTables() {
 					KeyType:       aws.String("HASH"),
 				},
 			},
+			ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+				ReadCapacityUnits:  aws.Int64(10),
+				WriteCapacityUnits: aws.Int64(10),
+			},
 		}
 
 		out, err := svc.CreateTable(input)
 		if err != nil {
-			log.Fatalf("Error creating table for resource %s: %s", r.Ident, err)
+			log.Fatalf("Error creating table %s: %s", r.Ident.Pluralize(), err)
 		}
 
-		log.Printf("Table created for resource %s: %s", r.Ident, out)
+		log.Printf("Table %s created: %s", r.Ident.Pluralize(), out)
 	}
 }
 

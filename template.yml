@@ -1,0 +1,123 @@
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+  createCourseFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: create
+      CodeUri: ./debug/course
+      Events:
+        createCourseApi:
+            Type: Api
+            Properties:
+                Path: /courses
+                Method: post
+  readCourseFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: read
+      CodeUri: ./debug/course
+      Events:
+        readCourseApi:
+            Type: Api
+            Properties:
+                Path: /courses/{id}
+                Method: get
+  updateCourseFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: update
+      CodeUri: ./debug/course
+      Events:
+        updateCourseApi:
+            Type: Api
+            Properties:
+                Path: /courses/{id}
+                Method: put
+  deleteCourseFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: delete
+      CodeUri: ./debug/course
+      Events:
+        deleteCourseApi:
+            Type: Api
+            Properties:
+                Path: /courses/{id}
+                Method: delete
+  listCourseFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: list
+      CodeUri: ./debug/course
+      Events:
+        listCourseApi:
+            Type: Api
+            Properties:
+                Path: /courses
+                Method: get
+  createUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: create
+      CodeUri: ./debug/user
+      Events:
+        createUserApi:
+            Type: Api
+            Properties:
+                Path: /users
+                Method: post
+  readUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: read
+      CodeUri: ./debug/user
+      Events:
+        readUserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: get
+  updateUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: update
+      CodeUri: ./debug/user
+      Events:
+        updateUserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: put
+  deleteUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: delete
+      CodeUri: ./debug/user
+      Events:
+        deleteUserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: delete
+  listUserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: list
+      CodeUri: ./debug/user
+      Events:
+        listUserApi:
+            Type: Api
+            Properties:
+                Path: /users
+                Method: get
+  
