@@ -44,7 +44,7 @@ var (
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// make debug binaries overwriting previous
-			// makeDebug()
+			makeDebug()
 			// generate new template.yml overwriting previous
 			generateTemplate()
 			// create lambda-local network if it doesn't exist already
