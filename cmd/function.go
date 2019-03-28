@@ -50,9 +50,9 @@ var (
 			config.Write()
 
 			// update serverless.yml, Makefile, template.yml
-			renderMakefile()
-			renderSLS()
-			generateSAMTemplate()
+			renderMakefile(config)
+			renderSLS(config)
+			generateSAMTemplate(config)
 		},
 	}
 

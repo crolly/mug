@@ -46,7 +46,7 @@ var (
 			// make debug binaries overwriting previous
 			makeDebug()
 			// generate new template.yml overwriting previous
-			generateSAMTemplate()
+			generateSAMTemplate(readConfig())
 			// create lambda-local network if it doesn't exist already
 			createLambdaNetwork()
 			// start dynamodb-local

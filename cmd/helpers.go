@@ -118,9 +118,8 @@ func execCmd(cmd *exec.Cmd) error {
 	return cmd.Run()
 }
 
-func renderMakefile() {
+func renderMakefile(config ResourceConfig) {
 	log.Println("Generating Makefile...")
-	config := readConfig()
 
 	// load Makefile template
 	t := loadTemplateFromBox(projectBox, "Makefile.tmpl")
@@ -147,9 +146,8 @@ func writeResourceDefinition(m Model, name string) {
 	_ = ioutil.WriteFile(filepath.Join(wd, "functions", name, fmt.Sprintf("%s.json", name)), json, 0644)
 }
 
-func renderSLS() {
+func renderSLS(config ResourceConfig) {
 	log.Println("Generating serverless.yml...")
-	config := readConfig()
 
 	// load Makefile template
 	t := loadTemplateFromBox(projectBox, "serverless.yml.tmpl")
@@ -169,9 +167,8 @@ func renderSLS() {
 	log.Println("serverless.yml generated.")
 }
 
-func generateSAMTemplate() {
+func generateSAMTemplate(config ResourceConfig) {
 	log.Println("Generating template.yml...")
-	config := readConfig()
 
 	// load Makefile template
 	t := loadTemplateFromBox(projectBox, "template.yml.tmpl")

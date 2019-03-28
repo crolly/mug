@@ -21,6 +21,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -36,14 +38,16 @@ var rmresourceCmd = &cobra.Command{
 
 		// delete resource from configuration
 		config.RemoveResource(resourceName)
+		fmt.Println(config)
 
 		// delete resource folder
 		removeFiles(config, resourceName, nil)
+		config.Write()
 
 		// rerender Makefile, serverless.yml, template.yml
-		renderMakefile()
-		renderSLS()
-		generateSAMTemplate()
+		renderMakefile(config)
+		renderSLS(config)
+		generateSAMTemplate(config)
 	},
 }
 

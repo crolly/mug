@@ -47,13 +47,13 @@ var (
 			m.Imports = m.getImports()
 
 			// add resource to mug.config.json
-			addResourceConfig(m)
+			config := addResourceConfig(m)
 			// render templates with data
-			renderTemplates(m)
+			renderTemplates(config, m)
 			// update Makefile
-			renderMakefile()
+			renderMakefile(config)
 			// update serverless.yml
-			renderSLS()
+			renderSLS(config)
 
 			// write definition to resource folder
 			writeResourceDefinition(m, modelName)
@@ -72,7 +72,7 @@ func init() {
 	resourceCmd.Flags().BoolVarP(&addDates, "addDates", "d", false, "automatically add createdAt and updatedAt attributes")
 }
 
-func addResourceConfig(m Model) {
+func addResourceConfig(m Model) ResourceConfig {
 	config := readConfig()
 
 	singular := m.Ident.Singularize().String()
@@ -93,11 +93,10 @@ func addResourceConfig(m Model) {
 
 	config.Write()
 
+	return config
 }
 
-func renderTemplates(m Model) {
-	config := readConfig()
-
+func renderTemplates(config ResourceConfig, m Model) {
 	// iterate over templates and execute
 	for _, tmpl := range resourceBox.List() {
 		// create the function folder for function templete (except model)
