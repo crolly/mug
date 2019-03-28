@@ -72,6 +72,21 @@ func writeConfig(config ResourceConfig) {
 	_ = ioutil.WriteFile(fileName, configJSON, 0644)
 }
 
+// AddFunction adds a given function to the given resource name of the configuration
+func AddFunction(resourceName string, functionName string, path string, method string) {
+	c := readConfig()
+	r := c.Resources[resourceName]
+	f := Function{
+		Name:    functionName + "_" + r.Ident.Singularize().String(),
+		Handler: functionName,
+		Path:    path,
+		Method:  method,
+	}
+	r.Functions = append(r.Functions, f)
+
+	writeConfig(c)
+}
+
 // Model represents a resource model object
 type Model struct {
 	Name       string      `json:"name"`

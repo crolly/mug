@@ -15,10 +15,8 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [ ] easy configuration and deployment
 - [ ] support for custom HASH key
 - [ ] support for RANGE and SORT keys
-- [ ] function selection (e.g. only generate list and get method)
 - [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
 - [ ] resource generation from JSON
-- [ ] remove resource/ functions from project
 - [x] support local debug of generated code (with aws-sam-cli)
 
 ## Getting Started
