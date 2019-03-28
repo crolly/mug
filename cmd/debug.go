@@ -182,36 +182,57 @@ func createResourceTables() {
 	}))
 	svc := dynamodb.New(sess)
 
+	// get list of tables
+	result, err := svc.ListTables(&dynamodb.ListTablesInput{})
+	if err != nil {
+		log.Fatalf("Error during creation of resource tables: %s\n", err)
+	}
+
+	tables := make(map[string]bool)
+	for _, t := range result.TableNames {
+		tables[*t] = true
+	}
+
 	// iterate over resources
 	for _, r := range config.Resources {
-		// create the table for the resource
-		input := &dynamodb.CreateTableInput{
-			TableName: aws.String(r.Ident.Pluralize().ToLower().String()),
-			AttributeDefinitions: []*dynamodb.AttributeDefinition{
-				{
-					AttributeName: aws.String("id"),
-					AttributeType: aws.String("B"),
-				},
-			},
-			KeySchema: []*dynamodb.KeySchemaElement{
-				{
-					AttributeName: aws.String("id"),
-					KeyType:       aws.String("HASH"),
-				},
-			},
-			ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-				ReadCapacityUnits:  aws.Int64(10),
-				WriteCapacityUnits: aws.Int64(10),
-			},
+		tableName := r.Ident.Pluralize().ToLower().String()
+		if tables[tableName] {
+			log.Printf("Table %s already exists, skipping creation...", tableName)
+		} else {
+			createTableForResource(svc, tableName)
 		}
 
-		out, err := svc.CreateTable(input)
-		if err != nil {
-			log.Fatalf("Error creating table %s: %s", r.Ident.Pluralize(), err)
-		}
-
-		log.Printf("Table %s created: %s", r.Ident.Pluralize(), out)
 	}
+}
+
+func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
+	// create the table for the resource
+	input := &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
+		AttributeDefinitions: []*dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("id"),
+				AttributeType: aws.String("B"),
+			},
+		},
+		KeySchema: []*dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("id"),
+				KeyType:       aws.String("HASH"),
+			},
+		},
+		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(10),
+			WriteCapacityUnits: aws.Int64(10),
+		},
+	}
+
+	out, err := svc.CreateTable(input)
+	if err != nil {
+		log.Fatalf("Error creating table %s: %s", tableName, err)
+	}
+
+	log.Printf("Table %s created: %s", tableName, out)
 }
 
 func startLocalAPI() {
