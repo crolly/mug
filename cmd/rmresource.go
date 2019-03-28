@@ -21,36 +21,32 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // rmresourceCmd represents the rmresource command
 var rmresourceCmd = &cobra.Command{
 	Use:   "resource resourceName",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Removes an entire resource",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("rmresource called")
+		resourceName := args[0]
+
+		config := readConfig()
+
+		// delete resource from configuration
+		config.RemoveResource(resourceName)
+
+		// delete resource folder
+		removeFiles(config, resourceName, nil)
+
+		// rerender Makefile, serverless.yml, template.yml
+		renderMakefile()
+		renderSLS()
+		generateSAMTemplate()
 	},
 }
 
 func init() {
 	removeCmd.AddCommand(rmresourceCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// rmresourceCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// rmresourceCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

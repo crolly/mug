@@ -21,10 +21,6 @@
 package cmd
 
 import (
-	"log"
-	"os"
-	"path/filepath"
-
 	"github.com/gobuffalo/flect"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +38,7 @@ var rmfunctionCmd = &cobra.Command{
 		config.RemoveFunction(resourceName, function.String())
 
 		// remove files
-		removeFunctionFiles(config, resourceName, function)
+		removeFiles(config, resourceName, &function)
 		config.Write()
 
 		// update serverless.yml, Makefile, template.yml
@@ -58,13 +54,4 @@ func init() {
 	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
 
 	rmfunctionCmd.MarkFlagRequired("resource")
-}
-
-func removeFunctionFiles(config ResourceConfig, resourceName string, function flect.Ident) {
-	// create the function folder
-	folder := filepath.Join(getWorkingDir(), "functions", resourceName, function.String())
-	err := os.RemoveAll(folder)
-	if err != nil {
-		log.Fatalf("Error deleting function folder %s: %s", function, err)
-	}
 }

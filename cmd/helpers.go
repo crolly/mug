@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/packr/v2"
 )
 
@@ -189,4 +190,17 @@ func generateSAMTemplate() {
 	}
 
 	log.Println("template.yml generated.")
+}
+
+func removeFiles(config ResourceConfig, resourceName string, function *flect.Ident) {
+	// create the function folder
+	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
+	if function != nil {
+		folder = filepath.Join(folder, function.String())
+	}
+
+	err := os.RemoveAll(folder)
+	if err != nil {
+		log.Fatalf("Error deleting function folder %s: %s", function, err)
+	}
 }

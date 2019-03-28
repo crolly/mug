@@ -101,6 +101,11 @@ func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string
 	}
 }
 
+// RemoveResource removes a given resource from the configuration
+func (c *ResourceConfig) RemoveResource(resourceName string) {
+	delete(c.Resources, resourceName)
+}
+
 // Model represents a resource model object
 type Model struct {
 	Name       string      `json:"name"`
