@@ -12,7 +12,9 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [x] add resources with single line command
 - [x] resource definition with nested objects (structs and slices)
 - [x] automatically generate `serverless.yml` with resource definition for AWS Lamdba functions and AWS DynamoDB
-- [ ] easy configuration and deployment
+- [ ] easy configuration
+- [x] easy deployment
+- [x] remove functions from resource
 - [ ] support for custom HASH key
 - [ ] support for RANGE and SORT keys
 - [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
