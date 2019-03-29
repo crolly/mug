@@ -158,7 +158,7 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String("id"),
-				AttributeType: aws.String("B"),
+				AttributeType: aws.String("S"),
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
