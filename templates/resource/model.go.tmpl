@@ -93,7 +93,7 @@ func Read(id string) ({{.Model.Type}}, error) {
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
-				B: []byte(aws.StringValue(aws.String(id))),
+				S: aws.String(id),
 			},
 		},
 	})
@@ -137,7 +137,7 @@ func Delete(id string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
-				B: []byte(aws.StringValue(aws.String(id))),
+				S: aws.String(id),
 			},
 		},
 		TableName: aws.String(tableName),
