@@ -60,12 +60,14 @@ var (
 
 	remoteDebugger bool
 	debugPort      string
+	apiPort        string
 )
 
 func init() {
 	rootCmd.AddCommand(debugCmd)
 	debugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
 	debugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
+	debugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
 }
 
 func makeDebug() {
@@ -182,11 +184,11 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 }
 
 func startLocalAPI() {
-	args := []string{"local", "start-api", "--docker-network", "lambda-local"}
+	args := []string{"local", "start-api", "-p", apiPort, "--docker-network", "lambda-local"}
 	if remoteDebugger {
 		ensureDebugger()
 		args = append(args, "--debugger-path", "./dlv", "-d", debugPort)
-		log.Printf("Starting local API at port 3000 with debugger at %s...\n", debugPort)
+		log.Printf("Starting local API at port %s with debugger at %s...\n", apiPort, debugPort)
 	}
 
 	runCmd("sam", args...)
