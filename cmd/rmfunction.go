@@ -41,10 +41,8 @@ var rmfunctionCmd = &cobra.Command{
 		removeFiles(config, resourceName, &function)
 		config.Write()
 
-		// update serverless.yml, Makefile, template.yml
-		renderMakefile(config)
-		renderSLS(config)
-		generateSAMTemplate(config)
+		// update the yml files and Makefile with current config
+		updateYMLs(config)
 	},
 }
 
@@ -52,6 +50,4 @@ func init() {
 	removeCmd.AddCommand(rmfunctionCmd)
 
 	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
-
-	rmfunctionCmd.MarkFlagRequired("resource")
 }

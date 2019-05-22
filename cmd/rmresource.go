@@ -44,10 +44,7 @@ var rmresourceCmd = &cobra.Command{
 		removeFiles(config, resourceName, nil)
 		config.Write()
 
-		// rerender Makefile, serverless.yml, template.yml
-		renderMakefile(config)
-		renderSLS(config)
-		generateSAMTemplate(config)
+		updateYMLs(config)
 	},
 }
 

@@ -201,3 +201,10 @@ func removeFiles(config ResourceConfig, resourceName string, function *flect.Ide
 		log.Fatalf("Error deleting function folder %s: %s", function, err)
 	}
 }
+
+// updateYMLs updates serverless.yml, Makefile, template.yml
+func updateYMLs(config ResourceConfig) {
+	renderMakefile(config)
+	renderSLS(config)
+	generateSAMTemplate(config)
+}

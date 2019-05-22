@@ -33,6 +33,8 @@ var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploys the stack to AWS using serverless framework",
 	Run: func(cmd *cobra.Command, args []string) {
+		// update the yml files and Makefile with current config
+		updateYMLs(readConfig())
 		// build binaries
 		makeBuild()
 		// deploy to AWS

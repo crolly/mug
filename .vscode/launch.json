@@ -5,7 +5,70 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "create example project",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["create", "example"]
+        },
+        {
+            "name": "add function without resource",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "function", "test", "-m", "GET", "-p", "test"]
+        },
+        {
+            "name": "add function without resource 2",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "function", "testtwo", "-m", "POST", "-p", "test-2"]
+        },
+        {
+            "name": "add simple resource course",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "resource", "course", "-a", "name:string"]
+        },
+        {
+            "name": "add complex resource user",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "resource", "user", "-a", "name:string,email:string,address:{street:string,zip:string,city:string}"]
+        },
+        {
+            "name": "add function to resource user",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "function", "listAddresses", "-m", "GET", "-p", "user/addresses", "-r", "user"]
+        },
+        {
+            "name": "remove function",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["remove", "function", "listAddresses"]
+        }, 
+        {
+            "name": "remove resource course",
             "type": "go",
             "request": "launch",
             "mode": "auto",
