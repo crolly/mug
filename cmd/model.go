@@ -21,6 +21,8 @@ type ResourceConfig struct {
 	Region      string                `json:"region"`
 	Resources   map[string]Resource   `json:"resources"`
 	Functions   map[string][]Function `json:"functions"`
+
+	Environments map[string]string `json:"-"`
 }
 
 // Resource represents a single Resource of the project's config

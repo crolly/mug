@@ -6,9 +6,12 @@ provider:
   region: "{{.Region}}"
   stage: ${opt:stage, 'dev'}
   environment:
-    {{ range $i, $r := .Resources }}
-      {{- $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
-    {{ end }}
+    {{- range $i, $r := .Resources }}
+      {{ $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
+    {{- end }}
+    {{- range $k, $v := .Environments }}
+      {{ $k }}: ${file(./.env):{{ $k }}}
+    {{- end }}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -41,7 +44,7 @@ functions:
 {{ if .Resources -}}
 resources:
   Resources:
-    {{- range $r := .Resources -}}
+    {{ range $r := .Resources -}}
     {{$r.Ident.Pascalize}}DynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -56,5 +59,5 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: '{{$r.Ident.Pluralize}}-${opt:stage, self:provider.stage}'
-    {{- end }}
-{{ end }}
+    {{ end }}
+{{- end }}

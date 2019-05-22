@@ -13,6 +13,7 @@ import (
 
 	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/joho/godotenv"
 )
 
 // getWorkingDir get the directory the current command is run out of
@@ -158,6 +159,9 @@ func renderSLS(config ResourceConfig) {
 		log.Fatal(err)
 	}
 	defer f.Close()
+
+	// load environment variables from .env
+	config.Environments, _ = godotenv.Read(filepath.Join(config.ProjectPath, ".env"))
 
 	// execote template and save to file
 	err = t.Execute(f, config)

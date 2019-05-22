@@ -21,6 +21,7 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
 - [ ] resource generation from JSON
 - [x] support local debug of generated code (with aws-sam-cli)
+- [x] support for [secret environments](#deploying-with-secrets) 
 
 ## Getting Started
 
@@ -28,6 +29,8 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [Installation](#installation)
 - [Create a Project](#create-a-project)
 - [Add a Resource](#add-a-resource)
+- [Debug locally](#debug-functions-locally)
+- [Deploy to AWS](#deploy-to-aws)
 
 ### Requirements
 
@@ -291,3 +294,29 @@ layers:
 ```
 
 **This will deploy your app to AWS and you can now develop against your new serverless API! Yeah!**
+
+#### Deploying with secrets
+
+In case you have environment variables, you want to have added to your `serverless.yml` especially for those, you may not want to share in your git repository, you can easily create a `.env` file in the projects root path (where all the other yaml file are), which will be parsed during creation/ update of the `serverless.yml`.
+The environments will then be loaded to the environments section.
+
+For example, an `.env` file like this:
+```
+APP_NAME = Example
+APP_ENV = stage
+```
+will result in an `serverless.yml` like this:
+```
+service: example
+
+provider:
+  name: aws
+  runtime: go1.x
+  region: "eu-central-1"
+  stage: ${opt:stage, 'dev'}
+  environment:
+      APP_NAME: ${file(./.env):APP_NAME}
+      APP_ENV: ${file(./.env):APP_ENV}
+```
+
+Simply adding your `.env` to your `.gitignore` would be a good practice to pass environment variables to your lambda function without exposing them to the world.
