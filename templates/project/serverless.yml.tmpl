@@ -5,12 +5,13 @@ provider:
   runtime: go1.x
   region: "{{.Region}}"
   stage: ${opt:stage, 'dev'}
-  {{- if .Resources }}
   environment:
-    {{ range $i, $r := .Resources }}
-      {{- $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
-    {{ end }}
-  {{- end }}
+    {{- range $i, $r := .Resources }}
+      {{ $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
+    {{- end }}
+    {{- range $k, $v := .Environments }}
+      {{ $k }}: ${file(./.env):{{ $k }}}
+    {{- end }}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -29,20 +30,21 @@ package:
  include:
    - ./bin/**
 
-{{ if .Resources -}}
+{{ if .Functions -}}
 functions:
-  {{ range $r := .Resources }}{{ range $f := $r.Functions -}}
-  {{$f.Name}}:
-    handler: bin/{{$r.Ident.Camelize}}/{{$f.Handler}}
+  {{ range $r, $func := .Functions }}{{ range $f := $func -}}
+  {{ $f.Name }}:
+    handler: bin{{ if $r }}/{{$r}}{{ end }}/{{$f.Handler}}
     events:
       - http:
           path: {{$f.Path}}
           method: {{$f.Method}}
-  {{ end }}
-  {{- end }}
+  {{ end }}{{- end }}
+{{- end }}
+{{ if .Resources -}}
 resources:
   Resources:
-    {{- range $r := .Resources }}
+    {{ range $r := .Resources -}}
     {{$r.Ident.Pascalize}}DynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -57,5 +59,5 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: '{{$r.Ident.Pluralize}}-${opt:stage, self:provider.stage}'
-    {{- end }}
-{{ end }}
+    {{ end }}
+{{- end }}

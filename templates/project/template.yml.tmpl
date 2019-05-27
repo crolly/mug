@@ -1,17 +1,16 @@
 Transform: 'AWS::Serverless-2016-10-31'
 Resources:
-  {{ range $r := .Resources }}{{ range $f := $r.Functions -}}
-  {{$f.Handler}}{{$r.Ident.Pascalize}}Function:
+  {{- range $r, $func := .Functions }}{{ range $f := $func }}
+  {{$f.Handler}}{{$r}}Function:
     Type: 'AWS::Serverless::Function'
     Properties:
       Runtime: go1.x
       Handler: {{$f.Handler}}
-      CodeUri: ./debug/{{$r.Ident.Camelize}}
+      CodeUri: ./debug/{{$r}}
       Events:
-        {{$f.Handler}}{{$r.Ident.Pascalize}}Api:
+        {{$f.Handler}}{{$r}}Api:
             Type: Api
             Properties:
                 Path: /{{$f.Path}}
                 Method: {{$f.Method}}
-  {{ end }}
-  {{- end }}
+  {{- end }}{{ end }}

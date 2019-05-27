@@ -1,0 +1,14 @@
+
+
+// {{.Function.Pascalize}} Blueprint
+func {{.Function.Pascalize}}() (interface{}, error) {
+    svc, tableName := connectDB()
+
+    values := map[string]interface{}{
+        "msg": "{{.Function.Pascalize}} invoked",
+        "svc": svc,
+        "tableName": tableName,
+    }
+
+	return values, nil
+}

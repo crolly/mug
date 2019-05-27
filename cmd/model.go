@@ -15,17 +15,19 @@ import (
 
 // ResourceConfig represents mu's configuration for resources
 type ResourceConfig struct {
-	ProjectName string              `json:"projectName"`
-	ProjectPath string              `json:"projectPath"`
-	ImportPath  string              `json:"importPath"`
-	Region      string              `json:"region"`
-	Resources   map[string]Resource `json:"resources"`
+	ProjectName string                `json:"projectName"`
+	ProjectPath string                `json:"projectPath"`
+	ImportPath  string                `json:"importPath"`
+	Region      string                `json:"region"`
+	Resources   map[string]Resource   `json:"resources"`
+	Functions   map[string][]Function `json:"functions"`
+
+	Environments map[string]string `json:"-"`
 }
 
 // Resource represents a single Resource of the project's config
 type Resource struct {
-	Ident     flect.Ident `json:"ident"`
-	Functions []Function  `json:"functions"`
+	Ident flect.Ident `json:"ident"`
 }
 
 // Function represents a Function
@@ -72,29 +74,40 @@ func (c *ResourceConfig) Write() {
 }
 
 // AddFunction adds a given function to the given resource name of the configuration
-func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) {
-	r := c.Resources[resourceName]
+func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) string {
+	if resourceName == "" {
+		resourceName = "_"
+	}
+
+	ident := flect.New(resourceName)
+	fName := getFuncName(ident, functionName)
 
 	f := Function{
-		Name:    functionName + "_" + r.Ident.Singularize().String(),
+		Name:    fName,
 		Handler: functionName,
 		Path:    path,
 		Method:  method,
 	}
-	r.Functions = append(r.Functions, f)
 
-	c.Resources[resourceName] = r
+	rCamel := ident.Camelize().String()
+	c.Functions[rCamel] = append(c.Functions[rCamel], f)
+
+	return rCamel
 }
 
 // RemoveFunction removes a given function from the given resource name of the configuration
 func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string) {
-	r := c.Resources[resourceName]
+	if resourceName == "" {
+		resourceName = "_"
+	}
 
-	name := functionName + "_" + resourceName
-	for i, f := range r.Functions {
+	ident := flect.New(resourceName)
+	rCamel := ident.Camelize().String()
+	name := getFuncName(ident, functionName)
+
+	for i, f := range c.Functions[rCamel] {
 		if name == f.Name {
-			r.Functions = append(r.Functions[:i], r.Functions[i+1:]...)
-			c.Resources[resourceName] = r
+			c.Functions[rCamel] = append(c.Functions[rCamel][:i], c.Functions[rCamel][i+1:]...)
 
 			return
 		}
@@ -104,6 +117,17 @@ func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string
 // RemoveResource removes a given resource from the configuration
 func (c *ResourceConfig) RemoveResource(resourceName string) {
 	delete(c.Resources, resourceName)
+	delete(c.Functions, resourceName)
+}
+
+// getFuncName returns the generated function name for a given resource ident and a functionName
+func getFuncName(ident flect.Ident, functionName string) string {
+	if ident.String() == "_" {
+		return functionName
+	}
+
+	return functionName + "_" + ident.Singularize().String()
+
 }
 
 // Model represents a resource model object

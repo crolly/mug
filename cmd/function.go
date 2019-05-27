@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/gobuffalo/flect"
 
@@ -43,16 +44,13 @@ var (
 
 			// get config and add function to it
 			config := readConfig()
-			config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
+			resourceName = config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
 
 			// generate files
 			renderFunction(config, resourceName, function)
 			config.Write()
 
-			// update serverless.yml, Makefile, template.yml
-			renderMakefile(config)
-			renderSLS(config)
-			generateSAMTemplate(config)
+			updateYMLs(config)
 		},
 	}
 
@@ -68,7 +66,7 @@ func init() {
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
 	functionCmd.Flags().StringVarP(&method, "method", "m", "", "Method the function will respond to e.g. get")
 
-	functionCmd.MarkFlagRequired("resource")
+	// functionCmd.MarkFlagRequired("resource")
 	functionCmd.MarkFlagRequired("path")
 	functionCmd.MarkFlagRequired("method")
 }
@@ -76,18 +74,26 @@ func init() {
 func renderFunction(config ResourceConfig, resourceName string, function flect.Ident) {
 
 	// create the function folder
-	folder := filepath.Join(config.ProjectPath, "functions", resourceName, function.String())
-	os.MkdirAll(folder, 0755)
+	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
+	funcFolder := filepath.Join(folder, function.String())
+	os.MkdirAll(funcFolder, 0755)
 
 	// create main.go file
-	f, err := os.Create(filepath.Join(folder, "main.go"))
+	f, err := os.Create(filepath.Join(funcFolder, "main.go"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
 	// get blueprint template
-	t := loadTemplateFromBox(functionBox, "blueprint.tmpl")
+	var t *template.Template
+	resourceFunc := false
+	if resourceName != "" {
+		t = loadTemplateFromBox(functionBox, "resourceBlueprint.tmpl")
+		resourceFunc = true
+	} else {
+		t = loadTemplateFromBox(functionBox, "blueprint.tmpl")
+	}
 
 	// execute template and save to file
 	data := map[string]interface{}{
@@ -98,5 +104,23 @@ func renderFunction(config ResourceConfig, resourceName string, function flect.I
 	err = t.Execute(f, data)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if resourceFunc {
+		// also add function to resource file
+		f, err := os.OpenFile(filepath.Join(folder, resourceName+".go"), os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		data := map[string]interface{}{
+			"Function": function,
+		}
+		t := loadTemplateFromBox(functionBox, "resourceFunction.tmpl")
+		err = t.Execute(f, data)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

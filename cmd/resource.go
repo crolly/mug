@@ -50,10 +50,9 @@ var (
 			config := addResourceConfig(m)
 			// render templates with data
 			renderTemplates(config, m)
-			// update Makefile
-			renderMakefile(config)
-			// update serverless.yml
-			renderSLS(config)
+
+			// update the yml files and Makefile with current config
+			updateYMLs(config)
 
 			// write definition to resource folder
 			writeResourceDefinition(m, modelName)
@@ -79,17 +78,17 @@ func addResourceConfig(m Model) ResourceConfig {
 	plural := m.Ident.Pluralize().String()
 
 	resource := Resource{
-		// Name:  m.Name,
 		Ident: flect.New(m.Name),
-		Functions: []Function{
-			Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
-			Function{Name: "read" + "_" + singular, Handler: "read", Path: fmt.Sprintf("%s/{id}", plural), Method: "get"},
-			Function{Name: "update" + "_" + singular, Handler: "update", Path: fmt.Sprintf("%s/{id}", plural), Method: "put"},
-			Function{Name: "delete" + "_" + singular, Handler: "delete", Path: fmt.Sprintf("%s/{id}", plural), Method: "delete"},
-			Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
-		},
 	}
 	config.Resources[m.Name] = resource
+
+	config.Functions[m.Name] = []Function{
+		Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
+		Function{Name: "read" + "_" + singular, Handler: "read", Path: fmt.Sprintf("%s/{id}", plural), Method: "get"},
+		Function{Name: "update" + "_" + singular, Handler: "update", Path: fmt.Sprintf("%s/{id}", plural), Method: "put"},
+		Function{Name: "delete" + "_" + singular, Handler: "delete", Path: fmt.Sprintf("%s/{id}", plural), Method: "delete"},
+		Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
+	}
 
 	config.Write()
 
@@ -100,7 +99,7 @@ func renderTemplates(config ResourceConfig, m Model) {
 	// iterate over templates and execute
 	for _, tmpl := range resourceBox.List() {
 		// create the function folder for function templete (except model)
-		folder := filepath.Join(getWorkingDir(), "functions", m.Ident.Camelize().String())
+		folder := filepath.Join(config.ProjectPath, "functions", m.Ident.Camelize().String())
 		if tmpl != "model.go.tmpl" {
 			folder = filepath.Join(folder, strings.Replace(tmpl, ".tmpl", "", 1))
 		}

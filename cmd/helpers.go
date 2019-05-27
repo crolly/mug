@@ -13,6 +13,7 @@ import (
 
 	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/joho/godotenv"
 )
 
 // getWorkingDir get the directory the current command is run out of
@@ -159,6 +160,9 @@ func renderSLS(config ResourceConfig) {
 	}
 	defer f.Close()
 
+	// load environment variables from .env
+	config.Environments, _ = godotenv.Read(filepath.Join(config.ProjectPath, ".env"))
+
 	// execote template and save to file
 	err = t.Execute(f, config)
 	if err != nil {
@@ -200,4 +204,11 @@ func removeFiles(config ResourceConfig, resourceName string, function *flect.Ide
 	if err != nil {
 		log.Fatalf("Error deleting function folder %s: %s", function, err)
 	}
+}
+
+// updateYMLs updates serverless.yml, Makefile, template.yml
+func updateYMLs(config ResourceConfig) {
+	renderMakefile(config)
+	renderSLS(config)
+	generateSAMTemplate(config)
 }

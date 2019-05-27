@@ -18,14 +18,13 @@ import (
 
 {{.Model.String}}
 
-// Put extracts the {{.Model.Type}} from JSON and writes it to DynamoDB
-func Put(body string) ({{.Model.Type}}, error) {
+func connectDB() (*dynamodb.DynamoDB, string) {
 	var sess *session.Session
 	var tableName string
 
 	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
 	if err != nil {
-		return {{.Model.Type}}{}, err
+		local = false
 	}
 	// Create dynamo client object locally if running SAM CLI
 	if local {
@@ -35,9 +34,15 @@ func Put(body string) ({{.Model.Type}}, error) {
 		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
 	} else {
 		sess = session.Must(session.NewSession())
-		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")	
 	}
-	svc := dynamodb.New(sess)
+
+	return dynamodb.New(sess), tableName
+}
+
+// Put extracts the {{.Model.Type}} from JSON and writes it to DynamoDB
+func Put(body string) ({{.Model.Type}}, error) {
+	svc, tableName := connectDB()
 
 	// Marshall the requrest body
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
@@ -68,24 +73,7 @@ func Put(body string) ({{.Model.Type}}, error) {
 
 // Read gets the {{.Model.Type}} from DynamoDB
 func Read(id string) ({{.Model.Type}}, error) {
-    var sess *session.Session
-	var tableName string
-	
-	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
-	if err != nil {
-		return {{.Model.Type}}{}, err
-	}
-	// Create dynamo client object locally if running SAM CLI
-	if local {
-		sess = session.Must(session.NewSession(&aws.Config{
-			Endpoint: aws.String("http://dynamodb:8000"),
-		}))
-		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
-	} else {
-		sess = session.Must(session.NewSession())
-		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
-	}
-	svc := dynamodb.New(sess)
+    svc, tableName := connectDB()
 	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 
 	// Perform the query
@@ -115,24 +103,7 @@ func Read(id string) ({{.Model.Type}}, error) {
 
 // Delete erases the {{.Model.Type}} from DynamoDB
 func Delete(id string) error {
-    var sess *session.Session
-	var tableName string
-
-	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
-	if err != nil {
-		return err
-	}
-	// Create dynamo client object locally if running SAM CLI
-	if local {
-		sess = session.Must(session.NewSession(&aws.Config{
-			Endpoint: aws.String("http://dynamodb:8000"),
-		}))
-		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
-	} else {
-		sess = session.Must(session.NewSession())
-		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
-	}
-	svc := dynamodb.New(sess)
+    svc, tableName := connectDB()
 
 	// Perform the delete
 	input := &dynamodb.DeleteItemInput{
@@ -144,7 +115,7 @@ func Delete(id string) error {
 		TableName: aws.String(tableName),
 	}
 
-	_, err = svc.DeleteItem(input)
+	_, err := svc.DeleteItem(input)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -154,24 +125,7 @@ func Delete(id string) error {
 
 // List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB
 func List() ([]{{.Model.Type}}, error){
-    var sess *session.Session
-	var tableName string
-	
-	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
-	if err != nil {
-		return []{{.Model.Type}}{}, err
-	}
-	// Create dynamo client object locally if running SAM CLI
-	if local {
-		sess = session.Must(session.NewSession(&aws.Config{
-			Endpoint: aws.String("http://dynamodb:8000"),
-		}))
-		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
-	} else {
-		sess = session.Must(session.NewSession())
-		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
-	}
-	svc := dynamodb.New(sess)
+    svc, tableName := connectDB()
 
     params := &dynamodb.ScanInput{
         TableName: aws.String(tableName),

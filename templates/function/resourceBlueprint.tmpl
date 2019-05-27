@@ -6,14 +6,21 @@ import (
 	
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	
+	"{{.Config.ImportPath}}/functions/{{.ResourceName}}"
 )
 
 // {{.Function.Pascalize}} function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
-	jsonItem, err := json.MarshalIndent(map[string]string{"msg": "{{.Function.Pascalize}} invoked successfully"}, "", "  ")
+	values, err := {{.ResourceName}}.{{.Function.Pascalize}}()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to perform {{.Function.Pascalize}}(), %v", err))
+	}
+
+	jsonItem, err := json.MarshalIndent(values, "", "  ")
     if err != nil {
-        fmt.Println("Error occured")
+        fmt.Println(err.Error())
         return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil 
     }
 	stringItem := string(jsonItem)

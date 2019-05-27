@@ -43,10 +43,10 @@ var (
 		Long: `This command generates a template.yml for aws-sam-cli and starts
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
+			// update the yml files and Makefile with current config
+			updateYMLs(readConfig())
 			// make debug binaries overwriting previous
 			makeDebug()
-			// generate new template.yml overwriting previous
-			generateSAMTemplate(readConfig())
 			// create lambda-local network if it doesn't exist already
 			createLambdaNetwork()
 			// start dynamodb-local
