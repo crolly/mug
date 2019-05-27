@@ -125,6 +125,28 @@ type Attribute struct {
 	Hash    bool        `json:"hash"`
 }
 
+//reads model definition for a resource
+func readModelForResource(resource string) Model {
+	wd := getWorkingDir()
+
+	configFile, err := os.Open(filepath.Join(wd, "functions", resource, resource+".json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer configFile.Close()
+
+	data, err := ioutil.ReadAll(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var model Model
+
+	json.Unmarshal(data, &model)
+
+	return model
+}
+
 // returns a new model object
 func newModel(name string, slice bool, attributes string, withID bool, withDates bool) Model {
 	ident := flect.New(name)

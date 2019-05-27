@@ -147,28 +147,37 @@ func createResourceTables() {
 		if tables[tableName] {
 			log.Printf("Table %s already exists, skipping creation...", tableName)
 		} else {
-			createTableForResource(svc, tableName)
+			createTableForResource(svc, tableName, r.Ident.Original)
 		}
 
 	}
 }
 
-func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
+func createTableForResource(svc *dynamodb.DynamoDB, tableName string, resourceIdent string) {
+	model := readModelForResource(resourceIdent)
 	// create the table for the resource
+	var attributes []*dynamodb.AttributeDefinition
+	var keySchema []*dynamodb.KeySchemaElement
+
+	for _, attribute := range model.Attributes {
+		dattr := &dynamodb.AttributeDefinition{
+			AttributeName: aws.String(attribute.Name),
+			AttributeType: aws.String(attribute.AwsType),
+		}
+		attributes = append(attributes, dattr)
+		keyType := "HASH"
+		if !attribute.Hash{
+			keyType = "RANGE"
+		}
+		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
+			AttributeName: aws.String(attribute.Name),
+			KeyType: aws.String(keyType),
+		})
+	}
 	input := &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
-		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			{
-				AttributeName: aws.String("id"),
-				AttributeType: aws.String("S"),
-			},
-		},
-		KeySchema: []*dynamodb.KeySchemaElement{
-			{
-				AttributeName: aws.String("id"),
-				KeyType:       aws.String("HASH"),
-			},
-		},
+		AttributeDefinitions: attributes,
+		KeySchema: keySchema,
 		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
 			ReadCapacityUnits:  aws.Int64(10),
 			WriteCapacityUnits: aws.Int64(10),
@@ -187,7 +196,7 @@ func startLocalAPI() {
 	args := []string{"local", "start-api", "-p", apiPort, "--docker-network", "lambda-local"}
 	if remoteDebugger {
 		ensureDebugger()
-		args = append(args, "--debugger-path", "./dlv", "-d", debugPort)
+		args = append(args, "--debugger-path", "./dlv", "-d", debugPort, "--debug-args", "-delveAPI=2")
 		log.Printf("Starting local API at port %s with debugger at %s...\n", apiPort, debugPort)
 	}
 
@@ -198,5 +207,5 @@ func ensureDebugger() {
 	// build delve
 	log.Println("Building dlv locally")
 	env := []string{"GOARCH=amd64", "GOOS=linux"}
-	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/derekparker/delve/cmd/dlv")
+	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
 }
