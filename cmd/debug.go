@@ -162,20 +162,20 @@ func createResourceTables() {
 
 func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 	// get model for tableName
-	model := readModelForResource(tableName)
+	resource := readModelForResource(tableName)
 
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
-	for _, a := range model.Attributes {
+	for _, a := range resource.Attributes {
 		attributes = append(attributes, &dynamodb.AttributeDefinition{
-			AttributeName: aws.String(a.Name),
+			AttributeName: aws.String(a.Ident.String()),
 			AttributeType: aws.String(a.AwsType),
 		})
 	}
 
 	// get keySchema
 	keySchema := []*dynamodb.KeySchemaElement{}
-	for t, k := range model.KeySchema {
+	for t, k := range resource.KeySchema {
 		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
 			AttributeName: aws.String(k),
 			KeyType:       aws.String(t),
@@ -187,10 +187,10 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 		ReadCapacityUnits:  aws.Int64(10),
 		WriteCapacityUnits: aws.Int64(10),
 	}
-	if len(model.CapacityUnits) > 0 {
+	if len(resource.CapacityUnits) > 0 {
 		throughput = &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(int64(model.CapacityUnits["read"])),
-			WriteCapacityUnits: aws.Int64(int64(model.CapacityUnits["write"])),
+			ReadCapacityUnits:  aws.Int64(int64(resource.CapacityUnits["read"])),
+			WriteCapacityUnits: aws.Int64(int64(resource.CapacityUnits["write"])),
 		}
 	}
 	// create the table input for the resource
@@ -228,10 +228,10 @@ func ensureDebugger() {
 }
 
 //reads model definition for a resource
-func readModelForResource(resource string) Model {
+func readModelForResource(resource string) Resource {
 	wd := getWorkingDir()
 
-	configFile, err := os.Open(filepath.Join(wd, "functions", resource, resource+".json"))
+	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -242,9 +242,8 @@ func readModelForResource(resource string) Model {
 		log.Fatal(err)
 	}
 
-	var model Model
+	var config ResourceConfig
+	json.Unmarshal(data, &config)
 
-	json.Unmarshal(data, &model)
-
-	return model
+	return config.Resources[resource]
 }
