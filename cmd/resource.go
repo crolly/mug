@@ -41,7 +41,19 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			// instantiate new resource model and parse given attributes
 			modelName := args[0]
-			m := newModel(modelName, false, attributes, !noID, addDates)
+			capacityUnits := map[string]byte{
+				"read":  readUnits,
+				"write": writeUnits,
+			}
+			options := map[string]interface{}{
+				"id":         !noID,
+				"dates":      dates,
+				"softDelete": softDelete,
+				"keySchema":  keySchema,
+				"billing":    billingMode,
+				"capacity":   capacityUnits,
+			}
+			m := newModel(modelName, false, attributes, options)
 
 			// get all imports
 			m.Imports = m.getImports()
@@ -55,20 +67,26 @@ var (
 			updateYMLs(config)
 
 			// write definition to resource folder
-			writeResourceDefinition(m, modelName)
+			writeResourceDefinition(m, config)
 		},
 	}
 
-	attributes string
-	noID       bool
-	addDates   bool
+	attributes, keySchema, billingMode string
+	noID, dates, softDelete            bool
+	readUnits, writeUnits              byte
 )
 
 func init() {
 	addCmd.AddCommand(resourceCmd)
 	resourceCmd.Flags().StringVarP(&attributes, "attributes", "a", "", "attributes of the resource")
-	resourceCmd.Flags().BoolVarP(&noID, "noID", "n", false, "automatically generate id attribute as hash key for resource")
-	resourceCmd.Flags().BoolVarP(&addDates, "addDates", "d", false, "automatically add createdAt and updatedAt attributes")
+	resourceCmd.Flags().BoolVarP(&noID, "noID", "n", false, "disable automatic generation of id attribute with type uuid")
+	resourceCmd.Flags().BoolVarP(&dates, "addDates", "d", false, "automatically add createdAt and updatedAt attributes")
+	resourceCmd.Flags().BoolVarP(&softDelete, "softDelete", "s", false, "automatically add deletedAt attribute")
+	resourceCmd.Flags().StringVarP(&keySchema, "keySchema", "k", "id:HASH", "Key Schema definition for the DynamoDB Table Resource (only applied if noID flag is set to true")
+	resourceCmd.Flags().StringVarP(&billingMode, "billingMode", "b", "provisioned", "Choose between 'provisioned' for ProvisionedThroughput (default) or 'ondemand'")
+	resourceCmd.Flags().Uint8VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
+	resourceCmd.Flags().Uint8VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
+
 }
 
 func addResourceConfig(m Model) ResourceConfig {
@@ -77,16 +95,36 @@ func addResourceConfig(m Model) ResourceConfig {
 	singular := m.Ident.Singularize().String()
 	plural := m.Ident.Pluralize().String()
 
+	attributeDefinitions := []AttributeDefinition{}
+	for _, a := range m.Attributes {
+		attributeDefinitions = append(attributeDefinitions, AttributeDefinition{
+			Ident:   a.Ident,
+			AwsType: a.AwsType,
+		})
+	}
+
 	resource := Resource{
-		Ident: flect.New(m.Name),
+		Ident:         flect.New(m.Name),
+		Attributes:    attributeDefinitions,
+		KeySchema:     m.KeySchema,
+		CompositeKey:  m.CompositeKey,
+		BillingMode:   m.BillingMode,
+		CapacityUnits: m.CapacityUnits,
 	}
 	config.Resources[m.Name] = resource
 
+	var path string
+	if m.CompositeKey {
+		path = fmt.Sprintf("%s/{%s}/{%s}", plural, m.KeySchema["HASH"], m.KeySchema["RANGE"])
+	} else {
+		path = fmt.Sprintf("%s/{%s}", plural, m.KeySchema["HASH"])
+	}
+
 	config.Functions[m.Name] = []Function{
 		Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
-		Function{Name: "read" + "_" + singular, Handler: "read", Path: fmt.Sprintf("%s/{id}", plural), Method: "get"},
-		Function{Name: "update" + "_" + singular, Handler: "update", Path: fmt.Sprintf("%s/{id}", plural), Method: "put"},
-		Function{Name: "delete" + "_" + singular, Handler: "delete", Path: fmt.Sprintf("%s/{id}", plural), Method: "delete"},
+		Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
+		Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
+		Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
 		Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
 	}
 

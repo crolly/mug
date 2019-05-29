@@ -48,12 +48,14 @@ func Put(body string) ({{.Model.Type}}, error) {
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
 	json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
 
+	{{ if .Model.GeneratedID -}}
 	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one
 	givenID, err := uuid.FromString({{.Model.Ident.Camelize}}.ID)
 	if err != nil || givenID == uuid.Nil {
         id, _ := uuid.NewV4()
         {{.Model.Ident.Camelize}}.ID = id.String()
     }
+	{{- end }}
 
 	// Marshall the Item into a Map DynamoDB can deal with
 	av, err := dynamodbattribute.MarshalMap({{.Model.Ident.Camelize}})
@@ -72,7 +74,11 @@ func Put(body string) ({{.Model.Type}}, error) {
 }
 
 // Read gets the {{.Model.Type}} from DynamoDB
+{{ if .Model.CompositeKey -}}
+func Read(hashKey, rangeKey string) ({{.Model.Type}}, error) {
+{{ else -}}
 func Read(id string) ({{.Model.Type}}, error) {
+{{ end -}}
     svc, tableName := connectDB()
 	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 
@@ -81,9 +87,14 @@ func Read(id string) ({{.Model.Type}}, error) {
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				S: aws.String(id),
+			"{{ index .Model.KeySchema "HASH" }}": {
+				S: aws.String({{if .Model.CompositeKey}}hashKey{{else}}id{{end}}),
 			},
+			{{ if .Model.CompositeKey -}}
+			"{{ index .Model.KeySchema "RANGE" }}": {
+				S: aws.String(rangeKey),
+			},
+			{{ end -}}
 		},
 	})
 	if err != nil {
@@ -102,15 +113,24 @@ func Read(id string) ({{.Model.Type}}, error) {
 }
 
 // Delete erases the {{.Model.Type}} from DynamoDB
+{{ if .Model.CompositeKey -}}
+func Delete(hashKey, rangeKey string) error {
+{{ else -}}
 func Delete(id string) error {
+{{ end -}}
     svc, tableName := connectDB()
 
 	// Perform the delete
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				S: aws.String(id),
+			"{{ index .Model.KeySchema "HASH" }}": {
+				S: aws.String({{if .Model.CompositeKey}}hashKey{{else}}id{{end}}),
 			},
+			{{ if .Model.CompositeKey -}}
+			"{{ index .Model.KeySchema "RANGE" }}": {
+				S: aws.String(rangeKey),
+			},
+			{{ end -}}
 		},
 		TableName: aws.String(tableName),
 	}

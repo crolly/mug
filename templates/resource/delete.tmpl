@@ -12,14 +12,21 @@ import (
 // DeleteHandler handles the DELETE request and delete the {{.Model.Ident.Camelize}} by given id
 func DeleteHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Pass the call to the model with params found in the path
-	id := request.PathParameters["id"]
-	fmt.Println("Path vars: ", id)
-	err := {{.Model.Ident.Singularize.ToLower}}.Delete(id)
+	{{ if .Model.CompositeKey -}}
+	hashKey := request.PathParameters["hash"]
+	rangeKey := request.PathParameters["range"]
+	fmt.Printf("Path vars: %s, %s", hashKey, rangeKey)
+	err := {{.Model.Ident.Singularize.ToLower}}.Delete(hashKey, rangeKey)
+	{{ else -}}
+	{{index .Model.KeySchema "HASH"}} := request.PathParameters["{{index .Model.KeySchema "HASH"}}"]
+	fmt.Println("Path vars: ", {{index .Model.KeySchema "HASH"}})
+	err := {{.Model.Ident.Singularize.ToLower}}.Delete({{index .Model.KeySchema "HASH"}})
+	{{ end -}}
 	if err != nil {
 		panic(fmt.Sprintf("Failed to find {{.Model.Ident.Camelize}}, %v", err))
 	}
 
-	msg := fmt.Sprintf("Deleted {{.Model.Ident.Camelize}} with id: %s \n", id)
+	msg := "Deleted {{.Model.Ident.Camelize}} \n"
 	return events.APIGatewayProxyResponse{Body: msg, StatusCode: 200}, nil
 }
 

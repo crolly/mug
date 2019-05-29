@@ -1,156 +1,38 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gobuffalo/flect"
 )
 
-// ResourceConfig represents mu's configuration for resources
-type ResourceConfig struct {
-	ProjectName string                `json:"projectName"`
-	ProjectPath string                `json:"projectPath"`
-	ImportPath  string                `json:"importPath"`
-	Region      string                `json:"region"`
-	Resources   map[string]Resource   `json:"resources"`
-	Functions   map[string][]Function `json:"functions"`
-
-	Environments map[string]string `json:"-"`
-}
-
-// Resource represents a single Resource of the project's config
-type Resource struct {
-	Ident flect.Ident `json:"ident"`
-}
-
-// Function represents a Function
-type Function struct {
-	Name    string `json:"name"`
-	Handler string `json:"handler"`
-	Path    string `json:"path"`
-	Method  string `json:"method"`
-}
-
-func readConfig() ResourceConfig {
-	wd := getWorkingDir()
-
-	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer configFile.Close()
-
-	data, err := ioutil.ReadAll(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var config ResourceConfig
-
-	json.Unmarshal(data, &config)
-
-	// make sure map exists
-	if len(config.Resources) == 0 {
-		config.Resources = make(map[string]Resource)
-	}
-
-	return config
-}
-
-// Write method to write the config back to disk
-func (c *ResourceConfig) Write() {
-	fileName := filepath.Join(c.ProjectPath, "mug.config.json")
-
-	configJSON, _ := json.MarshalIndent(c, "", "  ")
-	_ = ioutil.WriteFile(fileName, configJSON, 0644)
-}
-
-// AddFunction adds a given function to the given resource name of the configuration
-func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) string {
-	if resourceName == "" {
-		resourceName = "_"
-	}
-
-	ident := flect.New(resourceName)
-	fName := getFuncName(ident, functionName)
-
-	f := Function{
-		Name:    fName,
-		Handler: functionName,
-		Path:    path,
-		Method:  method,
-	}
-
-	rCamel := ident.Camelize().String()
-	c.Functions[rCamel] = append(c.Functions[rCamel], f)
-
-	return rCamel
-}
-
-// RemoveFunction removes a given function from the given resource name of the configuration
-func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string) {
-	if resourceName == "" {
-		resourceName = "_"
-	}
-
-	ident := flect.New(resourceName)
-	rCamel := ident.Camelize().String()
-	name := getFuncName(ident, functionName)
-
-	for i, f := range c.Functions[rCamel] {
-		if name == f.Name {
-			c.Functions[rCamel] = append(c.Functions[rCamel][:i], c.Functions[rCamel][i+1:]...)
-
-			return
-		}
-	}
-}
-
-// RemoveResource removes a given resource from the configuration
-func (c *ResourceConfig) RemoveResource(resourceName string) {
-	delete(c.Resources, resourceName)
-	delete(c.Functions, resourceName)
-}
-
-// getFuncName returns the generated function name for a given resource ident and a functionName
-func getFuncName(ident flect.Ident, functionName string) string {
-	if ident.String() == "_" {
-		return functionName
-	}
-
-	return functionName + "_" + ident.Singularize().String()
-
-}
-
 // Model represents a resource model object
 type Model struct {
-	Name       string      `json:"name"`
-	Type       string      `json:"type"`
-	Ident      flect.Ident `json:"ident"`
-	Attributes []Attribute `json:"attributes"`
-	Nested     []Model     `json:"nested"`
-	Imports    []string    `json:"imports"`
+	Name          string               `json:"name"`
+	Type          string               `json:"type"`
+	Ident         flect.Ident          `json:"ident"`
+	Attributes    map[string]Attribute `json:"attributes"`
+	Nested        []Model              `json:"nested"`
+	Imports       []string             `json:"imports"`
+	KeySchema     map[string]string    `json:"key_schema"`
+	GeneratedID   bool                 `json:"generated_id"`
+	CompositeKey  bool                 `json:"composite_key"`
+	BillingMode   string               `json:"billing_mode"`
+	CapacityUnits map[string]byte      `json:"capacity_units"`
 }
 
 // Attribute represents a resource model's attribute
 type Attribute struct {
 	Name    string      `json:"name"`
 	Ident   flect.Ident `json:"ident"`
-	GoType  string      `json:"goType"`
-	AwsType string      `json:"awsType"`
-	Hash    bool        `json:"hash"`
+	GoType  string      `json:"go_type"`
+	AwsType string      `json:"aws_type"`
 }
 
 // returns a new model object
-func newModel(name string, slice bool, attributes string, withID bool, withDates bool) Model {
+func newModel(name string, slice bool, attributes string, options map[string]interface{}) Model {
 	ident := flect.New(name)
 	m := Model{
 		Name:  ident.Camelize().String(),
@@ -163,15 +45,52 @@ func newModel(name string, slice bool, attributes string, withID bool, withDates
 		m.Type = m.Ident.Pascalize().String()
 	}
 
-	if withID {
+	var id, withDates, softDelete bool
+	var keySchema, billing string
+	var capacity map[string]byte
+	if options != nil {
+		id = options["id"].(bool)
+		withDates = options["dates"].(bool)
+		softDelete = options["softDelete"].(bool)
+		keySchema = options["keySchema"].(string)
+		billing = options["billing"].(string)
+		capacity = options["capacity"].(map[string]byte)
+	} else {
+		id, withDates, softDelete = false, false, false
+		billing = "provisioned"
+		capacity = map[string]byte{
+			"read":  1,
+			"write": 1,
+		}
+	}
+
+	if id {
+		m.GeneratedID = true
+		a := Attribute{Name: "id", Ident: flect.New("id"), AwsType: "S", GoType: "string"}
 		m.Imports = appendStringIfMissing(m.Imports, "github.com/gofrs/uuid")
-		m.addAttribute(Attribute{Name: "id", Ident: flect.New("id"), AwsType: "S", GoType: "string", Hash: true})
+		m.addAttribute(a)
+		m.KeySchema = map[string]string{
+			"HASH": "id",
+		}
+	} else if len(keySchema) > 0 {
+		m.parseKeySchema(keySchema)
 	}
 
 	if withDates {
 		m.Imports = appendStringIfMissing(m.Imports, "time")
-		m.addAttribute(Attribute{Name: "createdAt", Ident: flect.New("createdAt"), AwsType: "S", GoType: "time.Time", Hash: false})
-		m.addAttribute(Attribute{Name: "updatedAt", Ident: flect.New("updatedAt"), AwsType: "S", GoType: "time.Time", Hash: false})
+		m.addAttribute(Attribute{Name: "createdAt", Ident: flect.New("createdAt"), AwsType: "S", GoType: "time.Time"})
+		m.addAttribute(Attribute{Name: "updatedAt", Ident: flect.New("updatedAt"), AwsType: "S", GoType: "time.Time"})
+	}
+
+	if softDelete {
+		m.Imports = appendStringIfMissing(m.Imports, "time")
+		m.addAttribute(Attribute{Name: "deletedAt", Ident: flect.New("deletedAt"), AwsType: "S", GoType: "*time.Time"})
+	}
+
+	m.BillingMode = strings.ToLower(billing)
+
+	if m.BillingMode == "provisioned" {
+		m.CapacityUnits = capacity
 	}
 
 	// parse nested models
@@ -248,7 +167,7 @@ func (m *Model) addNested(b []int, pos int, attributes string, slice bool) int {
 	// new model name ensured to not have a comma or spaces
 	nmn := strings.ReplaceAll(strings.TrimSpace(attributes[cI:bI-1]), ",", "")
 	attr := attributes[bI+1 : pos]
-	n := newModel(nmn, slice, attr, false, false)
+	n := newModel(nmn, slice, attr, nil)
 
 	m.Nested = append(m.Nested, n)
 
@@ -265,18 +184,18 @@ func (m *Model) parseAttributes(attrs string) {
 		// handle optional inputs
 		var (
 			goType = "string"
-			hash   = false
-			err    error
+			// hash   = false
+			// err    error
 		)
 
 		if len(inputs) > 1 {
 			goType = inputs[1]
-			if len(inputs) > 2 {
-				hash, err = strconv.ParseBool(inputs[2])
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			// if len(inputs) > 2 {
+			// 	hash, err = strconv.ParseBool(inputs[2])
+			// 	if err != nil {
+			// 		log.Fatal(err)
+			// 	}
+			// }
 		}
 
 		attr := Attribute{
@@ -284,7 +203,6 @@ func (m *Model) parseAttributes(attrs string) {
 			Ident:   flect.New(name),
 			GoType:  goType,
 			AwsType: awsType(goType),
-			Hash:    hash,
 		}
 
 		m.addImport(goType)
@@ -329,8 +247,64 @@ func (m *Model) getImports() []string {
 func (m *Model) addAttribute(a Attribute) {
 	// make sure all attributes have names
 	if a.Name != "" {
-		m.Attributes = append(m.Attributes, a)
+		if m.Attributes == nil {
+			m.Attributes = map[string]Attribute{
+				a.Name: a,
+			}
+		}
+		m.Attributes[a.Name] = a
 	}
+
+}
+
+// parseKeySchema parses a given keySchema and add it to the model
+func (m *Model) parseKeySchema(schema string) {
+	for _, k := range strings.Split(schema, ",") {
+		key := strings.Split(k, ":")
+		if m.KeySchema == nil {
+			m.KeySchema = map[string]string{
+				strings.ToUpper(key[1]): key[0],
+			}
+		} else {
+			m.KeySchema[strings.ToUpper(key[1])] = key[0]
+		}
+	}
+
+	if c, err := m.checkKeys(); !c {
+		log.Fatal(err)
+	}
+
+}
+
+// checkKeys checks the Key Schema of the model against its attributes
+func (m *Model) checkKeys() (bool, error) {
+	check := map[string]byte{
+		"hash":  0,
+		"range": 0,
+	}
+
+	hashKey := m.KeySchema["HASH"]
+	rangeKey := m.KeySchema["RANGE"]
+
+	for _, a := range m.Attributes {
+		if a.Name == hashKey {
+			check["hash"]++
+		}
+		if a.Name == rangeKey {
+			check["range"]++
+		}
+	}
+
+	if check["hash"] == 0 {
+		return false, fmt.Errorf("No Hash Key defined for %s. Cannot identify ID Attribute", m.Name)
+	}
+
+	if check["hash"] == 1 && check["range"] <= 1 {
+		m.CompositeKey = true
+		return true, nil
+	}
+
+	return false, fmt.Errorf("Too many keys defined in Key Schema")
 
 }
 

@@ -84,6 +84,33 @@
             "program": "${workspaceRoot}/main.go",
             "env": {},
             "args": ["remove", "resource", "course"]
-        }
+        },
+        {
+            "name": "add resource w/ custom KeySchema",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "resource", "geo", "-a", "name,address,hashKey:uint64,geohash:uint64", "-n", "-k", "hashKey:HASH,geohash:RANGE"]
+        },
+        {
+            "name": "add resource with high CUs",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "resource", "high", "-a", "name:string", "-r", "10", "-w", "10"]
+        },
+        {
+            "name": "add resource with OnDemand billing",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "resource", "demand", "-a", "name:string", "-b", "ondemand"]
+        },
     ]
 }

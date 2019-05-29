@@ -140,11 +140,9 @@ func renderMakefile(config ResourceConfig) {
 	log.Println("Makefile generated.")
 }
 
-func writeResourceDefinition(m Model, name string) {
-	wd := getWorkingDir()
-
+func writeResourceDefinition(m Model, config ResourceConfig) {
 	json, _ := json.MarshalIndent(m, "", "  ")
-	_ = ioutil.WriteFile(filepath.Join(wd, "functions", name, fmt.Sprintf("%s.json", name)), json, 0644)
+	_ = ioutil.WriteFile(filepath.Join(config.ProjectPath, "functions", m.Name, fmt.Sprintf("%s.json", m.Name)), json, 0644)
 }
 
 func renderSLS(config ResourceConfig) {

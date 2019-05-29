@@ -50,14 +50,25 @@ resources:
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
+          {{- range $a := $r.Attributes }}
+          - AttributeName: {{ $a.Ident.Underscore }}
+            AttributeType: {{ $a.AwsType }}
+          {{- end }}
         KeySchema:
-          - AttributeName: id
+          - AttributeName: {{ index $r.KeySchema "HASH"}}
             KeyType: HASH
+          {{ if $r.CompositeKey -}}
+          - AttributeName: {{ index $r.KeySchema "RANGE"}}
+            KeyType: RANGE
+          {{- end }}
+        {{ if eq $r.BillingMode "provisioned" -}}  
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+          ReadCapacityUnits: {{ index $r.CapacityUnits "read"}}
+          WriteCapacityUnits: {{ index $r.CapacityUnits "write"}}
+        {{ end -}}
+        {{- if eq $r.BillingMode "ondemand" -}}
+        BillingMode: PAY_PER_REQUEST
+        {{ end -}}
         TableName: '{{$r.Ident.Pluralize}}-${opt:stage, self:provider.stage}'
     {{ end }}
 {{- end }}
