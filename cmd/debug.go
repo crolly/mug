@@ -203,5 +203,5 @@ func ensureDebugger() {
 	// build delve
 	log.Println("Building dlv locally")
 	env := []string{"GOARCH=amd64", "GOOS=linux"}
-	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/derekparker/delve/cmd/dlv")
+	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
 }
