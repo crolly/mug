@@ -192,7 +192,7 @@ func startLocalAPI() {
 	args := []string{"local", "start-api", "-p", apiPort, "--docker-network", "lambda-local"}
 	if remoteDebugger {
 		ensureDebugger()
-		args = append(args, "--debugger-path", "./dlv", "-d", debugPort)
+		args = append(args, "--debugger-path", "./dlv", "-d", debugPort, "--debug-args", "-delveAPI=2")
 		log.Printf("Starting local API at port %s with debugger at %s...\n", apiPort, debugPort)
 	}
 
