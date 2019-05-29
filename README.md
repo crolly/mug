@@ -92,7 +92,7 @@ This will generate the following files / subdirectories in the folder `functions
 
 The resource definition is kept track of in the `course.json` like this. I use this as a development step to eventually enable definition through json input:
 
-```
+```json
 {
   "name": "course",
   "type": "Course",
@@ -134,7 +134,7 @@ The resource definition is kept track of in the `course.json` like this. I use t
 }
 ```
 The course's struct in the `course.go` looks like this:
-```
+```go
 // Course defines the Course model
 type Course struct {
 	ID uuid.UUID `json:"id"`
@@ -161,7 +161,7 @@ mug add resource user -a "name,isActive:bool,email,address:{street,zip,city},enr
 **Please make sure to wrap the attribute definition with `"`(double quotes) to ensure the recursive parsing works!** 
 
 The struct(s) will look like this:
-```
+```go
 // User defines the User model
 type User struct {
 	ID uuid.UUID `json:"id"`
@@ -208,7 +208,7 @@ The command has two flags:
 
 When you start with the remote debugger enabled you can easily step through your functions using breakpoints etc. Make sure you have a propper launch configuration beforehand. For Visual Studio Code it may look like this:
 
-```
+```json
 {
     "version": "0.2.0",
     "configurations": [
@@ -306,7 +306,7 @@ APP_NAME = Example
 APP_ENV = stage
 ```
 will result in an `serverless.yml` like this:
-```
+```yaml
 service: example
 
 provider:
