@@ -162,7 +162,7 @@ func createResourceTables() {
 
 func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 	// get model for tableName
-	resource := readModelForResource(tableName)
+	resource := getResourceForTable(tableName)
 
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
@@ -228,7 +228,7 @@ func ensureDebugger() {
 }
 
 //reads model definition for a resource
-func readModelForResource(resource string) Resource {
+func getResourceForTable(table string) Resource {
 	wd := getWorkingDir()
 
 	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
@@ -245,5 +245,5 @@ func readModelForResource(resource string) Resource {
 	var config ResourceConfig
 	json.Unmarshal(data, &config)
 
-	return config.Resources[resource]
+	return config.Resources[table]
 }
