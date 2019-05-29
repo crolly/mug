@@ -154,16 +154,13 @@ func createResourceTables() {
 		if tables[tableName] {
 			log.Printf("Table %s already exists, skipping creation...", tableName)
 		} else {
-			createTableForResource(svc, tableName)
+			createTableForResource(svc, r)
 		}
 
 	}
 }
 
-func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
-	// get model for tableName
-	resource := getResourceForTable(tableName)
-
+func createTableForResource(svc *dynamodb.DynamoDB, resource Resource) {
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
 	for _, a := range resource.Attributes {
@@ -193,6 +190,10 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
 			WriteCapacityUnits: aws.Int64(int64(resource.CapacityUnits["write"])),
 		}
 	}
+
+	// set table name
+	tableName := resource.Ident.Pluralize().String()
+
 	// create the table input for the resource
 	input := &dynamodb.CreateTableInput{
 		TableName:             aws.String(tableName),
