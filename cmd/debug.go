@@ -21,7 +21,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -159,25 +161,44 @@ func createResourceTables() {
 }
 
 func createTableForResource(svc *dynamodb.DynamoDB, tableName string) {
-	// create the table for the resource
+	// get model for tableName
+	model := readModelForResource(tableName)
+
+	// get attributes
+	attributes := []*dynamodb.AttributeDefinition{}
+	for _, a := range model.Attributes {
+		attributes = append(attributes, &dynamodb.AttributeDefinition{
+			AttributeName: aws.String(a.Name),
+			AttributeType: aws.String(a.AwsType),
+		})
+	}
+
+	// get keySchema
+	keySchema := []*dynamodb.KeySchemaElement{}
+	for t, k := range model.KeySchema {
+		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
+			AttributeName: aws.String(k),
+			KeyType:       aws.String(t),
+		})
+	}
+
+	// get throughput
+	throughput := &dynamodb.ProvisionedThroughput{
+		ReadCapacityUnits:  aws.Int64(10),
+		WriteCapacityUnits: aws.Int64(10),
+	}
+	if len(model.CapacityUnits) > 0 {
+		throughput = &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(int64(model.CapacityUnits["read"])),
+			WriteCapacityUnits: aws.Int64(int64(model.CapacityUnits["write"])),
+		}
+	}
+	// create the table input for the resource
 	input := &dynamodb.CreateTableInput{
-		TableName: aws.String(tableName),
-		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			{
-				AttributeName: aws.String("id"),
-				AttributeType: aws.String("S"),
-			},
-		},
-		KeySchema: []*dynamodb.KeySchemaElement{
-			{
-				AttributeName: aws.String("id"),
-				KeyType:       aws.String("HASH"),
-			},
-		},
-		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(10),
-			WriteCapacityUnits: aws.Int64(10),
-		},
+		TableName:             aws.String(tableName),
+		AttributeDefinitions:  attributes,
+		KeySchema:             keySchema,
+		ProvisionedThroughput: throughput,
 	}
 
 	out, err := svc.CreateTable(input)
@@ -204,4 +225,26 @@ func ensureDebugger() {
 	log.Println("Building dlv locally")
 	env := []string{"GOARCH=amd64", "GOOS=linux"}
 	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
+}
+
+//reads model definition for a resource
+func readModelForResource(resource string) Model {
+	wd := getWorkingDir()
+
+	configFile, err := os.Open(filepath.Join(wd, "functions", resource, resource+".json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer configFile.Close()
+
+	data, err := ioutil.ReadAll(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var model Model
+
+	json.Unmarshal(data, &model)
+
+	return model
 }
