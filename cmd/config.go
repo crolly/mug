@@ -24,12 +24,12 @@ type ResourceConfig struct {
 
 // Resource represents a single Resource of the project's config
 type Resource struct {
-	Ident         flect.Ident           `json:"ident"`
-	Attributes    []AttributeDefinition `json:"attributes"`
-	KeySchema     map[string]string     `json:"key_schema"`
-	CompositeKey  bool                  `json:"composite_key"`
-	BillingMode   string                `json:"billing_mode"`
-	CapacityUnits map[string]byte       `json:"capacity_units"`
+	Ident         flect.Ident                    `json:"ident"`
+	Attributes    map[string]AttributeDefinition `json:"attributes"`
+	KeySchema     map[string]string              `json:"key_schema"`
+	CompositeKey  bool                           `json:"composite_key"`
+	BillingMode   string                         `json:"billing_mode"`
+	CapacityUnits map[string]byte                `json:"capacity_units"`
 }
 
 // AttributeDefinition represents the definition of a resource's attribute

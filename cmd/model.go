@@ -45,6 +45,11 @@ func newModel(name string, slice bool, attributes string, options map[string]int
 		m.Type = m.Ident.Pascalize().String()
 	}
 
+	// parse nested models
+	attributes = m.parseNested(attributes)
+	m.parseAttributes(attributes)
+
+	// handle all option values
 	var id, withDates, softDelete bool
 	var keySchema, billing string
 	var capacity map[string]byte
@@ -92,10 +97,6 @@ func newModel(name string, slice bool, attributes string, options map[string]int
 	if m.BillingMode == "provisioned" {
 		m.CapacityUnits = capacity
 	}
-
-	// parse nested models
-	attributes = m.parseNested(attributes)
-	m.parseAttributes(attributes)
 
 	return m
 }

@@ -50,7 +50,7 @@ resources:
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
-          {{- range $a := $r.Attributes }}
+          {{- range $k := $r.KeySchema }} {{ $a := index $r.Attributes $k }}
           - AttributeName: {{ $a.Ident.Underscore }}
             AttributeType: {{ $a.AwsType }}
           {{- end }}

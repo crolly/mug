@@ -95,12 +95,15 @@ func addResourceConfig(m Model) ResourceConfig {
 	singular := m.Ident.Singularize().String()
 	plural := m.Ident.Pluralize().String()
 
-	attributeDefinitions := []AttributeDefinition{}
-	for _, a := range m.Attributes {
-		attributeDefinitions = append(attributeDefinitions, AttributeDefinition{
-			Ident:   a.Ident,
-			AwsType: a.AwsType,
-		})
+	attributeDefinitions := map[string]AttributeDefinition{}
+	for _, k := range m.KeySchema {
+		a := m.Attributes[k]
+		if len(a.Name) > 0 {
+			attributeDefinitions[a.Name] = AttributeDefinition{
+				Ident:   a.Ident,
+				AwsType: a.AwsType,
+			}
+		}
 	}
 
 	resource := Resource{
