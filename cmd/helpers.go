@@ -206,6 +206,11 @@ func getConfigForFunction(k, fileName string, f Function, config ResourceConfig)
 }
 
 func generateSLS(path string, config ResourceConfig, t *template.Template) {
+	// ensure folder exists
+	err := os.MkdirAll(strings.ReplaceAll(path, "/serverless.yml", ""), 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// create file
 	f, err := os.Create(path)
 	if err != nil {

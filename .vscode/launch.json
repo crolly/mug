@@ -112,5 +112,14 @@
             "env": {},
             "args": ["add", "resource", "demand", "-a", "name:string", "-b", "ondemand"]
         },
+        {
+            "name": "mug debug",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["debug"]
+        },
     ]
 }
