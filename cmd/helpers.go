@@ -119,6 +119,52 @@ func execCmd(cmd *exec.Cmd) error {
 	return cmd.Run()
 }
 
+// func renderGopkg(config ResourceConfig) {
+// 	log.Println("Generating Gopkg.toml")
+
+// 	processed := map[string]bool{}
+
+// 	// iterate resources
+// 	for k, r := range config.Resources {
+// 		path := filepath.Join(getPath(config, r), "Gopkg.toml")
+// 		createGopkg(k, path)
+
+// 		processed[k] = true
+// 	}
+
+// 	// generate serverless.yml for remaining functions
+// 	for k, fs := range config.Functions {
+// 		if !processed[k] {
+// 			for _, f := range fs {
+// 				path := filepath.Join(getPath(config, f), "Gopkg.toml")
+// 				createGopkg(f.Name, path)
+// 			}
+// 		}
+// 	}
+// }
+
+// func createGopkg(key, path string) {
+// 	// load template
+// 	t := loadTemplateFromBox(slsBox, "Gopkg.toml.tmpl")
+
+// 	// create file only if it doesn't exist already
+// 	if _, err := os.Stat(path); os.IsNotExist(err) {
+// 		f, err := os.Create(path)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 		defer f.Close()
+
+// 		// execute template and save to file
+// 		err = t.Execute(f, nil)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+
+// 		log.Printf("Gopkg.toml generated for %s.\n", key)
+// 	}
+// }
+
 func renderMakefile(config ResourceConfig) {
 	log.Println("Generating Makefile...")
 
@@ -150,13 +196,10 @@ func renderSLS(config ResourceConfig) {
 
 	processed := map[string]bool{}
 
-	// load Makefile template
-	t := loadTemplateFromBox(slsBox, "serverless.yml.tmpl")
-
 	// generate serverless.yml for each resource
 	for k, r := range config.Resources {
-		path, resourceConfig := getConfigForResource(k, t.Name(), r, config)
-		generateSLS(path, resourceConfig, t)
+		path, resourceConfig := getConfigForResource(k, r, config)
+		generateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
 
 		processed[k] = true
 	}
@@ -165,15 +208,15 @@ func renderSLS(config ResourceConfig) {
 	for k, fs := range config.Functions {
 		if !processed[k] {
 			for _, f := range fs {
-				path, functionConfig := getConfigForFunction(k, t.Name(), f, config)
-				generateSLS(path, functionConfig, t)
+				path, functionConfig := getConfigForFunction(k, f, config)
+				generateSLS(filepath.Join(path, "serverless.yml"), functionConfig)
 			}
 		}
 	}
 }
 
-func getConfigForResource(k, fileName string, r Resource, config ResourceConfig) (string, ResourceConfig) {
-	path := filepath.Join(config.ProjectPath, "functions", r.Ident.String(), strings.Replace(fileName, ".tmpl", "", 1))
+func getConfigForResource(k string, r Resource, config ResourceConfig) (string, ResourceConfig) {
+	path := getPath(config, r)
 
 	// only handle current resource
 	config.Resources = map[string]Resource{
@@ -190,8 +233,8 @@ func getConfigForResource(k, fileName string, r Resource, config ResourceConfig)
 	return path, config
 }
 
-func getConfigForFunction(k, fileName string, f Function, config ResourceConfig) (string, ResourceConfig) {
-	path := filepath.Join(config.ProjectPath, "functions", f.Name, strings.Replace(fileName, ".tmpl", "", 1))
+func getConfigForFunction(k string, f Function, config ResourceConfig) (string, ResourceConfig) {
+	path := getPath(config, f)
 
 	// only handle current function
 	config.Resources = map[string]Resource{}
@@ -205,7 +248,23 @@ func getConfigForFunction(k, fileName string, f Function, config ResourceConfig)
 	return path, config
 }
 
-func generateSLS(path string, config ResourceConfig, t *template.Template) {
+func getPath(config ResourceConfig, i interface{}) string {
+	path := filepath.Join(config.ProjectPath, "functions")
+
+	switch t := i.(type) {
+	case Function:
+		path = filepath.Join(path, t.Name)
+	case Resource:
+		path = filepath.Join(path, t.Ident.String())
+	}
+
+	return path
+}
+
+func generateSLS(path string, config ResourceConfig) {
+	// load serverless.yml template
+	t := loadTemplateFromBox(slsBox, "serverless.yml.tmpl")
+
 	// create file
 	f, err := os.Create(path)
 	if err != nil {
@@ -256,8 +315,9 @@ func removeFiles(config ResourceConfig, resourceName string, function *flect.Ide
 	}
 }
 
-// updateYMLs updates serverless.yml, Makefile, template.yml
+// updateYMLs updates serverless.yml, Makefile, template.yml and create Gopkg.toml
 func updateYMLs(config ResourceConfig) {
+	// renderGopkg(config)
 	renderMakefile(config)
 	renderSLS(config)
 	generateSAMTemplate(config)

@@ -1,17 +1,28 @@
-{{ if .Functions -}}
-app_bins = {{ range $r, $func := .Functions -}}{{ range $f := $func }}bin{{ if $r }}/{{$r}}{{ end }}/{{ $f.Handler }} {{ end }}{{ end }}
-app_debugs = {{ range $r, $func := .Functions -}}{{ range $f := $func }}debug{{ if $r }}/{{$r}}{{ end }}/{{ $f.Handler }} {{ end }}{{ end }}
-{{- end }}
+{{ range $r, $fs := .Functions }}
+{{ if $r -}}
+{{ $r }}_bins = {{ range $f := $fs }}functions/{{$r}}/bin/{{ $f.Handler }} {{ end }}
+{{ $r }}_debugs = {{ range $f := $fs }}functions/{{$r}}/debug/{{ $f.Handler }} {{ end }}
 
-bin/% : functions/%/main.go
+functions/{{ $r }}/bin/% : functions/{{ $r }}/%/main.go
 		env GOOS=linux go build -ldflags="-s -w" -o $@ $<
 
-debug/%: functions/%/main.go
+functions/{{ $r }}/debug/%: functions/{{ $r }}/%/main.go
 		 env GOARCH=amd64 GOOS=linux go build -gcflags='-N -l' -o $@ $<
+{{ else -}}
+bins = {{ range $f := $fs }}functions/{{$f.Handler}}/bin/{{ $f.Handler }} {{ end }}
+debugs = {{ range $f := $fs }}functions/{{$f.Handler}}/debug/{{ $f.Handler }} {{ end }}
+{{ range $f := $fs }}
+functions/{{ $f.Handler }}/bin/{{ $f.Handler }} : functions/{{ $f.Handler }}/main.go
+		env GOOS=linux go build -ldflags="-s -w" -o $@ $<
 
-build: vendor {{ if .Functions }}| $(app_bins){{ end }}
+functions/{{ $f.Handler }}/debug/{{ $f.Handler }}: functions/{{ $f.Handler }}/main.go
+		 env GOARCH=amd64 GOOS=linux go build -gcflags='-N -l' -o $@ $<
+{{ end }}{{ end }}
+{{- end }}
 
-debug: vendor {{ if .Functions }}| $(app_debugs){{ end }}
+build: vendor | {{ range $r, $fs := .Functions }}{{ if $r }}$({{ $r }}_bins){{ else }}$(bins){{ end }} {{ end }}
+
+debug: vendor | {{ range $r, $fs := .Functions }}{{ if $r }}$({{ $r }}_debugs){{ else }}$(bins){{ end }} {{ end }}
 
 vendor: Gopkg.toml
 	    dep ensure
