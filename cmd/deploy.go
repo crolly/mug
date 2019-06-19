@@ -34,26 +34,18 @@ var (
 		Use:   "deploy",
 		Short: "Deploys the stack to AWS using serverless framework",
 		Run: func(cmd *cobra.Command, args []string) {
-			if disableUpdate {
-				// render only Makefile
-				renderMakefile(readConfig())
-			} else {
-				// update the yml files and Makefile with current config
-				updateYMLs(readConfig())
-			}
-
+			// update the yml files and Makefile with current config
+			updateYMLs(readConfig(), noUpdate)
 			// build binaries
 			makeBuild()
 			// deploy to AWS
 			deploy()
 		},
 	}
-
-	disableUpdate bool
 )
 
 func init() {
-	deployCmd.Flags().BoolVarP(&disableUpdate, "disableYMLUpdate", "d", false, "Disable update of template.yml and serverless.yml during execution")
+	deployCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
 	rootCmd.AddCommand(deployCmd)
 }
 

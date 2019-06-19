@@ -42,7 +42,7 @@ var rmfunctionCmd = &cobra.Command{
 		config.Write()
 
 		// update the yml files and Makefile with current config
-		updateYMLs(config)
+		updateYMLs(config, noUpdate)
 	},
 }
 
@@ -50,4 +50,5 @@ func init() {
 	removeCmd.AddCommand(rmfunctionCmd)
 
 	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
+	rmfunctionCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
 }

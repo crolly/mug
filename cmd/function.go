@@ -50,7 +50,8 @@ var (
 			renderFunction(config, resourceName, function)
 			config.Write()
 
-			updateYMLs(config)
+			// update the yml files and Makefile with current config
+			updateYMLs(readConfig(), noUpdate)
 		},
 	}
 
@@ -66,7 +67,8 @@ func init() {
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
 	functionCmd.Flags().StringVarP(&method, "method", "m", "", "Method the function will respond to e.g. get")
 
-	// functionCmd.MarkFlagRequired("resource")
+	functionCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
+
 	functionCmd.MarkFlagRequired("path")
 	functionCmd.MarkFlagRequired("method")
 }

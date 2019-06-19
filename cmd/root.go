@@ -29,7 +29,8 @@ import (
 )
 
 var (
-	cfgFile string
+	cfgFile  string
+	noUpdate bool
 
 	resourceBox = packr.New("resource", "../templates/resource")
 	projectBox  = packr.New("project", "../templates/project")

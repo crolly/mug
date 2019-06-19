@@ -64,7 +64,7 @@ var (
 			renderTemplates(config, m)
 
 			// update the yml files and Makefile with current config
-			updateYMLs(config)
+			updateYMLs(config, noUpdate)
 
 			// write definition to resource folder
 			writeResourceDefinition(m, config)
@@ -86,6 +86,8 @@ func init() {
 	resourceCmd.Flags().StringVarP(&billingMode, "billingMode", "b", "provisioned", "Choose between 'provisioned' for ProvisionedThroughput (default) or 'ondemand'")
 	resourceCmd.Flags().Uint8VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
 	resourceCmd.Flags().Uint8VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
+
+	resourceCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
 
 }
 

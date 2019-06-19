@@ -25,7 +25,14 @@ func CreateHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProx
 	fmt.Println("Wrote item:  ", {{.Model.Ident.Camelize}})
 	jsonItem, _ := json.MarshalIndent({{.Model.Ident.Camelize}}, "", "  ")
 	stringItem := string(jsonItem)
-	return events.APIGatewayProxyResponse{Body: stringItem, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       stringItem,
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {

@@ -45,12 +45,8 @@ var (
 		Long: `This command generates a template.yml for aws-sam-cli and starts
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if noUpdate {
-				renderMakefile(readConfig())
-			} else {
-				// update the yml files and Makefile with current config
-				updateYMLs(readConfig())
-			}
+			// update the yml files and Makefile with current config
+			updateYMLs(readConfig(), noUpdate)
 			// make debug binaries overwriting previous
 			makeDebug()
 			// create lambda-local network if it doesn't exist already
@@ -64,9 +60,9 @@ var (
 		},
 	}
 
-	remoteDebugger, noUpdate bool
-	debugPort                string
-	apiPort                  string
+	remoteDebugger bool
+	debugPort      string
+	apiPort        string
 )
 
 func init() {
@@ -74,7 +70,7 @@ func init() {
 	debugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
 	debugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
 	debugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
-	debugCmd.Flags().BoolVarP(&noUpdate, "disableUpdate", "d", false, "Disable update of template.yml and serverless.yml during execution")
+	debugCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
 }
 
 func makeDebug() {

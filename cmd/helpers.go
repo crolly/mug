@@ -316,9 +316,11 @@ func removeFiles(config ResourceConfig, resourceName string, function *flect.Ide
 }
 
 // updateYMLs updates serverless.yml, Makefile, template.yml and create Gopkg.toml
-func updateYMLs(config ResourceConfig) {
+func updateYMLs(config ResourceConfig, ignoreSLS bool) {
 	// renderGopkg(config)
 	renderMakefile(config)
-	renderSLS(config)
+	if !ignoreSLS {
+		renderSLS(config)
+	}
 	generateSAMTemplate(config)
 }
