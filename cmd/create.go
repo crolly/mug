@@ -125,7 +125,7 @@ func getPaths(projectName string) (string, string, string) {
 		wd := getWorkingDir()
 		if filepathHasPrefix(wd, srcPath) {
 			projectPath = filepath.Join(wd, projectName)
-			importPath = strings.TrimPrefix(strings.ReplaceAll(projectPath, srcPath, ""), "/")
+			importPath = strings.TrimPrefix(strings.Replace(projectPath, srcPath, "", 1), "/")
 		} else {
 			log.Fatal("You must either create the project inside of $GOPATH or provide the full path (e.g. github.com/crolly/mug-example")
 		}

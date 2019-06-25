@@ -34,25 +34,36 @@ var (
 		Use:   "deploy",
 		Short: "Deploys the stack to AWS using serverless framework",
 		Run: func(cmd *cobra.Command, args []string) {
-			// update the yml files and Makefile with current config
-			updateYMLs(readConfig(), noUpdate)
+			config := readConfig()
+			if disableUpdate {
+				// render only Makefile
+				renderMakefile(config)
+			} else {
+				// update the yml files and Makefile with current config
+				updateYMLs(config, noUpdate)
+			}
+
 			// build binaries
-			makeBuild()
+			makeBuild(config)
 			// deploy to AWS
-			deploy()
+			deploy(config)
 		},
 	}
+
+	disableUpdate bool
+	name          string
 )
 
 func init() {
 	deployCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
+	deployCmd.Flags().BoolVarP(&disableUpdate, "disableYMLUpdate", "d", false, "Disable update of template.yml and serverless.yml during execution")
+	deployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
 	rootCmd.AddCommand(deployCmd)
 }
 
-func makeBuild() {
+func makeBuild(config ResourceConfig) {
 	// check if Makefile exists in working directory
-	wd := getWorkingDir()
-	if _, err := os.Stat(filepath.Join(wd, "Makefile")); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(config.ProjectPath, "Makefile")); os.IsNotExist(err) {
 		log.Fatal("no Makefile found - cannout build binaries")
 	}
 
@@ -61,11 +72,29 @@ func makeBuild() {
 	runCmd("make", "build")
 }
 
-func deploy() {
-	// check if Makefile exists in working directory
-	wd := getWorkingDir()
-	if _, err := os.Stat(filepath.Join(wd, "serverless.yml")); os.IsNotExist(err) {
-		log.Fatal("no serverless.yml found - cannout build binaries")
+func deploy(config ResourceConfig) {
+	dir := filepath.Join(config.ProjectPath, "functions")
+	// check if only single resource of function should be deployed
+	if name != "" {
+		// deploy single resource or functions
+		deployResourceOrFunction(dir, name)
+	} else {
+		// deploy all
+		for k, fs := range config.Functions {
+			if k == "" {
+				for _, f := range fs {
+					deployResourceOrFunction(dir, f.Name)
+				}
+			} else {
+				deployResourceOrFunction(dir, k)
+			}
+		}
+	}
+}
+
+func deployResourceOrFunction(dir, name string) {
+	if _, err := os.Stat(filepath.Join(dir, name, "serverless.yml")); os.IsNotExist(err) {
+		log.Fatal("no serverless.yml found - cannout deploy")
 	}
 
 	// run make debug

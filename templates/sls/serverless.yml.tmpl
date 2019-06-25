@@ -34,7 +34,7 @@ package:
 functions:
   {{ range $r, $func := .Functions }}{{ range $f := $func -}}
   {{ $f.Name }}:
-    handler: bin{{ if $r }}/{{$r}}{{ end }}/{{$f.Handler}}
+    handler: bin/{{$f.Handler}}
     events:
       - http:
           path: {{$f.Path}}
