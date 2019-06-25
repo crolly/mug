@@ -40,7 +40,14 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	jsonItem, _ := json.MarshalIndent({{.Model.Ident.Camelize}}, "", "  ")
 	stringItem := string(jsonItem)
 	fmt.Println("Found item: ", stringItem)
-	return events.APIGatewayProxyResponse{Body: stringItem, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       stringItem,
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {

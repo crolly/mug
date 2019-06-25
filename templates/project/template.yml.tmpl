@@ -6,7 +6,7 @@ Resources:
     Properties:
       Runtime: go1.x
       Handler: {{$f.Handler}}
-      CodeUri: ./debug/{{$r}}
+      CodeUri: ./functions/{{if $r}}{{$r}}/debug{{else}}{{$f.Handler}}/debug{{end}} 
       Events:
         {{$f.Handler}}{{$r}}Api:
             Type: Api

@@ -22,7 +22,14 @@ func ListHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	jsonItems, _ := json.MarshalIndent({{.Model.Ident.Pluralize}}, "", "  ")
 	stringItems := string(jsonItems)
 	fmt.Println("Found items: ", stringItems)
-	return events.APIGatewayProxyResponse{Body: stringItems, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       stringItems,
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {

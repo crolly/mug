@@ -27,7 +27,14 @@ func DeleteHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProx
 	}
 
 	msg := "Deleted {{.Model.Ident.Camelize}} \n"
-	return events.APIGatewayProxyResponse{Body: msg, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       msg,
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {

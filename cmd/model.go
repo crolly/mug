@@ -149,7 +149,7 @@ func (m *Model) parseNested(attributes string) string {
 	}
 
 	for _, np := range rm {
-		clAttr = strings.ReplaceAll(clAttr, np, "")
+		clAttr = strings.Replace(clAttr, np, "", 1)
 	}
 
 	return clAttr
@@ -166,7 +166,7 @@ func (m *Model) addNested(b []int, pos int, attributes string, slice bool) int {
 	}
 
 	// new model name ensured to not have a comma or spaces
-	nmn := strings.ReplaceAll(strings.TrimSpace(attributes[cI:bI-1]), ",", "")
+	nmn := strings.Replace(strings.TrimSpace(attributes[cI:bI-1]), ",", "", 1)
 	attr := attributes[bI+1 : pos]
 	n := newModel(nmn, slice, attr, nil)
 

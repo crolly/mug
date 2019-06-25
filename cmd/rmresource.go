@@ -44,10 +44,11 @@ var rmresourceCmd = &cobra.Command{
 		removeFiles(config, resourceName, nil)
 		config.Write()
 
-		updateYMLs(config)
+		updateYMLs(config, noUpdate)
 	},
 }
 
 func init() {
 	removeCmd.AddCommand(rmresourceCmd)
+	removeCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
 }
