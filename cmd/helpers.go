@@ -248,14 +248,6 @@ func getConfigForFunction(k string, f Function, config ResourceConfig) (string, 
 	return path, config
 }
 
-<<<<<<< HEAD
-func generateSLS(path string, config ResourceConfig, t *template.Template) {
-	// ensure folder exists
-	err := os.MkdirAll(strings.ReplaceAll(path, "/serverless.yml", ""), 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-=======
 func getPath(config ResourceConfig, i interface{}) string {
 	path := filepath.Join(config.ProjectPath, "functions")
 
@@ -273,7 +265,6 @@ func generateSLS(path string, config ResourceConfig) {
 	// load serverless.yml template
 	t := loadTemplateFromBox(slsBox, "serverless.yml.tmpl")
 
->>>>>>> sls-function-level
 	// create file
 	f, err := os.Create(path)
 	if err != nil {
