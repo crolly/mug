@@ -215,15 +215,15 @@ func renderSLS(config ResourceConfig) {
 	}
 }
 
-func getConfigForResource(k string, r Resource, config ResourceConfig) (string, ResourceConfig) {
+func getConfigForResource(k string, r *Resource, config ResourceConfig) (string, ResourceConfig) {
 	path := getPath(config, r)
 
 	// only handle current resource
-	config.Resources = map[string]Resource{
+	config.Resources = map[string]*Resource{
 		k: r,
 	}
 
-	config.Functions = map[string][]Function{
+	config.Functions = map[string][]*Function{
 		k: config.Functions[k],
 	}
 
@@ -233,13 +233,13 @@ func getConfigForResource(k string, r Resource, config ResourceConfig) (string, 
 	return path, config
 }
 
-func getConfigForFunction(k string, f Function, config ResourceConfig) (string, ResourceConfig) {
+func getConfigForFunction(k string, f *Function, config ResourceConfig) (string, ResourceConfig) {
 	path := getPath(config, f)
 
 	// only handle current function
-	config.Resources = map[string]Resource{}
-	config.Functions = map[string][]Function{
-		"": []Function{f},
+	config.Resources = map[string]*Resource{}
+	config.Functions = map[string][]*Function{
+		"": []*Function{f},
 	}
 
 	// load environment variables from .env

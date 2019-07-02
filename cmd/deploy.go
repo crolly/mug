@@ -35,7 +35,7 @@ var (
 		Short: "Deploys the stack to AWS using serverless framework",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := readConfig()
-			if disableUpdate {
+			if noUpdate {
 				// render only Makefile
 				renderMakefile(config)
 			} else {
@@ -50,13 +50,11 @@ var (
 		},
 	}
 
-	disableUpdate bool
-	name          string
+	name string
 )
 
 func init() {
-	deployCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
-	deployCmd.Flags().BoolVarP(&disableUpdate, "disableYMLUpdate", "d", false, "Disable update of template.yml and serverless.yml during execution")
+	deployCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
 	deployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
 	rootCmd.AddCommand(deployCmd)
 }

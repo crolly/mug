@@ -113,6 +113,33 @@
             "args": ["add", "resource", "demand", "-a", "name:string", "-b", "ondemand"]
         },
         {
+            "name": "add auth to all",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "auth"]
+        },
+        {
+            "name": "add auth with cognito user pool",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "auth", "-p", "arn:aws:cognito-idp:eu-central-1:285688367535:userpool/eu-central-1_OjjilcBGQ"]
+        },
+        {
+            "name": "add auth with excludes",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "auth", "-x", "course, test"]
+        },
+        {
             "name": "mug debug",
             "type": "go",
             "request": "launch",

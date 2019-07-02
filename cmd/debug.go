@@ -70,7 +70,7 @@ func init() {
 	debugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
 	debugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
 	debugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
-	debugCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
+	debugCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
 }
 
 func makeDebug() {
@@ -156,7 +156,7 @@ func createResourceTables() {
 	}
 }
 
-func createTableForResource(svc *dynamodb.DynamoDB, resource Resource) {
+func createTableForResource(svc *dynamodb.DynamoDB, resource *Resource) {
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
 	for _, a := range resource.Attributes {
@@ -225,7 +225,7 @@ func ensureDebugger() {
 }
 
 //reads model definition for a resource
-func getResourceForTable(table string) Resource {
+func getResourceForTable(table string) *Resource {
 	wd := getWorkingDir()
 
 	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))

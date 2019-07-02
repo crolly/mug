@@ -12,12 +12,14 @@ import (
 
 // ResourceConfig represents mu's configuration for resources
 type ResourceConfig struct {
-	ProjectName string                `json:"projectName"`
-	ProjectPath string                `json:"projectPath"`
-	ImportPath  string                `json:"importPath"`
-	Region      string                `json:"region"`
-	Resources   map[string]Resource   `json:"resources"`
-	Functions   map[string][]Function `json:"functions"`
+	ProjectName string                 `json:"projectName"`
+	ProjectPath string                 `json:"projectPath"`
+	ImportPath  string                 `json:"importPath"`
+	Region      string                 `json:"region"`
+	Resources   map[string]*Resource   `json:"resources"`
+	Functions   map[string][]*Function `json:"functions"`
+
+	Authentication bool `json:"authentication"`
 
 	Environments map[string]string `json:"-"`
 }
@@ -44,6 +46,8 @@ type Function struct {
 	Handler string `json:"handler"`
 	Path    string `json:"path"`
 	Method  string `json:"method"`
+
+	Authentication bool `json:"authentication"`
 }
 
 func readConfig() ResourceConfig {
@@ -67,7 +71,7 @@ func readConfig() ResourceConfig {
 
 	// make sure map exists
 	if len(config.Resources) == 0 {
-		config.Resources = make(map[string]Resource)
+		config.Resources = make(map[string]*Resource)
 	}
 
 	return config
@@ -90,7 +94,7 @@ func (c *ResourceConfig) AddFunction(resourceName string, functionName string, p
 	ident := flect.New(resourceName)
 	fName := getFuncName(ident, functionName)
 
-	f := Function{
+	f := &Function{
 		Name:    fName,
 		Handler: functionName,
 		Path:    path,

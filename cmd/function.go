@@ -67,7 +67,7 @@ func init() {
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
 	functionCmd.Flags().StringVarP(&method, "method", "m", "", "Method the function will respond to e.g. get")
 
-	functionCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
+	functionCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
 
 	functionCmd.MarkFlagRequired("path")
 	functionCmd.MarkFlagRequired("method")

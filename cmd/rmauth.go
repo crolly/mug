@@ -21,34 +21,28 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-// rmresourceCmd represents the rmresource command
-var rmresourceCmd = &cobra.Command{
-	Use:   "resource resourceName",
-	Short: "Removes an entire resource",
-	Args:  cobra.ExactArgs(1),
+// rmauthCmd represents the rmauth command
+var rmauthCmd = &cobra.Command{
+	Use:   "auth",
+	Short: "Remove authentication from the project",
 	Run: func(cmd *cobra.Command, args []string) {
-		resourceName := args[0]
-
 		config := readConfig()
+		for _, funcs := range config.Functions {
+			for _, f := range funcs {
+				f.Authentication = false
+			}
+		}
+		config.Authentication = false
 
-		// delete resource from configuration
-		config.RemoveResource(resourceName)
-		fmt.Println(config)
-
-		// delete resource folder
-		removeFiles(config, resourceName, nil)
 		config.Write()
 
-		updateYMLs(config, noUpdate)
+		renderSLS(config)
 	},
 }
 
 func init() {
-	removeCmd.AddCommand(rmresourceCmd)
-	removeCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
+	removeCmd.AddCommand(rmauthCmd)
 }

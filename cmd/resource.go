@@ -87,7 +87,7 @@ func init() {
 	resourceCmd.Flags().Uint8VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
 	resourceCmd.Flags().Uint8VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
 
-	resourceCmd.Flags().BoolVarP(&noUpdate, "disableYMLUpdate", "d", false, "Disable update of serverless.yml during execution")
+	resourceCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore serverless.yml and template.yml during execution")
 
 }
 
@@ -108,7 +108,7 @@ func addResourceConfig(m Model) ResourceConfig {
 		}
 	}
 
-	resource := Resource{
+	resource := &Resource{
 		Ident:         flect.New(m.Name),
 		Attributes:    attributeDefinitions,
 		KeySchema:     m.KeySchema,
@@ -125,12 +125,12 @@ func addResourceConfig(m Model) ResourceConfig {
 		path = fmt.Sprintf("%s/{%s}", plural, m.KeySchema["HASH"])
 	}
 
-	config.Functions[m.Name] = []Function{
-		Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
-		Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
-		Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
-		Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
-		Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
+	config.Functions[m.Name] = []*Function{
+		&Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
+		&Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
+		&Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
+		&Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
+		&Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
 	}
 
 	config.Write()

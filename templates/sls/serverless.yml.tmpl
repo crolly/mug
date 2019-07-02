@@ -39,6 +39,11 @@ functions:
       - http:
           path: {{$f.Path}}
           method: {{$f.Method}}
+          cors: true
+          {{ if $f.Authentication }}authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer {{ end }}
   {{ end }}{{- end }}
 {{ range $r := .Resources }}
 resources:
@@ -68,4 +73,32 @@ resources:
         BillingMode: PAY_PER_REQUEST
         {{ end -}}
         TableName: '{{$r.Ident.Pluralize}}-${opt:stage, self:provider.stage}'
+    {{ if $.Authentication }}ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - '${env:COGNITOUSERPOOL}' {{ end }}
+{{- end }}
+{{- if (and (eq (len .Resources) 0) .Authentication) -}}
+resources:
+  Resources:
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - '${env:COGNITOUSERPOOL}'
 {{- end }}
