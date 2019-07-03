@@ -46,7 +46,11 @@ func Put(body string) ({{.Model.Type}}, error) {
 
 	// Marshall the requrest body
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
-	json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
+	err := json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
+	if err != nil {
+		fmt.Println("Got error unmarshalling request body: ", err.Error())
+		return {{.Model.Ident.Camelize}}, err 
+	}
 
 	{{ if .Model.GeneratedID -}}
 	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one

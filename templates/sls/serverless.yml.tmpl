@@ -7,7 +7,7 @@ provider:
   region: "{{.Region}}"
   stage: ${opt:stage, 'dev'}
   environment:
-    {{ range $r := .Resources }}
+    {{- range $r := .Resources }}
       {{ $r.Ident.ToUpper }}_TABLE_NAME: {{ $r.Ident.Pluralize }}-${opt:stage, self:provider.stage}
     {{- end }}
     {{- range $k, $v := .Environments }}
@@ -40,12 +40,12 @@ functions:
           path: {{$f.Path}}
           method: {{$f.Method}}
           cors: true
-          {{ if $f.Authentication }}authorizer:
+          {{- if $f.Authentication }}authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer {{ end }}
   {{ end }}{{- end }}
-{{ range $r := .Resources }}
+{{- range $r := .Resources }}
 resources:
   Resources:
     {{$r.Ident.Pascalize}}DynamoDbTable:
