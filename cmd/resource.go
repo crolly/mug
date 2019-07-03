@@ -64,7 +64,13 @@ var (
 			renderTemplates(config, m)
 
 			// update the yml files and Makefile with current config
-			updateYMLs(config, noUpdate)
+			// updateYMLs(config, noUpdate)
+			if noUpdate {
+				path, resourceConfig := getConfigForResource(modelName, config)
+				generateSLS(path, resourceConfig)
+			} else {
+				updateYMLs(config, noUpdate)
+			}
 
 			// write definition to resource folder
 			writeResourceDefinition(m, config)

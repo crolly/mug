@@ -197,8 +197,8 @@ func renderSLS(config ResourceConfig) {
 	processed := map[string]bool{}
 
 	// generate serverless.yml for each resource
-	for k, r := range config.Resources {
-		path, resourceConfig := getConfigForResource(k, r, config)
+	for k := range config.Resources {
+		path, resourceConfig := getConfigForResource(k, config)
 		generateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
 
 		processed[k] = true
@@ -215,7 +215,8 @@ func renderSLS(config ResourceConfig) {
 	}
 }
 
-func getConfigForResource(k string, r *Resource, config ResourceConfig) (string, ResourceConfig) {
+func getConfigForResource(k string, config ResourceConfig) (string, ResourceConfig) {
+	r := config.Resources[k]
 	path := getPath(config, r)
 
 	// only handle current resource

@@ -44,14 +44,20 @@ var (
 
 			// get config and add function to it
 			config := readConfig()
-			resourceName = config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
+			resourceName, f := config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
 
 			// generate files
 			renderFunction(config, resourceName, function)
 			config.Write()
 
 			// update the yml files and Makefile with current config
-			updateYMLs(readConfig(), noUpdate)
+			// updateYMLs(readConfig(), noUpdate)
+			if noUpdate {
+				path, functionConfig := getConfigForFunction("", f, config)
+				generateSLS(path, functionConfig)
+			} else {
+				updateYMLs(config, noUpdate)
+			}
 		},
 	}
 

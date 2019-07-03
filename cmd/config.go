@@ -86,7 +86,7 @@ func (c *ResourceConfig) Write() {
 }
 
 // AddFunction adds a given function to the given resource name of the configuration
-func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) string {
+func (c *ResourceConfig) AddFunction(resourceName string, functionName string, path string, method string) (string, *Function) {
 	if resourceName == "" {
 		resourceName = "_"
 	}
@@ -104,7 +104,7 @@ func (c *ResourceConfig) AddFunction(resourceName string, functionName string, p
 	rCamel := ident.Camelize().String()
 	c.Functions[rCamel] = append(c.Functions[rCamel], f)
 
-	return rCamel
+	return rCamel, f
 }
 
 // RemoveFunction removes a given function from the given resource name of the configuration
