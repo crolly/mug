@@ -46,7 +46,7 @@ var (
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// update the yml files and Makefile with current config
-			updateYMLs(readConfig(), noUpdate)
+			// updateYMLs(readConfig(), noUpdate)
 			// make debug binaries overwriting previous
 			makeDebug()
 			// create lambda-local network if it doesn't exist already

@@ -35,13 +35,13 @@ var (
 		Short: "Deploys the stack to AWS using serverless framework",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := readConfig()
-			if noUpdate {
-				// render only Makefile
-				renderMakefile(config)
-			} else {
-				// update the yml files and Makefile with current config
-				updateYMLs(config, noUpdate)
-			}
+			// if noUpdate {
+			// 	// render only Makefile
+			// 	renderMakefile(config)
+			// } else {
+			// 	// update the yml files and Makefile with current config
+			// 	updateYMLs(config, noUpdate)
+			// }
 
 			// build binaries
 			makeBuild(config)
