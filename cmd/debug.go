@@ -75,13 +75,19 @@ func init() {
 
 func makeDebug() {
 	// check if Makefile exists in working directory
-	wd := readConfig().ProjectPath
+	config := readConfig()
+	wd := config.ProjectPath
 	if _, err := os.Stat(filepath.Join(wd, "Makefile")); os.IsNotExist(err) {
 		log.Fatal("no Makefile found - cannout build binaries")
 	}
 
 	// delete previous debug binaries
-	runCmd("find", ".", "-depth", "-type", "d", "-name", "'debug'", "-prune", "-exec", "rm -rf {} ';'")
+	for n := range config.Functions {
+		err := os.RemoveAll(filepath.Join(wd, "functions", n, "debug"))
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+	}
 
 	// run make debug
 	log.Println("Building Debug Binaries...")
