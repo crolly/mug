@@ -75,10 +75,13 @@ func init() {
 
 func makeDebug() {
 	// check if Makefile exists in working directory
-	wd := getWorkingDir()
+	wd := readConfig().ProjectPath
 	if _, err := os.Stat(filepath.Join(wd, "Makefile")); os.IsNotExist(err) {
 		log.Fatal("no Makefile found - cannout build binaries")
 	}
+
+	// delete previous debug binaries
+	runCmd("find", ".", "-depth", "-type", "d", "-name", "'debug'", "-prune", "-exec", "rm", "-rf", "{}", "';'")
 
 	// run make debug
 	log.Println("Building Debug Binaries...")
@@ -226,7 +229,7 @@ func ensureDebugger() {
 
 //reads model definition for a resource
 func getResourceForTable(table string) *Resource {
-	wd := getWorkingDir()
+	wd := readConfig().ProjectPath
 
 	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
 	if err != nil {
