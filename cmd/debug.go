@@ -81,7 +81,7 @@ func makeDebug() {
 	}
 
 	// delete previous debug binaries
-	runCmd("find", ".", "-depth", "-type", "d", "-name", "'debug'", "-prune", "-exec", "rm", "-rf", "{}", "';'")
+	runCmd("find", ".", "-depth", "-type", "d", "-name", "'debug'", "-prune", "-exec", "rm -rf {} ';'")
 
 	// run make debug
 	log.Println("Building Debug Binaries...")
