@@ -57,7 +57,7 @@ var (
 			sc.AddFunction(fn)
 			sc.Write(mc.ProjectPath, rName)
 
-			// // generate files
+			// generate files
 			renderFunction(mc, rName, fName)
 		},
 	}

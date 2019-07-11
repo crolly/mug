@@ -28,7 +28,7 @@ type Provider struct {
 	Runtime        string
 	Region         string
 	Stage          string
-	Environments   map[string]string `yaml:"environment"`
+	Environments   map[string]string `yaml:"environment,omitempty"`
 	RoleStatements []RoleStatement   `yaml:"iamRoleStatements"`
 }
 
@@ -48,7 +48,12 @@ type Package struct {
 // ServerlessFunction ...
 type ServerlessFunction struct {
 	Handler string
-	Events  []map[string]Event
+	Events  []Events
+}
+
+// Events ...
+type Events struct {
+	HTTP Event `yaml:"http"`
 }
 
 // Event ...
@@ -240,9 +245,9 @@ func (s *ServerlessConfig) SetFunctions(fns []*Function) {
 	for _, fn := range fns {
 		s.Functions[fn.Name] = ServerlessFunction{
 			Handler: fn.Handler,
-			Events: []map[string]Event{
-				map[string]Event{
-					"http:": Event{
+			Events: []Events{
+				Events{
+					HTTP: Event{
 						Path:   fn.Path,
 						Method: fn.Method,
 						CORS:   true,
@@ -261,9 +266,9 @@ func (s *ServerlessConfig) AddFunction(fn Function) {
 	}
 	s.Functions[fn.Name] = ServerlessFunction{
 		Handler: fn.Handler,
-		Events: []map[string]Event{
-			map[string]Event{
-				"http:": Event{
+		Events: []Events{
+			Events{
+				HTTP: Event{
 					Path:   fn.Path,
 					Method: fn.Method,
 					CORS:   true,
