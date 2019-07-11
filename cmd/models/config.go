@@ -110,7 +110,7 @@ func (c *ResourceConfig) AddFunction(resourceName string, functionName string, p
 	}
 
 	ident := flect.New(resourceName)
-	fName := getFuncName(ident, functionName)
+	fName := GetFuncName(resourceName, functionName)
 
 	f := &Function{
 		Name:    fName,
@@ -133,7 +133,7 @@ func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string
 
 	ident := flect.New(resourceName)
 	rCamel := ident.Camelize().String()
-	name := getFuncName(ident, functionName)
+	name := GetFuncName(resourceName, functionName)
 
 	for i, f := range c.Functions[rCamel] {
 		if name == f.Name {
@@ -148,16 +148,6 @@ func (c *ResourceConfig) RemoveFunction(resourceName string, functionName string
 func (c *ResourceConfig) RemoveResource(resourceName string) {
 	delete(c.Resources, resourceName)
 	delete(c.Functions, resourceName)
-}
-
-// getFuncName returns the generated function name for a given resource ident and a functionName
-func getFuncName(ident flect.Ident, functionName string) string {
-	if ident.String() == "_" {
-		return functionName
-	}
-
-	return functionName + "_" + ident.Singularize().String()
-
 }
 
 // GetServerlessConfig returns the ServerlessConfig (serverless.yml contents) for a given resource/function group name
@@ -183,7 +173,10 @@ func (m MUGConfig) GetServerlessConfig(n string) ServerlessConfig {
 
 // ReadMUGConfig ...
 func ReadMUGConfig() MUGConfig {
-	data := readDataFromFile(filepath.Join(GetWorkingDir(), "mug.config.json"))
+	data, err := readDataFromFile(filepath.Join(GetWorkingDir(), "mug.config.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var config MUGConfig
 	json.Unmarshal(data, &config)
@@ -216,4 +209,22 @@ func (m MUGConfig) NewServerlessConfig() ServerlessConfig {
 	s.Provider.Region = m.Region
 
 	return s
+}
+
+// ReadServerlessConfig reads the ServerlessConfig from serverless.yml in the resource or function group directory.
+// If a serverless.yml file does not exist, a new default ServerlessConfig is returned
+func (m MUGConfig) ReadServerlessConfig(rn string) ServerlessConfig {
+	var sc ServerlessConfig
+	data, err := readDataFromFile(filepath.Join(m.ProjectPath, "functions", rn, "serverless.yml"))
+	if err == nil {
+		if err := yaml.Unmarshal(data, &sc); err != nil {
+			log.Fatal(err)
+		}
+	} else if os.IsNotExist(err) {
+		// file doesn't exist return default ServerlessConfig
+		sc = m.NewServerlessConfig()
+
+	}
+
+	return sc
 }

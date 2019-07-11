@@ -337,18 +337,29 @@ func UpdateYMLs(config ResourceConfig, ignoreSLS bool) {
 	generateSAMTemplate(config)
 }
 
-func readDataFromFile(path string) []byte {
+func readDataFromFile(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return data
+	return data, nil
+}
+
+// GetFuncName returns the generated function name for a given resource/ function group name and a functionName
+func GetFuncName(resourceName, functionName string) string {
+	ident := flect.New(resourceName)
+	if ident.String() == "_" {
+		return functionName
+	}
+
+	return functionName + "_" + ident.Singularize().String()
+
 }

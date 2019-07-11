@@ -3,6 +3,7 @@ package models
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/imdario/mergo"
@@ -17,8 +18,8 @@ type ServerlessConfig struct {
 	Service   string
 	Provider  Provider
 	Package   Package
-	Functions map[string]ServerlessFunction
-	Resources Resources
+	Functions map[string]ServerlessFunction `yaml:",omitempty"`
+	Resources Resources                     `yaml:",omitempty"`
 }
 
 // Provider ...
@@ -153,6 +154,38 @@ func NewDefaultServerlessConfig() ServerlessConfig {
 	return s
 }
 
+// Write writes the ServerlessConfig to serverless.yml for the given project path and model name
+func (s *ServerlessConfig) Write(pp, mn string) {
+	// resource path
+	rp := filepath.Join(pp, "functions", mn)
+
+	// read env file
+	env, _ := godotenv.Read(filepath.Join(pp, ".env"), filepath.Join(rp, ".env"))
+
+	// merge environment into ServerlessConfig
+	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
+		log.Fatal(err)
+	}
+
+	fp := filepath.Join(rp, "serverless.yml")
+	// make sure directory exists
+	if _, err := os.Stat(rp); os.IsNotExist(err) {
+		if err := os.MkdirAll(rp, 0755); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	yml, err := yaml.Marshal(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(fp, yml, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // SetResourceWithModel sets a Resource to the ServerlessConfig
 func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 	rd := ResourceDefinition{
@@ -220,28 +253,22 @@ func (s *ServerlessConfig) SetFunctions(fns []*Function) {
 	}
 }
 
-// Write writes the ServerlessConfig to serverless.yml for the given project path and model name
-func (s *ServerlessConfig) Write(pp, mn string) {
-	// resource path
-	rp := filepath.Join(pp, "functions", mn)
-
-	// read env file
-	env, _ := godotenv.Read(filepath.Join(pp, ".env"), filepath.Join(rp, ".env"))
-
-	// merge environment into ServerlessConfig
-	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
-		log.Fatal(err)
+// AddFunction adds a function to the ServerlessConfig
+func (s *ServerlessConfig) AddFunction(fn Function) {
+	// make sure map exists
+	if len(s.Functions) == 0 {
+		s.Functions = map[string]ServerlessFunction{}
 	}
-
-	f := filepath.Join(rp, "serverless.yml")
-
-	yml, err := yaml.Marshal(s)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = ioutil.WriteFile(f, yml, 0644)
-	if err != nil {
-		log.Fatal(err)
+	s.Functions[fn.Name] = ServerlessFunction{
+		Handler: fn.Handler,
+		Events: []map[string]Event{
+			map[string]Event{
+				"http:": Event{
+					Path:   fn.Path,
+					Method: fn.Method,
+					CORS:   true,
+				},
+			},
+		},
 	}
 }

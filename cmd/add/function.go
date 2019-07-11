@@ -27,8 +27,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/crolly/mug/cmd/models"
 	"github.com/gobuffalo/flect"
+
+	"github.com/crolly/mug/cmd/models"
 
 	"github.com/spf13/cobra"
 )
@@ -40,37 +41,36 @@ var (
 		Short: "Adds a function to a resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			actual := args[0]
-			function := flect.New(actual).Camelize()
+			fName := args[0]
 
 			// get config and add function to it
-			config := models.ReadConfig()
-			resourceName, f := config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
+			mc := models.ReadMUGConfig()
+			sc := mc.ReadServerlessConfig(rName)
 
-			// generate files
-			renderFunction(config, resourceName, function)
-			config.Write()
-
-			// update the yml files and Makefile with current config
-			// updateYMLs(readConfig(), noUpdate)
-			if noUpdate {
-				path, functionConfig := models.GetConfigForFunction("", f, config)
-				models.GenerateSLS(path, functionConfig)
-			} else {
-				models.UpdateYMLs(config, noUpdate)
+			fn := models.Function{
+				Name:    models.GetFuncName(rName, fName),
+				Path:    strings.TrimPrefix(path, "/"),
+				Method:  strings.ToLower(method),
+				Handler: fName,
 			}
+
+			sc.AddFunction(fn)
+			sc.Write(mc.ProjectPath, rName)
+
+			// // generate files
+			renderFunction(mc, rName, fName)
 		},
 	}
 
-	resourceName string
-	path         string
-	method       string
+	rName  string
+	path   string
+	method string
 )
 
 func init() {
 	AddCmd.AddCommand(functionCmd)
 
-	functionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
+	functionCmd.Flags().StringVarP(&rName, "resource", "r", "generic", "Name of the resource the function should be added to")
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
 	functionCmd.Flags().StringVarP(&method, "method", "m", "", "Method the function will respond to e.g. get")
 
@@ -80,11 +80,12 @@ func init() {
 	functionCmd.MarkFlagRequired("method")
 }
 
-func renderFunction(config models.ResourceConfig, resourceName string, function flect.Ident) {
+func renderFunction(config models.MUGConfig, rName, fName string) {
+	fIdent := flect.New(fName)
 
 	// create the function folder
-	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
-	funcFolder := filepath.Join(folder, function.String())
+	folder := filepath.Join(config.ProjectPath, "functions", rName)
+	funcFolder := filepath.Join(folder, fName)
 	os.MkdirAll(funcFolder, 0755)
 
 	// create main.go file
@@ -97,7 +98,7 @@ func renderFunction(config models.ResourceConfig, resourceName string, function 
 	// get blueprint template
 	var t *template.Template
 	resourceFunc := false
-	if resourceName != "" {
+	if rName != "generic" {
 		t = models.LoadTemplateFromBox(models.FunctionBox, "resourceBlueprint.tmpl")
 		resourceFunc = true
 	} else {
@@ -106,8 +107,8 @@ func renderFunction(config models.ResourceConfig, resourceName string, function 
 
 	// execute template and save to file
 	data := map[string]interface{}{
-		"ResourceName": resourceName,
-		"Function":     function,
+		"ResourceName": rName,
+		"Function":     fIdent,
 		"Config":       config,
 	}
 	err = t.Execute(f, data)
@@ -117,14 +118,14 @@ func renderFunction(config models.ResourceConfig, resourceName string, function 
 
 	if resourceFunc {
 		// also add function to resource file
-		f, err := os.OpenFile(filepath.Join(folder, resourceName+".go"), os.O_APPEND|os.O_WRONLY, 0600)
+		f, err := os.OpenFile(filepath.Join(folder, rName+".go"), os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer f.Close()
 
 		data := map[string]interface{}{
-			"Function": function,
+			"Function": fIdent,
 		}
 		t := models.LoadTemplateFromBox(models.FunctionBox, "resourceFunction.tmpl")
 		err = t.Execute(f, data)
