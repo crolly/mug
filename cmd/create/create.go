@@ -68,8 +68,7 @@ func createProjectStructure(projectName string) {
 
 	// iterate over templates and execute
 	for _, tmpl := range models.ProjectBox.List() {
-
-		// create file
+		// create files (Gopkg.toml, Makefile)
 		fileName := fmt.Sprintf("%s/%s", config.ProjectPath, strings.Replace(tmpl, ".tmpl", "", 1))
 		f, err := os.Create(fileName)
 		if err != nil {
@@ -87,12 +86,14 @@ func createProjectStructure(projectName string) {
 		}
 	}
 
+	// persist config
+	config.Write()
 }
 
-func newConfig(projectName string) models.ResourceConfig {
+func newConfig(projectName string) models.MUGConfig {
 	pName, pPath, iPath := getPaths(projectName)
 
-	config := models.ResourceConfig{
+	config := models.MUGConfig{
 		ProjectName: pName,
 		ProjectPath: pPath,
 		ImportPath:  iPath,

@@ -1,8 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -199,12 +197,6 @@ func renderMakefile(config ResourceConfig) {
 	log.Println("Makefile generated.")
 }
 
-// WriteResourceDefinition ...
-func WriteResourceDefinition(m Model, config ResourceConfig) {
-	json, _ := json.MarshalIndent(m, "", "  ")
-	_ = ioutil.WriteFile(filepath.Join(config.ProjectPath, "functions", m.Name, fmt.Sprintf("%s.json", m.Name)), json, 0644)
-}
-
 // RenderSLS will render the serverless.yml file with a given ResourceConfig
 func RenderSLS(config ResourceConfig) {
 	log.Println("Generating serverless.yml...")
@@ -343,4 +335,20 @@ func UpdateYMLs(config ResourceConfig, ignoreSLS bool) {
 		RenderSLS(config)
 	}
 	generateSAMTemplate(config)
+}
+
+func readDataFromFile(path string) []byte {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return data
 }

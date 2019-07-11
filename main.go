@@ -20,9 +20,7 @@
 
 package main
 
-import (
-	"github.com/crolly/mug/cmd"
-)
+import "github.com/crolly/mug/cmd"
 
 func main() {
 
@@ -33,4 +31,25 @@ func main() {
 	// }
 
 	cmd.RootCmd.Execute()
+
+	// f, err := os.Open("template.yml")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// defer f.Close()
+
+	// data, err := ioutil.ReadAll(f)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// sls := models.TemplateConfig{}
+	// err = yaml.Unmarshal(data, &sls)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// s, _ := yaml.Marshal(sls)
+	// log.Println(string(s))
 }

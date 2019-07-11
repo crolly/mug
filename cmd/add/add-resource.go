@@ -21,14 +21,12 @@
 package add
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/crolly/mug/cmd/models"
-	"github.com/gobuffalo/flect"
 
 	"github.com/spf13/cobra"
 )
@@ -40,6 +38,8 @@ var (
 		Short: "Adds CRUDL functions for the defined resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			// TODO: check if resource exists already
+
 			// instantiate new resource model and parse given attributes
 			modelName := args[0]
 			capacityUnits := map[string]byte{
@@ -60,21 +60,15 @@ var (
 			m.Imports = m.GetImports()
 
 			// add resource to mug.config.json
-			config := addResourceConfig(m)
+			mc, sc := m.GetConfigs()
+
 			// render templates with data
-			renderTemplates(config, m)
+			renderTemplates(mc, m)
 
-			// update the yml files and Makefile with current config
-			// updateYMLs(config, noUpdate)
-			if noUpdate {
-				path, resourceConfig := models.GetConfigForResource(modelName, config)
-				models.GenerateSLS(path, resourceConfig)
-			} else {
-				models.UpdateYMLs(config, noUpdate)
-			}
-
-			// write definition to resource folder
-			models.WriteResourceDefinition(m, config)
+			// write modelName.json, mug.config.json and serverless.yml for resource
+			m.Write(mc.ProjectPath)
+			mc.Write()
+			sc.Write(mc.ProjectPath, modelName)
 		},
 	}
 
@@ -94,58 +88,11 @@ func init() {
 	resourceCmd.Flags().Uint8VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
 	resourceCmd.Flags().Uint8VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
 
-	resourceCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore serverless.yml and template.yml during execution")
+	// resourceCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore serverless.yml and template.yml during execution")
 
 }
 
-func addResourceConfig(m models.Model) models.ResourceConfig {
-	config := models.ReadConfig()
-
-	singular := m.Ident.Singularize().String()
-	plural := m.Ident.Pluralize().String()
-
-	attributeDefinitions := map[string]models.AttributeDefinition{}
-	for _, k := range m.KeySchema {
-		a := m.Attributes[k]
-		if len(a.Name) > 0 {
-			attributeDefinitions[a.Name] = models.AttributeDefinition{
-				Ident:   a.Ident,
-				AwsType: a.AwsType,
-			}
-		}
-	}
-
-	resource := &models.Resource{
-		Ident:         flect.New(m.Name),
-		Attributes:    attributeDefinitions,
-		KeySchema:     m.KeySchema,
-		CompositeKey:  m.CompositeKey,
-		BillingMode:   m.BillingMode,
-		CapacityUnits: m.CapacityUnits,
-	}
-	config.Resources[m.Name] = resource
-
-	var path string
-	if m.CompositeKey {
-		path = fmt.Sprintf("%s/{%s}/{%s}", plural, m.KeySchema["HASH"], m.KeySchema["RANGE"])
-	} else {
-		path = fmt.Sprintf("%s/{%s}", plural, m.KeySchema["HASH"])
-	}
-
-	config.Functions[m.Name] = []*models.Function{
-		&models.Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
-		&models.Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
-		&models.Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
-		&models.Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
-		&models.Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
-	}
-
-	config.Write()
-
-	return config
-}
-
-func renderTemplates(config models.ResourceConfig, m models.Model) {
+func renderTemplates(config models.MUGConfig, m models.Model) {
 	// iterate over templates and execute
 	for _, tmpl := range models.ResourceBox.List() {
 		// create the function folder for function templete (except model)

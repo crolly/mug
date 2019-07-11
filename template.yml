@@ -1,0 +1,62 @@
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+  createuserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: create
+      CodeUri: ./functions/user/debug 
+      Events:
+        createuserApi:
+            Type: Api
+            Properties:
+                Path: /users
+                Method: post
+  readuserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: read
+      CodeUri: ./functions/user/debug 
+      Events:
+        readuserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: get
+  updateuserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: update
+      CodeUri: ./functions/user/debug 
+      Events:
+        updateuserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: put
+  deleteuserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: delete
+      CodeUri: ./functions/user/debug 
+      Events:
+        deleteuserApi:
+            Type: Api
+            Properties:
+                Path: /users/{id}
+                Method: delete
+  listuserFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Runtime: go1.x
+      Handler: list
+      CodeUri: ./functions/user/debug 
+      Events:
+        listuserApi:
+            Type: Api
+            Properties:
+                Path: /users
+                Method: get

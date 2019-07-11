@@ -7,8 +7,25 @@ import (
 	"os"
 	"path/filepath"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/gobuffalo/flect"
 )
+
+// MUGConfig ...
+type MUGConfig struct {
+	ProjectName string
+	ProjectPath string
+	ImportPath  string
+	Region      string
+	Resources   map[string]*NewResource
+}
+
+// NewResource ...
+type NewResource struct {
+	Ident      flect.Ident
+	Attributes map[string]AttributeDefinition
+}
 
 // ResourceConfig represents mu's configuration for resources
 type ResourceConfig struct {
@@ -141,4 +158,62 @@ func getFuncName(ident flect.Ident, functionName string) string {
 
 	return functionName + "_" + ident.Singularize().String()
 
+}
+
+// GetServerlessConfig returns the ServerlessConfig (serverless.yml contents) for a given resource/function group name
+func (m MUGConfig) GetServerlessConfig(n string) ServerlessConfig {
+	s, err := os.Open(filepath.Join(m.ProjectPath, "functions", n, "serverless.yml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer s.Close()
+
+	data, err := ioutil.ReadAll(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var c ServerlessConfig
+
+	yaml.Unmarshal(data, &c)
+
+	return c
+}
+
+// ReadMUGConfig ...
+func ReadMUGConfig() MUGConfig {
+	data := readDataFromFile(filepath.Join(GetWorkingDir(), "mug.config.json"))
+
+	var config MUGConfig
+	json.Unmarshal(data, &config)
+
+	// make sure map exists
+	if len(config.Resources) == 0 {
+		config.Resources = make(map[string]*NewResource)
+	}
+
+	return config
+}
+
+// Write write the MUGConfig to mug.config.json in the project path
+func (m MUGConfig) Write() {
+	f := filepath.Join(m.ProjectPath, "mug.config.json")
+
+	json, _ := json.MarshalIndent(m, "", "  ")
+	err := ioutil.WriteFile(f, json, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// NewServerlessConfig return a new ServerlessConfig with the attributes from the MUGConfig
+// NewFromResourceConfig returns a ServerlessConfig from a provided ResourceConfig
+func (m MUGConfig) NewServerlessConfig() ServerlessConfig {
+	s := NewDefaultServerlessConfig()
+	s.Service = m.ProjectName
+	s.Provider.Region = m.Region
+
+	return s
 }

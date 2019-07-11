@@ -1,8 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/gobuffalo/flect"
@@ -307,6 +310,65 @@ func (m *Model) checkKeys() (bool, error) {
 
 	return false, fmt.Errorf("Too many keys defined in Key Schema")
 
+}
+
+// GetConfigs returns the MUGConfig and ServerlessConfig for this Model
+func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
+	attributeDefinitions := map[string]AttributeDefinition{}
+	for _, k := range m.KeySchema {
+		a := m.Attributes[k]
+		if len(a.Name) > 0 {
+			attributeDefinitions[a.Name] = AttributeDefinition{
+				Ident:   a.Ident,
+				AwsType: a.AwsType,
+			}
+		}
+	}
+
+	// update mug.config.json
+	r := &NewResource{
+		Ident:      flect.New(m.Name),
+		Attributes: attributeDefinitions,
+	}
+	mc := ReadMUGConfig()
+	mc.Resources[m.Name] = r
+	// mc.Write()
+
+	// update serverless.yml
+	var path string
+	singular := m.Ident.Singularize().String()
+	plural := m.Ident.Pluralize().String()
+	if m.CompositeKey {
+		path = fmt.Sprintf("%s/{%s}/{%s}", plural, m.KeySchema["HASH"], m.KeySchema["RANGE"])
+	} else {
+		path = fmt.Sprintf("%s/{%s}", plural, m.KeySchema["HASH"])
+	}
+	fns := []*Function{
+		&Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
+		&Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
+		&Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
+		&Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
+		&Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
+	}
+
+	sc := mc.NewServerlessConfig()
+	sc.SetResourceWithModel(r, m)
+	sc.SetFunctions(fns)
+
+	return mc, sc
+}
+
+// Write write the Model definition to the modelName.json
+func (m Model) Write(path string) {
+	json, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile(filepath.Join(path, "functions", m.Name, fmt.Sprintf("%s.json", m.Name)), json, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // String prints a representation of a model
