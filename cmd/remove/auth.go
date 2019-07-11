@@ -18,36 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package remove
 
 import (
-	"github.com/gobuffalo/flect"
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
-// rmfunctionCmd represents the rmfunction command
-var rmfunctionCmd = &cobra.Command{
-	Use:   "function functionName",
-	Short: "Removes a function from a resource",
+// rmauthCmd represents the rmauth command
+var rmauthCmd = &cobra.Command{
+	Use:   "auth",
+	Short: "Remove authentication from the project",
 	Run: func(cmd *cobra.Command, args []string) {
-		actual := args[0]
-		function := flect.New(actual).Camelize()
+		config := models.ReadConfig()
+		for _, funcs := range config.Functions {
+			for _, f := range funcs {
+				f.Authentication = false
+			}
+		}
+		config.Authentication = false
 
-		// get config and add function to it
-		config := readConfig()
-		config.RemoveFunction(resourceName, function.String())
-
-		// remove files
-		removeFiles(config, resourceName, &function)
 		config.Write()
 
-		// update the yml files and Makefile with current config
-		updateYMLs(config, true)
+		models.RenderSLS(config)
 	},
 }
 
 func init() {
-	removeCmd.AddCommand(rmfunctionCmd)
-
-	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
+	RemoveCmd.AddCommand(rmauthCmd)
 }

@@ -25,7 +25,6 @@ import (
 )
 
 func main() {
-	mug := cmd.NewRootCmd()
 
 	// code to generate docs
 	// err := doc.GenMarkdownTree(mug, "./docs")
@@ -33,5 +32,5 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	mug.Execute()
+	cmd.RootCmd.Execute()
 }

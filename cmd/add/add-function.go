@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package add
 
 import (
 	"log"
@@ -27,6 +27,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/crolly/mug/cmd/models"
 	"github.com/gobuffalo/flect"
 
 	"github.com/spf13/cobra"
@@ -43,7 +44,7 @@ var (
 			function := flect.New(actual).Camelize()
 
 			// get config and add function to it
-			config := readConfig()
+			config := models.ReadConfig()
 			resourceName, f := config.AddFunction(resourceName, function.String(), strings.TrimPrefix(path, "/"), strings.ToLower(method))
 
 			// generate files
@@ -53,10 +54,10 @@ var (
 			// update the yml files and Makefile with current config
 			// updateYMLs(readConfig(), noUpdate)
 			if noUpdate {
-				path, functionConfig := getConfigForFunction("", f, config)
-				generateSLS(path, functionConfig)
+				path, functionConfig := models.GetConfigForFunction("", f, config)
+				models.GenerateSLS(path, functionConfig)
 			} else {
-				updateYMLs(config, noUpdate)
+				models.UpdateYMLs(config, noUpdate)
 			}
 		},
 	}
@@ -67,7 +68,7 @@ var (
 )
 
 func init() {
-	addCmd.AddCommand(functionCmd)
+	AddCmd.AddCommand(functionCmd)
 
 	functionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
@@ -79,7 +80,7 @@ func init() {
 	functionCmd.MarkFlagRequired("method")
 }
 
-func renderFunction(config ResourceConfig, resourceName string, function flect.Ident) {
+func renderFunction(config models.ResourceConfig, resourceName string, function flect.Ident) {
 
 	// create the function folder
 	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
@@ -97,10 +98,10 @@ func renderFunction(config ResourceConfig, resourceName string, function flect.I
 	var t *template.Template
 	resourceFunc := false
 	if resourceName != "" {
-		t = loadTemplateFromBox(functionBox, "resourceBlueprint.tmpl")
+		t = models.LoadTemplateFromBox(models.FunctionBox, "resourceBlueprint.tmpl")
 		resourceFunc = true
 	} else {
-		t = loadTemplateFromBox(functionBox, "blueprint.tmpl")
+		t = models.LoadTemplateFromBox(models.FunctionBox, "blueprint.tmpl")
 	}
 
 	// execute template and save to file
@@ -125,7 +126,7 @@ func renderFunction(config ResourceConfig, resourceName string, function flect.I
 		data := map[string]interface{}{
 			"Function": function,
 		}
-		t := loadTemplateFromBox(functionBox, "resourceFunction.tmpl")
+		t := models.LoadTemplateFromBox(models.FunctionBox, "resourceFunction.tmpl")
 		err = t.Execute(f, data)
 		if err != nil {
 			log.Fatal(err)

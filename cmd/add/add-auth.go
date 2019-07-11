@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package add
 
 import (
 	"log"
@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,7 @@ var (
 		Use:   "auth",
 		Short: "Add authentication to resources and functions",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := readConfig()
+			config := models.ReadConfig()
 			// add user pool if provided to env
 			if pool != "" {
 				addPoolEnv(config, pool)
@@ -45,7 +46,7 @@ var (
 			addAuth(config, excludes)
 
 			// update serverless.yml with authentication information
-			renderSLS(config)
+			models.RenderSLS(config)
 		},
 	}
 
@@ -53,14 +54,14 @@ var (
 )
 
 func init() {
-	addCmd.AddCommand(authCmd)
+	AddCmd.AddCommand(authCmd)
 
 	authCmd.Flags().StringVarP(&pool, "user pool", "p", "", "define the user pool to authenticate against")
 	authCmd.Flags().StringVarP(&excludes, "excludes", "x", "", "list of functions or resources without authentication")
 
 }
 
-func addPoolEnv(config ResourceConfig, pool string) {
+func addPoolEnv(config models.ResourceConfig, pool string) {
 	f, err := os.OpenFile(filepath.Join(config.ProjectPath, ".env"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -72,7 +73,7 @@ func addPoolEnv(config ResourceConfig, pool string) {
 	}
 }
 
-func addAuth(config ResourceConfig, excludes string) {
+func addAuth(config models.ResourceConfig, excludes string) {
 	excludeSlice := strings.Split(excludes, ",")
 	activeAuth := false
 

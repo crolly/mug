@@ -18,31 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package remove
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// rmauthCmd represents the rmauth command
-var rmauthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Remove authentication from the project",
-	Run: func(cmd *cobra.Command, args []string) {
-		config := readConfig()
-		for _, funcs := range config.Functions {
-			for _, f := range funcs {
-				f.Authentication = false
-			}
-		}
-		config.Authentication = false
-
-		config.Write()
-
-		renderSLS(config)
-	},
+// RemoveCmd represents the remove command
+var RemoveCmd = &cobra.Command{
+	Use:   "remove",
+	Short: "Remove a simple lambda function or CRUDL functions for a resource to your project",
 }
 
 func init() {
-	removeCmd.AddCommand(rmauthCmd)
+	RemoveCmd.SetHelpCommand(&cobra.Command{
+		Use:    "no-help",
+		Hidden: true,
+	})
 }

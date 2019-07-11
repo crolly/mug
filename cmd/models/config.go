@@ -1,4 +1,4 @@
-package cmd
+package models
 
 import (
 	"encoding/json"
@@ -50,8 +50,9 @@ type Function struct {
 	Authentication bool `json:"authentication"`
 }
 
-func readConfig() ResourceConfig {
-	wd := getWorkingDir()
+// ReadConfig return the ResourceConfig from the working directory
+func ReadConfig() ResourceConfig {
+	wd := GetWorkingDir()
 
 	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
 	if err != nil {

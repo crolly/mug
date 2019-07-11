@@ -18,23 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package deploy
 
 import (
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
-// deployCmd represents the deploy command
 var (
-	deployCmd = &cobra.Command{
+	// DeployCmd represents the deploy command
+	DeployCmd = &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploys the stack to AWS using serverless framework",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := readConfig()
+			config := models.ReadConfig()
 			// if noUpdate {
 			// 	// render only Makefile
 			// 	renderMakefile(config)
@@ -50,16 +51,16 @@ var (
 		},
 	}
 
-	name string
+	name     string
+	noUpdate bool
 )
 
 func init() {
-	deployCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
-	deployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
-	rootCmd.AddCommand(deployCmd)
+	DeployCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
+	DeployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
 }
 
-func makeBuild(config ResourceConfig) {
+func makeBuild(config models.ResourceConfig) {
 	// check if Makefile exists in working directory
 	if _, err := os.Stat(filepath.Join(config.ProjectPath, "Makefile")); os.IsNotExist(err) {
 		log.Fatal("no Makefile found - cannout build binaries")
@@ -67,10 +68,10 @@ func makeBuild(config ResourceConfig) {
 
 	// run make debug
 	log.Println("Building Binaries...")
-	runCmd("make", "build")
+	models.RunCmd("make", "build")
 }
 
-func deploy(config ResourceConfig) {
+func deploy(config models.ResourceConfig) {
 	dir := filepath.Join(config.ProjectPath, "functions")
 	// check if only single resource of function should be deployed
 	if name != "" {
@@ -97,5 +98,5 @@ func deployResourceOrFunction(dir, name string) {
 
 	// run make debug
 	log.Println("Deploying ...")
-	runCmd("sls", "deploy")
+	models.RunCmd("sls", "deploy")
 }

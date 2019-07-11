@@ -24,22 +24,23 @@ import (
 	"fmt"
 	"os"
 
-	packr "github.com/gobuffalo/packr/v2"
+	"github.com/crolly/mug/cmd/remove"
+
+	"github.com/crolly/mug/cmd/deploy"
+
+	"github.com/crolly/mug/cmd/add"
+	"github.com/crolly/mug/cmd/create"
+	"github.com/crolly/mug/cmd/debug"
+
 	"github.com/spf13/cobra"
 )
 
 var (
-	cfgFile  string
-	noUpdate bool
-
-	resourceBox = packr.New("resource", "../templates/resource")
-	projectBox  = packr.New("project", "../templates/project")
-	functionBox = packr.New("function", "../templates/function")
-	slsBox      = packr.New("sls", "../templates/sls")
+	cfgFile string
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
 	Use:   "mug",
 	Short: "microservices understand golang - easily creating serverless AWS Lambda CRUDL apps",
 	Long: `
@@ -48,15 +49,18 @@ the project structure with serverless configuration and a required Makefile
 to build the functions. You can easily add CRUDL functions as resources.`,
 }
 
-// NewRootCmd returns the pointer to the root command
-func NewRootCmd() *cobra.Command {
-	return rootCmd
+func init() {
+	RootCmd.AddCommand(create.CreateCmd)
+	RootCmd.AddCommand(add.AddCmd)
+	RootCmd.AddCommand(debug.DebugCmd)
+	RootCmd.AddCommand(deploy.DeployCmd)
+	RootCmd.AddCommand(remove.RemoveCmd)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

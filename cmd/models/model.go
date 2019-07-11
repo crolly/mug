@@ -1,4 +1,4 @@
-package cmd
+package models
 
 import (
 	"fmt"
@@ -31,8 +31,8 @@ type Attribute struct {
 	AwsType string      `json:"aws_type"`
 }
 
-// returns a new model object
-func newModel(name string, slice bool, attributes string, options map[string]interface{}) Model {
+// New returns a new model object
+func New(name string, slice bool, attributes string, options map[string]interface{}) Model {
 	ident := flect.New(name)
 	m := Model{
 		Name:  ident.Camelize().String(),
@@ -168,7 +168,7 @@ func (m *Model) addNested(b []int, pos int, attributes string, slice bool) int {
 	// new model name ensured to not have a comma or spaces
 	nmn := strings.Replace(strings.TrimSpace(attributes[cI:bI-1]), ",", "", 1)
 	attr := attributes[bI+1 : pos]
-	n := newModel(nmn, slice, attr, nil)
+	n := New(nmn, slice, attr, nil)
 
 	m.Nested = append(m.Nested, n)
 
@@ -222,13 +222,13 @@ func (m *Model) addImport(goType string) {
 	}
 }
 
-// getImports recursively iterates through all import slices and adds the import to the root model
-func (m *Model) getImports() []string {
+// GetImports recursively iterates through all import slices and adds the import to the root model
+func (m *Model) GetImports() []string {
 	var imports []string
 	if len(m.Nested) > 0 {
 		for _, n := range m.Nested {
 			// get all imports of the nested model
-			nI := n.getImports()
+			nI := n.GetImports()
 
 			// iterate over imports and append new ones to imports slice
 			for _, i := range nI {

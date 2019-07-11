@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package add
 
 import (
 	"fmt"
@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/crolly/mug/cmd/models"
 	"github.com/gobuffalo/flect"
 
 	"github.com/spf13/cobra"
@@ -53,10 +54,10 @@ var (
 				"billing":    billingMode,
 				"capacity":   capacityUnits,
 			}
-			m := newModel(modelName, false, attributes, options)
+			m := models.New(modelName, false, attributes, options)
 
 			// get all imports
-			m.Imports = m.getImports()
+			m.Imports = m.GetImports()
 
 			// add resource to mug.config.json
 			config := addResourceConfig(m)
@@ -66,14 +67,14 @@ var (
 			// update the yml files and Makefile with current config
 			// updateYMLs(config, noUpdate)
 			if noUpdate {
-				path, resourceConfig := getConfigForResource(modelName, config)
-				generateSLS(path, resourceConfig)
+				path, resourceConfig := models.GetConfigForResource(modelName, config)
+				models.GenerateSLS(path, resourceConfig)
 			} else {
-				updateYMLs(config, noUpdate)
+				models.UpdateYMLs(config, noUpdate)
 			}
 
 			// write definition to resource folder
-			writeResourceDefinition(m, config)
+			models.WriteResourceDefinition(m, config)
 		},
 	}
 
@@ -83,7 +84,7 @@ var (
 )
 
 func init() {
-	addCmd.AddCommand(resourceCmd)
+	AddCmd.AddCommand(resourceCmd)
 	resourceCmd.Flags().StringVarP(&attributes, "attributes", "a", "", "attributes of the resource")
 	resourceCmd.Flags().BoolVarP(&noID, "noID", "n", false, "disable automatic generation of id attribute with type uuid")
 	resourceCmd.Flags().BoolVarP(&dates, "addDates", "d", false, "automatically add createdAt and updatedAt attributes")
@@ -97,24 +98,24 @@ func init() {
 
 }
 
-func addResourceConfig(m Model) ResourceConfig {
-	config := readConfig()
+func addResourceConfig(m models.Model) models.ResourceConfig {
+	config := models.ReadConfig()
 
 	singular := m.Ident.Singularize().String()
 	plural := m.Ident.Pluralize().String()
 
-	attributeDefinitions := map[string]AttributeDefinition{}
+	attributeDefinitions := map[string]models.AttributeDefinition{}
 	for _, k := range m.KeySchema {
 		a := m.Attributes[k]
 		if len(a.Name) > 0 {
-			attributeDefinitions[a.Name] = AttributeDefinition{
+			attributeDefinitions[a.Name] = models.AttributeDefinition{
 				Ident:   a.Ident,
 				AwsType: a.AwsType,
 			}
 		}
 	}
 
-	resource := &Resource{
+	resource := &models.Resource{
 		Ident:         flect.New(m.Name),
 		Attributes:    attributeDefinitions,
 		KeySchema:     m.KeySchema,
@@ -131,12 +132,12 @@ func addResourceConfig(m Model) ResourceConfig {
 		path = fmt.Sprintf("%s/{%s}", plural, m.KeySchema["HASH"])
 	}
 
-	config.Functions[m.Name] = []*Function{
-		&Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
-		&Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
-		&Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
-		&Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
-		&Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
+	config.Functions[m.Name] = []*models.Function{
+		&models.Function{Name: "create" + "_" + singular, Handler: "create", Path: plural, Method: "post"},
+		&models.Function{Name: "read" + "_" + singular, Handler: "read", Path: path, Method: "get"},
+		&models.Function{Name: "update" + "_" + singular, Handler: "update", Path: path, Method: "put"},
+		&models.Function{Name: "delete" + "_" + singular, Handler: "delete", Path: path, Method: "delete"},
+		&models.Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
 	}
 
 	config.Write()
@@ -144,9 +145,9 @@ func addResourceConfig(m Model) ResourceConfig {
 	return config
 }
 
-func renderTemplates(config ResourceConfig, m Model) {
+func renderTemplates(config models.ResourceConfig, m models.Model) {
 	// iterate over templates and execute
-	for _, tmpl := range resourceBox.List() {
+	for _, tmpl := range models.ResourceBox.List() {
 		// create the function folder for function templete (except model)
 		folder := filepath.Join(config.ProjectPath, "functions", m.Ident.Camelize().String())
 		if tmpl != "model.go.tmpl" {
@@ -166,7 +167,7 @@ func renderTemplates(config ResourceConfig, m Model) {
 		defer f.Close()
 
 		// load template
-		t := loadTemplateFromBox(resourceBox, tmpl)
+		t := models.LoadTemplateFromBox(models.ResourceBox, tmpl)
 
 		// execute template and save to file
 		data := map[string]interface{}{

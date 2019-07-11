@@ -18,22 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package add
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// addCmd represents the add command
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a simple lambda function or CRUDL functions for a resource to your project",
-}
+var (
+	// AddCmd represents the add command
+	AddCmd = &cobra.Command{
+		Use:   "add",
+		Short: "Add a simple lambda function or CRUDL functions for a resource to your project",
+	}
+
+	noUpdate bool
+)
 
 func init() {
-	addCmd.SetHelpCommand(&cobra.Command{
+	AddCmd.SetHelpCommand(&cobra.Command{
 		Use:    "no-help",
 		Hidden: true,
 	})
-	rootCmd.AddCommand(addCmd)
 }

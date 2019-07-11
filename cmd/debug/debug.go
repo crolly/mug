@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package debug
 
 import (
 	"encoding/json"
@@ -33,13 +33,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/crolly/mug/cmd/models"
 
 	"github.com/spf13/cobra"
 )
 
-// debugCmd represents the debug command
 var (
-	debugCmd = &cobra.Command{
+	// DebugCmd represents the debug command
+	DebugCmd = &cobra.Command{
 		Use:   "debug",
 		Short: "starts a aws-sam-cli local api",
 		Long: `This command generates a template.yml for aws-sam-cli and starts
@@ -60,22 +61,21 @@ var (
 		},
 	}
 
-	remoteDebugger bool
-	debugPort      string
-	apiPort        string
+	remoteDebugger, noUpdate bool
+	debugPort                string
+	apiPort                  string
 )
 
 func init() {
-	rootCmd.AddCommand(debugCmd)
-	debugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
-	debugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
-	debugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
-	debugCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
+	DebugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
+	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
+	DebugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
+	DebugCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
 }
 
 func makeDebug() {
 	// check if Makefile exists in working directory
-	config := readConfig()
+	config := models.ReadConfig()
 	wd := config.ProjectPath
 	if _, err := os.Stat(filepath.Join(wd, "Makefile")); os.IsNotExist(err) {
 		log.Fatal("no Makefile found - cannout build binaries")
@@ -91,7 +91,7 @@ func makeDebug() {
 
 	// run make debug
 	log.Println("Building Debug Binaries...")
-	runCmd("make", "debug")
+	models.RunCmd("make", "debug")
 }
 
 func createLambdaNetwork() {
@@ -103,7 +103,7 @@ func createLambdaNetwork() {
 	// create network if it doesn't exist
 	if len(out) == 0 {
 		log.Println("Creating lambda-local docker network")
-		runCmd("docker", "network", "create", "lambda-local")
+		models.RunCmd("docker", "network", "create", "lambda-local")
 	} else {
 		log.Println("Docker network lambda-local already exists, skipping creation...")
 	}
@@ -118,14 +118,14 @@ func startLocalDynamoDB() {
 
 	if strings.HasPrefix(string(out), "Exited") {
 		log.Println("Restarting dynamodb-local container...")
-		runCmd("docker", "restart", "dynamodb")
+		models.RunCmd("docker", "restart", "dynamodb")
 	}
 
 	// create container if it doesn't exist already
 	if len(out) == 0 {
 		log.Println("Starting dynamodb-local...")
-		wd := getWorkingDir()
-		runCmd("docker", "run", "-v", fmt.Sprintf("%s:/dynamodb_local_db", wd), "-p", "8000:8000", "--net=lambda-local", "--name", "dynamodb", "-d", "amazon/dynamodb-local")
+		wd := models.GetWorkingDir()
+		models.RunCmd("docker", "run", "-v", fmt.Sprintf("%s:/dynamodb_local_db", wd), "-p", "8000:8000", "--net=lambda-local", "--name", "dynamodb", "-d", "amazon/dynamodb-local")
 	}
 
 	log.Println("dynamodb-local running.")
@@ -133,7 +133,7 @@ func startLocalDynamoDB() {
 
 func createResourceTables() {
 	// read the resource config
-	config := readConfig()
+	config := models.ReadConfig()
 
 	// create service to dynamodb
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -165,7 +165,7 @@ func createResourceTables() {
 	}
 }
 
-func createTableForResource(svc *dynamodb.DynamoDB, resource *Resource) {
+func createTableForResource(svc *dynamodb.DynamoDB, resource *models.Resource) {
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
 	for _, a := range resource.Attributes {
@@ -223,19 +223,19 @@ func startLocalAPI() {
 		log.Printf("Starting local API at port %s with debugger at %s...\n", apiPort, debugPort)
 	}
 
-	runCmd("sam", args...)
+	models.RunCmd("sam", args...)
 }
 
 func ensureDebugger() {
 	// build delve
 	log.Println("Building dlv locally")
 	env := []string{"GOARCH=amd64", "GOOS=linux"}
-	runCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
+	models.RunCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
 }
 
 //reads model definition for a resource
-func getResourceForTable(table string) *Resource {
-	wd := readConfig().ProjectPath
+func getResourceForTable(table string) *models.Resource {
+	wd := models.ReadConfig().ProjectPath
 
 	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
 	if err != nil {
@@ -248,7 +248,7 @@ func getResourceForTable(table string) *Resource {
 		log.Fatal(err)
 	}
 
-	var config ResourceConfig
+	var config models.ResourceConfig
 	json.Unmarshal(data, &config)
 
 	return config.Resources[table]

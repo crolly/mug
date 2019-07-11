@@ -18,22 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package remove
 
 import (
+	"fmt"
+
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
-// removeCmd represents the remove command
-var removeCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "Remove a simple lambda function or CRUDL functions for a resource to your project",
+// rmresourceCmd represents the rmresource command
+var rmresourceCmd = &cobra.Command{
+	Use:   "resource resourceName",
+	Short: "Removes an entire resource",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		resourceName := args[0]
+
+		config := models.ReadConfig()
+
+		// delete resource from configuration
+		config.RemoveResource(resourceName)
+		fmt.Println(config)
+
+		// delete resource folder
+		models.RemoveFiles(config, resourceName, nil)
+		config.Write()
+
+		models.UpdateYMLs(config, true)
+	},
 }
 
 func init() {
-	removeCmd.SetHelpCommand(&cobra.Command{
-		Use:    "no-help",
-		Hidden: true,
-	})
-	rootCmd.AddCommand(removeCmd)
+	RemoveCmd.AddCommand(rmresourceCmd)
 }

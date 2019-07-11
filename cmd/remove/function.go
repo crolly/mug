@@ -18,36 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package remove
 
 import (
-	"fmt"
-
+	"github.com/crolly/mug/cmd/models"
+	"github.com/gobuffalo/flect"
 	"github.com/spf13/cobra"
 )
 
-// rmresourceCmd represents the rmresource command
-var rmresourceCmd = &cobra.Command{
-	Use:   "resource resourceName",
-	Short: "Removes an entire resource",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		resourceName := args[0]
+// rmfunctionCmd represents the rmfunction command
+var (
+	rmfunctionCmd = &cobra.Command{
+		Use:   "function functionName",
+		Short: "Removes a function from a resource",
+		Run: func(cmd *cobra.Command, args []string) {
+			actual := args[0]
+			function := flect.New(actual).Camelize()
 
-		config := readConfig()
+			// get config and add function to it
+			config := models.ReadConfig()
+			config.RemoveFunction(resourceName, function.String())
 
-		// delete resource from configuration
-		config.RemoveResource(resourceName)
-		fmt.Println(config)
+			// remove files
+			models.RemoveFiles(config, resourceName, &function)
+			config.Write()
 
-		// delete resource folder
-		removeFiles(config, resourceName, nil)
-		config.Write()
+			// update the yml files and Makefile with current config
+			models.UpdateYMLs(config, true)
+		},
+	}
 
-		updateYMLs(config, true)
-	},
-}
+	resourceName string
+)
 
 func init() {
-	removeCmd.AddCommand(rmresourceCmd)
+	RemoveCmd.AddCommand(rmfunctionCmd)
+
+	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
 }

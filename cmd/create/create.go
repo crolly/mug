@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package create
 
 import (
 	"fmt"
@@ -28,12 +28,13 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
 var (
-	// createCmd represents the create command
-	createCmd = &cobra.Command{
+	// CreateCmd represents the create command
+	CreateCmd = &cobra.Command{
 		Use:   "create",
 		Short: "Creates the boilerplate for your AWS Lambda for golang project.",
 		Args:  cobra.ExactArgs(1),
@@ -46,13 +47,11 @@ var (
 )
 
 func init() {
-	createCmd.SetHelpCommand(&cobra.Command{
+	CreateCmd.SetHelpCommand(&cobra.Command{
 		Use:    "no-help",
 		Hidden: true,
 	})
-	createCmd.Flags().StringVarP(&region, "region", "r", "eu-central-1", "Region the project will be deployed to (e.g. us-east-1 or eu-central-1)")
-
-	rootCmd.AddCommand(createCmd)
+	CreateCmd.Flags().StringVarP(&region, "region", "r", "eu-central-1", "Region the project will be deployed to (e.g. us-east-1 or eu-central-1)")
 }
 
 // createsProjectStructure creates the project structure with serverless.yml and mug.config.json
@@ -68,7 +67,7 @@ func createProjectStructure(projectName string) {
 	os.MkdirAll(config.ProjectPath, 0755)
 
 	// iterate over templates and execute
-	for _, tmpl := range projectBox.List() {
+	for _, tmpl := range models.ProjectBox.List() {
 
 		// create file
 		fileName := fmt.Sprintf("%s/%s", config.ProjectPath, strings.Replace(tmpl, ".tmpl", "", 1))
@@ -79,7 +78,7 @@ func createProjectStructure(projectName string) {
 		defer f.Close()
 
 		// load template
-		t := loadTemplateFromBox(projectBox, tmpl)
+		t := models.LoadTemplateFromBox(models.ProjectBox, tmpl)
 
 		// execute template and save to file
 		err = t.Execute(f, config)
@@ -90,10 +89,10 @@ func createProjectStructure(projectName string) {
 
 }
 
-func newConfig(projectName string) ResourceConfig {
+func newConfig(projectName string) models.ResourceConfig {
 	pName, pPath, iPath := getPaths(projectName)
 
-	config := ResourceConfig{
+	config := models.ResourceConfig{
 		ProjectName: pName,
 		ProjectPath: pPath,
 		ImportPath:  iPath,
@@ -122,7 +121,7 @@ func getPaths(projectName string) (string, string, string) {
 		projectName = projectName[i+1 : len(projectName)]
 	} else {
 		// project is created with project name only
-		wd := getWorkingDir()
+		wd := models.GetWorkingDir()
 		if filepathHasPrefix(wd, srcPath) {
 			projectPath = filepath.Join(wd, projectName)
 			importPath = strings.TrimPrefix(strings.Replace(projectPath, srcPath, "", 1), "/")

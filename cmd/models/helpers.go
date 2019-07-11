@@ -1,4 +1,4 @@
-package cmd
+package models
 
 import (
 	"encoding/json"
@@ -16,8 +16,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// getWorkingDir get the directory the current command is run out of
-func getWorkingDir() string {
+var (
+	// ResourceBox is the packr box containing the resource file templates
+	ResourceBox = packr.New("resource", "../../templates/resource")
+	// ProjectBox is the packr box containing the project file templates
+	ProjectBox = packr.New("project", "../../templates/project")
+	// FunctionBox is the packr box containing the function file templates
+	FunctionBox = packr.New("function", "../../templates/function")
+	// SlsBox is the packr box containing the serverless.yml template
+	SlsBox = packr.New("sls", "../../templates/sls")
+)
+
+// GetWorkingDir get the directory the current command is run out of
+func GetWorkingDir() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -66,7 +77,7 @@ func awsType(s string) string {
 }
 
 // LoadTemplateFromBox loads a *text/template.Template from a packr.Box
-func loadTemplateFromBox(b *packr.Box, file string) *template.Template {
+func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
 	// load string from template
 	ts, err := b.FindString(file)
 	if err != nil {
@@ -92,7 +103,8 @@ func appendStringIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func runCmd(name string, args ...string) {
+// RunCmd will run an OS command with the given arguments
+func RunCmd(name string, args ...string) {
 	cmd := exec.Command(name, args...)
 
 	err := execCmd(cmd)
@@ -101,7 +113,8 @@ func runCmd(name string, args ...string) {
 	}
 }
 
-func runCmdWithEnv(envs []string, name string, args ...string) {
+// RunCmdWithEnv will run an OS command with the given arguments and an environment
+func RunCmdWithEnv(envs []string, name string, args ...string) {
 	cmdEnv := append(os.Environ(), envs...)
 	cmd := exec.Command(name, args...)
 	cmd.Env = cmdEnv
@@ -169,7 +182,7 @@ func renderMakefile(config ResourceConfig) {
 	log.Println("Generating Makefile...")
 
 	// load Makefile template
-	t := loadTemplateFromBox(projectBox, "Makefile.tmpl")
+	t := LoadTemplateFromBox(ProjectBox, "Makefile.tmpl")
 
 	// open file and execute template
 	f, err := os.OpenFile(filepath.Join(config.ProjectPath, "Makefile"), os.O_WRONLY, 0755)
@@ -186,20 +199,22 @@ func renderMakefile(config ResourceConfig) {
 	log.Println("Makefile generated.")
 }
 
-func writeResourceDefinition(m Model, config ResourceConfig) {
+// WriteResourceDefinition ...
+func WriteResourceDefinition(m Model, config ResourceConfig) {
 	json, _ := json.MarshalIndent(m, "", "  ")
 	_ = ioutil.WriteFile(filepath.Join(config.ProjectPath, "functions", m.Name, fmt.Sprintf("%s.json", m.Name)), json, 0644)
 }
 
-func renderSLS(config ResourceConfig) {
+// RenderSLS will render the serverless.yml file with a given ResourceConfig
+func RenderSLS(config ResourceConfig) {
 	log.Println("Generating serverless.yml...")
 
 	processed := map[string]bool{}
 
 	// generate serverless.yml for each resource
 	for k := range config.Resources {
-		path, resourceConfig := getConfigForResource(k, config)
-		generateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
+		path, resourceConfig := GetConfigForResource(k, config)
+		GenerateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
 
 		processed[k] = true
 	}
@@ -208,14 +223,15 @@ func renderSLS(config ResourceConfig) {
 	for k, fs := range config.Functions {
 		if !processed[k] {
 			for _, f := range fs {
-				path, functionConfig := getConfigForFunction(k, f, config)
-				generateSLS(filepath.Join(path, "serverless.yml"), functionConfig)
+				path, functionConfig := GetConfigForFunction(k, f, config)
+				GenerateSLS(filepath.Join(path, "serverless.yml"), functionConfig)
 			}
 		}
 	}
 }
 
-func getConfigForResource(k string, config ResourceConfig) (string, ResourceConfig) {
+// GetConfigForResource returns only the named resource ResourceConfig with the path information
+func GetConfigForResource(k string, config ResourceConfig) (string, ResourceConfig) {
 	r := config.Resources[k]
 	path := getPath(config, r)
 
@@ -234,7 +250,8 @@ func getConfigForResource(k string, config ResourceConfig) (string, ResourceConf
 	return path, config
 }
 
-func getConfigForFunction(k string, f *Function, config ResourceConfig) (string, ResourceConfig) {
+// GetConfigForFunction returns only the named function ResourceConfig with the path information
+func GetConfigForFunction(k string, f *Function, config ResourceConfig) (string, ResourceConfig) {
 	path := getPath(config, f)
 
 	// only handle current function
@@ -262,9 +279,10 @@ func getPath(config ResourceConfig, i interface{}) string {
 	return path
 }
 
-func generateSLS(path string, config ResourceConfig) {
+// GenerateSLS generates the serverlss.yml for a given ResourceConfig
+func GenerateSLS(path string, config ResourceConfig) {
 	// load serverless.yml template
-	t := loadTemplateFromBox(slsBox, "serverless.yml.tmpl")
+	t := LoadTemplateFromBox(SlsBox, "serverless.yml.tmpl")
 
 	// create file
 	f, err := os.Create(path)
@@ -285,7 +303,7 @@ func generateSAMTemplate(config ResourceConfig) {
 	log.Println("Generating template.yml...")
 
 	// load Makefile template
-	t := loadTemplateFromBox(projectBox, "template.yml.tmpl")
+	t := LoadTemplateFromBox(ProjectBox, "template.yml.tmpl")
 
 	// open file and execute template
 	f, err := os.Create(filepath.Join(config.ProjectPath, "template.yml"))
@@ -303,7 +321,8 @@ func generateSAMTemplate(config ResourceConfig) {
 	log.Println("template.yml generated.")
 }
 
-func removeFiles(config ResourceConfig, resourceName string, function *flect.Ident) {
+// RemoveFiles ...
+func RemoveFiles(config ResourceConfig, resourceName string, function *flect.Ident) {
 	// create the function folder
 	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
 	if function != nil {
@@ -316,12 +335,12 @@ func removeFiles(config ResourceConfig, resourceName string, function *flect.Ide
 	}
 }
 
-// updateYMLs updates serverless.yml, Makefile, template.yml and create Gopkg.toml
-func updateYMLs(config ResourceConfig, ignoreSLS bool) {
+// UpdateYMLs updates serverless.yml, Makefile, template.yml and create Gopkg.toml
+func UpdateYMLs(config ResourceConfig, ignoreSLS bool) {
 	// renderGopkg(config)
 	renderMakefile(config)
 	if !ignoreSLS {
-		renderSLS(config)
+		RenderSLS(config)
 	}
 	generateSAMTemplate(config)
 }
