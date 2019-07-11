@@ -363,3 +363,12 @@ func GetFuncName(resourceName, functionName string) string {
 	return functionName + "_" + ident.Singularize().String()
 
 }
+
+func contains(s []string, v string) bool {
+	for _, e := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
+}

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/imdario/mergo"
 
@@ -274,6 +275,73 @@ func (s *ServerlessConfig) AddFunction(fn Function) {
 					CORS:   true,
 				},
 			},
+		},
+	}
+}
+
+// AddPoolEnv adds the given cognito user pool arn as environment in .env
+func (s *ServerlessConfig) AddPoolEnv(mc MUGConfig, rName, pool string) {
+	path := filepath.Join(mc.ProjectPath, "functions", rName, ".env")
+	env, err := godotenv.Read(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	env["COGNITO_USER_POOL"] = pool
+	if err := godotenv.Write(env, path); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// AddAuth adds Authorization to the ServerlessConfig
+func (s *ServerlessConfig) AddAuth(excludes string) {
+	excludeSlice := strings.Split(excludes, ",")
+	resRequired := false
+
+	for _, fn := range s.Functions {
+		if !contains(excludeSlice, fn.Handler) {
+			resRequired = true
+			fn.addAuth()
+		}
+	}
+
+	if resRequired {
+		s.addAuthResource()
+	}
+}
+
+// addAuthResource adds the Authorizer Resource to the ServerlessConfig
+func (s *ServerlessConfig) addAuthResource() {
+	// make sure map exists
+	if len(s.Resources.Resources) == 0 {
+		s.Resources.Resources = map[string]ResourceDefinition{}
+	}
+
+	s.Resources.Resources["ApiGatewayAuthorizer"] = ResourceDefinition{
+		DependsOn: []string{"ApiGatewayRestApi"},
+		Type:      "AWS::ApiGateway::Authorizer",
+		Properties: Properties{
+			Name:           "cognito-authorizer",
+			IdentitySource: "method.request.header.Authorization",
+			RestAPIID: Reference{
+				Ref: "ApiGatewayRestApi",
+			},
+			Type:         "COGNITO_USER_POOLS",
+			ProviderARNs: []string{"${env:COGNITO_USER_POOL}"},
+		},
+	}
+}
+
+// AddAuth adds the authorizer reference to the ServerlessFunction
+func (f *ServerlessFunction) addAuth() {
+	f.Events[0].HTTP.Authorizer = Authorizer{
+		Type: "COGNITO_USER_POOLS",
+		AuthorizerID: Reference{
+			Ref: "ApiGatewayAuthorizer",
 		},
 	}
 }

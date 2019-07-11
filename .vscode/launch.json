@@ -113,22 +113,22 @@
             "args": ["add", "resource", "demand", "-a", "name:string", "-b", "ondemand"]
         },
         {
-            "name": "add auth to all",
+            "name": "add auth to generic function group",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "auth"]
+            "args": ["add", "auth", "generic"]
         },
         {
-            "name": "add auth with cognito user pool",
+            "name": "add auth with cognito user pool to user resource",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "auth", "-p", "arn:aws:cognito-idp:eu-central-1:285688367535:userpool/eu-central-1_OjjilcBGQ"]
+            "args": ["add", "auth", "user", "-p", "arn:aws:cognito-idp:eu-central-1:285688367535:userpool/eu-central-1_OjjilcBGQ"]
         },
         {
             "name": "add auth with excludes",
@@ -137,7 +137,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "auth", "-x", "course, test"]
+            "args": ["add", "auth", "generic", "-x", "test"]
         },
         {
             "name": "mug debug",

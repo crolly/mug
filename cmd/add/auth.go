@@ -21,11 +21,6 @@
 package add
 
 import (
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
@@ -34,19 +29,22 @@ import (
 var (
 	authCmd = &cobra.Command{
 		Use:   "auth",
-		Short: "Add authentication to resources and functions",
+		Short: "Add authentication to a resource or function group",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			config := models.ReadConfig()
+			rName := args[0]
+			mc := models.ReadMUGConfig()
+			sc := mc.ReadServerlessConfig(rName)
 			// add user pool if provided to env
 			if pool != "" {
-				addPoolEnv(config, pool)
+				sc.AddPoolEnv(mc, rName, pool)
 			}
 
 			// add authentication to functions
-			addAuth(config, excludes)
+			sc.AddAuth(excludes)
 
-			// update serverless.yml with authentication information
-			models.RenderSLS(config)
+			// update serverless.yml
+			sc.Write(mc.ProjectPath, rName)
 		},
 	}
 
@@ -57,57 +55,6 @@ func init() {
 	AddCmd.AddCommand(authCmd)
 
 	authCmd.Flags().StringVarP(&pool, "user pool", "p", "", "define the user pool to authenticate against")
-	authCmd.Flags().StringVarP(&excludes, "excludes", "x", "", "list of functions or resources without authentication")
+	authCmd.Flags().StringVarP(&excludes, "excludes", "x", "", "list of functions in resource/ function group without authentication")
 
-}
-
-func addPoolEnv(config models.ResourceConfig, pool string) {
-	f, err := os.OpenFile(filepath.Join(config.ProjectPath, ".env"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = f.WriteString("COGNITOUSERPOOL = " + pool + "\n")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func addAuth(config models.ResourceConfig, excludes string) {
-	excludeSlice := strings.Split(excludes, ",")
-	activeAuth := false
-
-	for k, v := range config.Functions {
-		if k != "" {
-			// must be resource
-			if !contains(excludeSlice, k) {
-				for _, f := range v {
-					f.Authentication = true
-					activeAuth = true
-				}
-			}
-		} else {
-			// must be standalone functions --> iterate through function slice
-			for _, f := range v {
-				if !contains(excludeSlice, f.Name) {
-					f.Authentication = true
-					activeAuth = true
-				}
-			}
-		}
-	}
-
-	config.Authentication = activeAuth
-
-	// write back config
-	config.Write()
-}
-
-func contains(s []string, v string) bool {
-	for _, e := range s {
-		if e == v {
-			return true
-		}
-	}
-	return false
 }
