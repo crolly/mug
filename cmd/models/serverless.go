@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -87,11 +88,11 @@ type ResourceDefinition struct {
 // Properties ...
 type Properties struct {
 	// Properties for Resources
-	AttributeDefinitions  []AttributeDef        `yaml:"AttributeDefinitions,omitempty"`
-	KeySchema             []KeySchema           `yaml:"KeySchema,omitempty"`
-	ProvisionedThroughput ProvisionedThroughput `yaml:"ProvisionedThroughput,omitempty"`
-	BillingMode           string                `yaml:"BillingMode,omitempty"`
-	TableName             string                `yaml:"TableName,omitempty"`
+	AttributeDefinitions  []AttributeDef         `yaml:"AttributeDefinitions,omitempty"`
+	KeySchema             []KeySchema            `yaml:"KeySchema,omitempty"`
+	ProvisionedThroughput *ProvisionedThroughput `yaml:"ProvisionedThroughput,omitempty"`
+	BillingMode           string                 `yaml:"BillingMode,omitempty"`
+	TableName             string                 `yaml:"TableName,omitempty"`
 
 	//Properties for Authorizer
 	Name           string    `yaml:"Name,omitempty"`
@@ -120,8 +121,8 @@ type KeySchema struct {
 
 // ProvisionedThroughput ...
 type ProvisionedThroughput struct {
-	ReadCapacityUnits  byte `yaml:"ReadCapacityUnits"`
-	WriteCapacityUnits byte `yaml:"WriteCapacityUnits"`
+	ReadCapacityUnits  int64 `yaml:"ReadCapacityUnits"`
+	WriteCapacityUnits int64 `yaml:"WriteCapacityUnits"`
 }
 
 // NewDefaultServerlessConfig return a default ServerlessConfig object
@@ -198,7 +199,7 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 		Type:           "AWS::DynamoDB::Table",
 		DeletionPolicy: "Retain",
 		Properties: Properties{
-			TableName: r.Ident.Pluralize().String() + "-${opt:stage, self:provider.stage}",
+			TableName: fmt.Sprintf("${env:%s_TABLE_NAME}", m.Ident.ToUpper().String()),
 		},
 	}
 
@@ -219,7 +220,7 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 
 	// set billing mode and capacity units
 	if m.BillingMode == "provisioned" {
-		rd.Properties.ProvisionedThroughput = ProvisionedThroughput{
+		rd.Properties.ProvisionedThroughput = &ProvisionedThroughput{
 			ReadCapacityUnits:  m.CapacityUnits["read"],
 			WriteCapacityUnits: m.CapacityUnits["write"],
 		}
@@ -229,7 +230,7 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 
 	s.Resources = Resources{
 		Resources: map[string]*ResourceDefinition{
-			r.Ident.Pascalize().String(): rd,
+			r.Ident.Pascalize().String() + "DynamoDbTable": rd,
 		},
 	}
 
@@ -308,7 +309,7 @@ func (s *ServerlessConfig) AddAuth(excludes string) {
 	resRequired := false
 
 	for _, fn := range s.Functions {
-		if !contains(excludeSlice, fn.Handler) {
+		if !Contains(excludeSlice, fn.Handler) {
 			resRequired = true
 			fn.addAuth()
 		}

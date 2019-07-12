@@ -21,7 +21,7 @@
 package create
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -44,6 +44,10 @@ var (
 	}
 
 	region string
+
+	gopkg = `"[[constraint]]
+	name = "github.com/aws/aws-lambda-go"
+	version = "^1.0.1""`
 )
 
 func init() {
@@ -66,24 +70,9 @@ func createProjectStructure(projectName string) {
 	}
 	os.MkdirAll(config.ProjectPath, 0755)
 
-	// iterate over templates and execute
-	for _, tmpl := range models.ProjectBox.List() {
-		// create files (Gopkg.toml, Makefile)
-		fileName := fmt.Sprintf("%s/%s", config.ProjectPath, strings.Replace(tmpl, ".tmpl", "", 1))
-		f, err := os.Create(fileName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		// load template
-		t := models.LoadTemplateFromBox(models.ProjectBox, tmpl)
-
-		// execute template and save to file
-		err = t.Execute(f, config)
-		if err != nil {
-			log.Fatal(err)
-		}
+	// write Gopkg.toml
+	if err := ioutil.WriteFile(filepath.Join(config.ProjectPath, "Gopkg.toml"), []byte(gopkg), 0644); err != nil {
+		log.Fatal(err)
 	}
 
 	// persist config

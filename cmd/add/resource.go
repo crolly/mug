@@ -42,7 +42,7 @@ var (
 
 			// instantiate new resource model and parse given attributes
 			modelName := args[0]
-			capacityUnits := map[string]byte{
+			capacityUnits := map[string]int64{
 				"read":  readUnits,
 				"write": writeUnits,
 			}
@@ -74,7 +74,7 @@ var (
 
 	attributes, keySchema, billingMode string
 	noID, dates, softDelete            bool
-	readUnits, writeUnits              byte
+	readUnits, writeUnits              int64
 )
 
 func init() {
@@ -85,8 +85,8 @@ func init() {
 	resourceCmd.Flags().BoolVarP(&softDelete, "softDelete", "s", false, "automatically add deletedAt attribute")
 	resourceCmd.Flags().StringVarP(&keySchema, "keySchema", "k", "id:HASH", "Key Schema definition for the DynamoDB Table Resource (only applied if noID flag is set to true")
 	resourceCmd.Flags().StringVarP(&billingMode, "billingMode", "b", "provisioned", "Choose between 'provisioned' for ProvisionedThroughput (default) or 'ondemand'")
-	resourceCmd.Flags().Uint8VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
-	resourceCmd.Flags().Uint8VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
+	resourceCmd.Flags().Int64VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
+	resourceCmd.Flags().Int64VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
 
 	// resourceCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore serverless.yml and template.yml during execution")
 

@@ -23,7 +23,7 @@ type Model struct {
 	GeneratedID   bool                 `json:"generated_id"`
 	CompositeKey  bool                 `json:"composite_key"`
 	BillingMode   string               `json:"billing_mode"`
-	CapacityUnits map[string]byte      `json:"capacity_units"`
+	CapacityUnits map[string]int64     `json:"capacity_units"`
 }
 
 // Attribute represents a resource model's attribute
@@ -55,18 +55,18 @@ func New(name string, slice bool, attributes string, options map[string]interfac
 	// handle all option values
 	var id, withDates, softDelete bool
 	var keySchema, billing string
-	var capacity map[string]byte
+	var capacity map[string]int64
 	if options != nil {
 		id = options["id"].(bool)
 		withDates = options["dates"].(bool)
 		softDelete = options["softDelete"].(bool)
 		keySchema = options["keySchema"].(string)
 		billing = options["billing"].(string)
-		capacity = options["capacity"].(map[string]byte)
+		capacity = options["capacity"].(map[string]int64)
 	} else {
 		id, withDates, softDelete = false, false, false
 		billing = "provisioned"
-		capacity = map[string]byte{
+		capacity = map[string]int64{
 			"read":  1,
 			"write": 1,
 		}

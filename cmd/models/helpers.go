@@ -17,12 +17,10 @@ import (
 var (
 	// ResourceBox is the packr box containing the resource file templates
 	ResourceBox = packr.New("resource", "../../templates/resource")
-	// ProjectBox is the packr box containing the project file templates
-	ProjectBox = packr.New("project", "../../templates/project")
 	// FunctionBox is the packr box containing the function file templates
 	FunctionBox = packr.New("function", "../../templates/function")
-	// SlsBox is the packr box containing the serverless.yml template
-	SlsBox = packr.New("sls", "../../templates/sls")
+	// MakeBox is the packr box containing the Makefile template
+	MakeBox = packr.New("make", "../../templates/make")
 )
 
 // GetWorkingDir get the directory the current command is run out of
@@ -176,51 +174,51 @@ func execCmd(cmd *exec.Cmd) error {
 // 	}
 // }
 
-func renderMakefile(config ResourceConfig) {
-	log.Println("Generating Makefile...")
+// func renderMakefile(config ResourceConfig) {
+// 	log.Println("Generating Makefile...")
 
-	// load Makefile template
-	t := LoadTemplateFromBox(ProjectBox, "Makefile.tmpl")
+// 	// load Makefile template
+// 	t := LoadTemplateFromBox(ProjectBox, "Makefile.tmpl")
 
-	// open file and execute template
-	f, err := os.OpenFile(filepath.Join(config.ProjectPath, "Makefile"), os.O_WRONLY, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+// 	// open file and execute template
+// 	f, err := os.OpenFile(filepath.Join(config.ProjectPath, "Makefile"), os.O_WRONLY, 0755)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer f.Close()
 
-	// execote template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Makefile generated.")
-}
+// 	// execote template and save to file
+// 	err = t.Execute(f, config)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	log.Println("Makefile generated.")
+// }
 
 // RenderSLS will render the serverless.yml file with a given ResourceConfig
-func RenderSLS(config ResourceConfig) {
-	log.Println("Generating serverless.yml...")
+// func RenderSLS(config ResourceConfig) {
+// 	log.Println("Generating serverless.yml...")
 
-	processed := map[string]bool{}
+// 	processed := map[string]bool{}
 
-	// generate serverless.yml for each resource
-	for k := range config.Resources {
-		path, resourceConfig := GetConfigForResource(k, config)
-		GenerateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
+// 	// generate serverless.yml for each resource
+// 	for k := range config.Resources {
+// 		path, resourceConfig := GetConfigForResource(k, config)
+// 		GenerateSLS(filepath.Join(path, "serverless.yml"), resourceConfig)
 
-		processed[k] = true
-	}
+// 		processed[k] = true
+// 	}
 
-	// generate serverless.yml for remaining functions
-	for k, fs := range config.Functions {
-		if !processed[k] {
-			for _, f := range fs {
-				path, functionConfig := GetConfigForFunction(k, f, config)
-				GenerateSLS(filepath.Join(path, "serverless.yml"), functionConfig)
-			}
-		}
-	}
-}
+// 	// generate serverless.yml for remaining functions
+// 	for k, fs := range config.Functions {
+// 		if !processed[k] {
+// 			for _, f := range fs {
+// 				path, functionConfig := GetConfigForFunction(k, f, config)
+// 				GenerateSLS(filepath.Join(path, "serverless.yml"), functionConfig)
+// 			}
+// 		}
+// 	}
+// }
 
 // GetConfigForResource returns only the named resource ResourceConfig with the path information
 func GetConfigForResource(k string, config ResourceConfig) (string, ResourceConfig) {
@@ -272,46 +270,46 @@ func getPath(config ResourceConfig, i interface{}) string {
 }
 
 // GenerateSLS generates the serverlss.yml for a given ResourceConfig
-func GenerateSLS(path string, config ResourceConfig) {
-	// load serverless.yml template
-	t := LoadTemplateFromBox(SlsBox, "serverless.yml.tmpl")
+// func GenerateSLS(path string, config ResourceConfig) {
+// 	// load serverless.yml template
+// 	t := LoadTemplateFromBox(SlsBox, "serverless.yml.tmpl")
 
-	// create file
-	f, err := os.Create(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+// 	// create file
+// 	f, err := os.Create(path)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer f.Close()
 
-	// execute template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("serverless.yml generated.")
-}
+// 	// execute template and save to file
+// 	err = t.Execute(f, config)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	log.Println("serverless.yml generated.")
+// }
 
-func generateSAMTemplate(config ResourceConfig) {
-	log.Println("Generating template.yml...")
+// func generateSAMTemplate(config ResourceConfig) {
+// 	log.Println("Generating template.yml...")
 
-	// load Makefile template
-	t := LoadTemplateFromBox(ProjectBox, "template.yml.tmpl")
+// 	// load Makefile template
+// 	t := LoadTemplateFromBox(ProjectBox, "template.yml.tmpl")
 
-	// open file and execute template
-	f, err := os.Create(filepath.Join(config.ProjectPath, "template.yml"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+// 	// open file and execute template
+// 	f, err := os.Create(filepath.Join(config.ProjectPath, "template.yml"))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer f.Close()
 
-	// execote template and save to file
-	err = t.Execute(f, config)
-	if err != nil {
-		log.Fatal(err)
-	}
+// 	// execote template and save to file
+// 	err = t.Execute(f, config)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	log.Println("template.yml generated.")
-}
+// 	log.Println("template.yml generated.")
+// }
 
 // RemoveFiles ...
 func RemoveFiles(pPath, aName, fName string) {
@@ -328,14 +326,14 @@ func RemoveFiles(pPath, aName, fName string) {
 }
 
 // UpdateYMLs updates serverless.yml, Makefile, template.yml and create Gopkg.toml
-func UpdateYMLs(config ResourceConfig, ignoreSLS bool) {
-	// renderGopkg(config)
-	renderMakefile(config)
-	if !ignoreSLS {
-		RenderSLS(config)
-	}
-	generateSAMTemplate(config)
-}
+// func UpdateYMLs(config ResourceConfig, ignoreSLS bool) {
+// 	// renderGopkg(config)
+// 	renderMakefile(config)
+// 	if !ignoreSLS {
+// 		RenderSLS(config)
+// 	}
+// 	generateSAMTemplate(config)
+// }
 
 func readDataFromFile(path string) ([]byte, error) {
 	f, err := os.Open(path)
@@ -364,7 +362,8 @@ func GetFuncName(resourceName, functionName string) string {
 
 }
 
-func contains(s []string, v string) bool {
+// Contains checks whether a string slice contains a given string
+func Contains(s []string, v string) bool {
 	for _, e := range s {
 		if e == v {
 			return true

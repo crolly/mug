@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"gopkg.in/yaml.v2"
 
@@ -233,4 +234,55 @@ func (m MUGConfig) ReadServerlessConfig(rn string) ServerlessConfig {
 func (m *MUGConfig) RemoveResource(rN string) {
 	// remove from MUGConfig
 	delete(m.Resources, rN)
+}
+
+func (m MUGConfig) clearFolder(path string) {
+	if err := os.RemoveAll(filepath.Join(m.ProjectPath, "functions", path)); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m MUGConfig) renderMakefile(t *template.Template, r string) {
+	// open file and execute template
+	f, err := os.Create(filepath.Join(m.ProjectPath, "Makefile"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	sc := m.ReadServerlessConfig(r)
+	// execute template and save to file
+	data := map[string]interface{}{
+		"Functions": sc.Functions,
+		"Resource":  r,
+	}
+	err = t.Execute(f, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Makefile generated.")
+}
+
+func (m MUGConfig) make(list []string, kind string) {
+	// load Makefile template
+	t := LoadTemplateFromBox(MakeBox, "Makefile.tmpl")
+
+	for _, r := range list {
+		// clear the debug binaries
+		m.clearFolder(filepath.Join(r, kind))
+		// render for each resource/ function group
+		m.renderMakefile(t, r)
+		// and run the build
+		RunCmd("make", kind)
+	}
+}
+
+// MakeDebug renders the Makefile and builds the debug binaries
+func (m MUGConfig) MakeDebug(list []string) {
+	m.make(list, "debug")
+}
+
+// MakeBuild renders the Makefile and builds the binaries
+func (m MUGConfig) MakeBuild(list []string) {
+	m.make(list, "bin")
 }

@@ -46,52 +46,50 @@ var (
 		Long: `This command generates a template.yml for aws-sam-cli and starts
 	a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// update the yml files and Makefile with current config
-			// updateYMLs(readConfig(), noUpdate)
+			// get the config
+			mc := models.ReadMUGConfig()
+
+			// get list of resources
+			var list []string
+			if debugList != "all" {
+				// split list of resources/ function groups
+				list = strings.Split(debugList, ",")
+			} else {
+				// list of all resources and function groups
+				info, err := ioutil.ReadDir(filepath.Join(mc.ProjectPath, "functions"))
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				for _, f := range info {
+					if f.IsDir() {
+						list = append(list, f.Name())
+					}
+				}
+			}
+
 			// make debug binaries overwriting previous
-			makeDebug()
+			mc.MakeDebug(list)
 			// create lambda-local network if it doesn't exist already
 			createLambdaNetwork()
 			// start dynamodb-local
 			startLocalDynamoDB()
 			// create tables for resources
-			createResourceTables()
+			createResourceTables(mc, list)
 			// start aws-sam-cli local api
 			startLocalAPI()
 		},
 	}
 
-	remoteDebugger, noUpdate bool
-	debugPort                string
-	apiPort                  string
+	remoteDebugger               bool
+	debugPort, gwPort, debugList string
 )
 
 func init() {
-	DebugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicated whether you want to run a remote debugger")
-	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "p", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
-	DebugCmd.Flags().StringVarP(&apiPort, "apiPort", "a", "3000", "defines the port of local lambda api [default: 3000]")
-	DebugCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml and template.yml during execution")
-}
-
-func makeDebug() {
-	// check if Makefile exists in working directory
-	config := models.ReadConfig()
-	wd := config.ProjectPath
-	if _, err := os.Stat(filepath.Join(wd, "Makefile")); os.IsNotExist(err) {
-		log.Fatal("no Makefile found - cannout build binaries")
-	}
-
-	// delete previous debug binaries
-	for n := range config.Functions {
-		err := os.RemoveAll(filepath.Join(wd, "functions", n, "debug"))
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-	}
-
-	// run make debug
-	log.Println("Building Debug Binaries...")
-	models.RunCmd("make", "debug")
+	DebugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicates whether you want to run a remote debugger (e.g. step through your code with VSCode)")
+	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "d", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
+	DebugCmd.Flags().StringVarP(&gwPort, "gwPort", "g", "3000", "defines the port of local API Gateway [default: 3000]")
+	DebugCmd.Flags().StringVarP(&debugList, "list", "l", "all", "comma separated list of resources/ function groups to debug [default: all]")
 }
 
 func createLambdaNetwork() {
@@ -131,14 +129,11 @@ func startLocalDynamoDB() {
 	log.Println("dynamodb-local running.")
 }
 
-func createResourceTables() {
-	// read the resource config
-	config := models.ReadConfig()
-
+func createResourceTables(m models.MUGConfig, list []string) {
 	// create service to dynamodb
 	sess := session.Must(session.NewSession(&aws.Config{
 		Endpoint: aws.String("http://localhost:8000"),
-		Region:   aws.String(config.Region),
+		Region:   aws.String(m.Region),
 	}))
 	svc := dynamodb.New(sess)
 
@@ -154,33 +149,38 @@ func createResourceTables() {
 	}
 
 	// iterate over resources
-	for _, r := range config.Resources {
-		tableName := r.Ident.Pluralize().ToLower().String()
-		if tables[tableName] {
-			log.Printf("Table %s already exists, skipping creation...", tableName)
-		} else {
-			createTableForResource(svc, r)
-		}
+	for n, r := range m.Resources {
+		if models.Contains(list, n) {
+			sc := m.ReadServerlessConfig(n)
+			rName := r.Ident.Pascalize().String() + "DynamoDbTable"
+			props := sc.Resources.Resources[rName].Properties
+			tableName := r.Ident.Pluralize().Camelize().String() + "-debug"
 
+			if tables[tableName] {
+				log.Printf("Table %s already exists, skipping creation...", tableName)
+			} else {
+				createTableForResource(svc, tableName, props)
+			}
+		}
 	}
 }
 
-func createTableForResource(svc *dynamodb.DynamoDB, resource *models.Resource) {
+func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props models.Properties) {
 	// get attributes
 	attributes := []*dynamodb.AttributeDefinition{}
-	for _, a := range resource.Attributes {
+	for _, a := range props.AttributeDefinitions {
 		attributes = append(attributes, &dynamodb.AttributeDefinition{
-			AttributeName: aws.String(a.Ident.String()),
-			AttributeType: aws.String(a.AwsType),
+			AttributeName: aws.String(a.AttributeName),
+			AttributeType: aws.String(a.AttributeType),
 		})
 	}
 
 	// get keySchema
 	keySchema := []*dynamodb.KeySchemaElement{}
-	for t, k := range resource.KeySchema {
+	for _, k := range props.KeySchema {
 		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
-			AttributeName: aws.String(k),
-			KeyType:       aws.String(t),
+			AttributeName: aws.String(k.AttributeName),
+			KeyType:       aws.String(k.KeyType),
 		})
 	}
 
@@ -189,15 +189,12 @@ func createTableForResource(svc *dynamodb.DynamoDB, resource *models.Resource) {
 		ReadCapacityUnits:  aws.Int64(10),
 		WriteCapacityUnits: aws.Int64(10),
 	}
-	if len(resource.CapacityUnits) > 0 {
+	if props.ProvisionedThroughput != nil {
 		throughput = &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(int64(resource.CapacityUnits["read"])),
-			WriteCapacityUnits: aws.Int64(int64(resource.CapacityUnits["write"])),
+			ReadCapacityUnits:  aws.Int64(props.ProvisionedThroughput.ReadCapacityUnits),
+			WriteCapacityUnits: aws.Int64(props.ProvisionedThroughput.WriteCapacityUnits),
 		}
 	}
-
-	// set table name
-	tableName := resource.Ident.Pluralize().String()
 
 	// create the table input for the resource
 	input := &dynamodb.CreateTableInput{
@@ -216,11 +213,11 @@ func createTableForResource(svc *dynamodb.DynamoDB, resource *models.Resource) {
 }
 
 func startLocalAPI() {
-	args := []string{"local", "start-api", "-p", apiPort, "--docker-network", "lambda-local"}
+	args := []string{"local", "start-api", "-p", gwPort, "--docker-network", "lambda-local"}
 	if remoteDebugger {
 		ensureDebugger()
 		args = append(args, "--debugger-path", "./dlv", "-d", debugPort, "--debug-args", "-delveAPI=2")
-		log.Printf("Starting local API at port %s with debugger at %s...\n", apiPort, debugPort)
+		log.Printf("Starting local API at port %s with debugger at %s...\n", gwPort, debugPort)
 	}
 
 	models.RunCmd("sam", args...)
