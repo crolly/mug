@@ -59,8 +59,17 @@ var (
 			startLocalDynamoDB()
 			// create tables for resources
 			createResourceTables(mc, list)
+
+			// render template.yml
+			t := models.NewTemplate()
+			for _, r := range list {
+				sc := mc.ReadServerlessConfig(r)
+				t.AddFunctionsFromServerlessConfig(sc, r)
+			}
+			t.Write(mc.ProjectPath)
+
 			// start aws-sam-cli local api
-			startLocalAPI()
+			// startLocalAPI()
 		},
 	}
 

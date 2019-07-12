@@ -162,12 +162,12 @@ func NewDefaultServerlessConfig() ServerlessConfig {
 }
 
 // Write writes the ServerlessConfig to serverless.yml for the given project path and model name
-func (s *ServerlessConfig) Write(pp, mn string) {
+func (s *ServerlessConfig) Write(projectPath, mn string) {
 	// resource path
-	rp := filepath.Join(pp, "functions", mn)
+	rp := filepath.Join(projectPath, "functions", mn)
 
 	// read env file
-	env, _ := godotenv.Read(filepath.Join(pp, ".env"), filepath.Join(rp, ".env"))
+	env, _ := godotenv.Read(filepath.Join(projectPath, ".env"), filepath.Join(rp, ".env"))
 
 	// merge environment into ServerlessConfig
 	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
