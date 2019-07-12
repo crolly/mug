@@ -314,16 +314,16 @@ func generateSAMTemplate(config ResourceConfig) {
 }
 
 // RemoveFiles ...
-func RemoveFiles(config ResourceConfig, resourceName string, function *flect.Ident) {
+func RemoveFiles(pPath, aName, fName string) {
 	// create the function folder
-	folder := filepath.Join(config.ProjectPath, "functions", resourceName)
-	if function != nil {
-		folder = filepath.Join(folder, function.String())
+	folder := filepath.Join(pPath, "functions", aName)
+	if fName != "" {
+		folder = filepath.Join(folder, fName)
 	}
 
 	err := os.RemoveAll(folder)
 	if err != nil {
-		log.Fatalf("Error deleting function folder %s: %s", function, err)
+		log.Fatalf("Error deleting function folder %s: %s", folder, err)
 	}
 }
 

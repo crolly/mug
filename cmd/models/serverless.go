@@ -19,8 +19,8 @@ type ServerlessConfig struct {
 	Service   string
 	Provider  Provider
 	Package   Package
-	Functions map[string]ServerlessFunction `yaml:",omitempty"`
-	Resources Resources                     `yaml:",omitempty"`
+	Functions map[string]*ServerlessFunction `yaml:",omitempty"`
+	Resources Resources                      `yaml:",omitempty"`
 }
 
 // Provider ...
@@ -61,8 +61,8 @@ type Events struct {
 type Event struct {
 	Path       string
 	Method     string
-	CORS       bool       `yaml:",omitempty"`
-	Authorizer Authorizer `yaml:",omitempty"`
+	CORS       bool        `yaml:",omitempty"`
+	Authorizer *Authorizer `yaml:",omitempty"`
 }
 
 // Authorizer ...
@@ -73,7 +73,7 @@ type Authorizer struct {
 
 // Resources ...
 type Resources struct {
-	Resources map[string]ResourceDefinition `yaml:"Resources"`
+	Resources map[string]*ResourceDefinition `yaml:"Resources"`
 }
 
 // ResourceDefinition ...
@@ -194,7 +194,7 @@ func (s *ServerlessConfig) Write(pp, mn string) {
 
 // SetResourceWithModel sets a Resource to the ServerlessConfig
 func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
-	rd := ResourceDefinition{
+	rd := &ResourceDefinition{
 		Type:           "AWS::DynamoDB::Table",
 		DeletionPolicy: "Retain",
 		Properties: Properties{
@@ -228,7 +228,7 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 	}
 
 	s.Resources = Resources{
-		Resources: map[string]ResourceDefinition{
+		Resources: map[string]*ResourceDefinition{
 			r.Ident.Pascalize().String(): rd,
 		},
 	}
@@ -241,10 +241,10 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 
 // SetFunctions sets a slice of Functions to the ServerlessConfig
 func (s *ServerlessConfig) SetFunctions(fns []*Function) {
-	s.Functions = map[string]ServerlessFunction{}
+	s.Functions = map[string]*ServerlessFunction{}
 
 	for _, fn := range fns {
-		s.Functions[fn.Name] = ServerlessFunction{
+		s.Functions[fn.Name] = &ServerlessFunction{
 			Handler: fn.Handler,
 			Events: []Events{
 				Events{
@@ -263,9 +263,9 @@ func (s *ServerlessConfig) SetFunctions(fns []*Function) {
 func (s *ServerlessConfig) AddFunction(fn Function) {
 	// make sure map exists
 	if len(s.Functions) == 0 {
-		s.Functions = map[string]ServerlessFunction{}
+		s.Functions = map[string]*ServerlessFunction{}
 	}
-	s.Functions[fn.Name] = ServerlessFunction{
+	s.Functions[fn.Name] = &ServerlessFunction{
 		Handler: fn.Handler,
 		Events: []Events{
 			Events{
@@ -277,6 +277,11 @@ func (s *ServerlessConfig) AddFunction(fn Function) {
 			},
 		},
 	}
+}
+
+// RemoveFunction removes a function from the ServerlessConfig
+func (s *ServerlessConfig) RemoveFunction(n string) {
+	s.Functions[n] = nil
 }
 
 // AddPoolEnv adds the given cognito user pool arn as environment in .env
@@ -327,10 +332,10 @@ func (s *ServerlessConfig) RemoveAuth() {
 func (s *ServerlessConfig) addAuthResource() {
 	// make sure map exists
 	if len(s.Resources.Resources) == 0 {
-		s.Resources.Resources = map[string]ResourceDefinition{}
+		s.Resources.Resources = map[string]*ResourceDefinition{}
 	}
 
-	s.Resources.Resources["ApiGatewayAuthorizer"] = ResourceDefinition{
+	s.Resources.Resources["ApiGatewayAuthorizer"] = &ResourceDefinition{
 		DependsOn: []string{"ApiGatewayRestApi"},
 		Type:      "AWS::ApiGateway::Authorizer",
 		Properties: Properties{
@@ -346,12 +351,12 @@ func (s *ServerlessConfig) addAuthResource() {
 }
 
 func (s *ServerlessConfig) removeAuthResource() {
-	s.Resources.Resources["ApiGatewayAuthorizer"] = ResourceDefinition{}
+	s.Resources.Resources["ApiGatewayAuthorizer"] = nil
 }
 
 // addAuth adds the authorizer reference to the ServerlessFunction
 func (f *ServerlessFunction) addAuth() {
-	f.Events[0].HTTP.Authorizer = Authorizer{
+	f.Events[0].HTTP.Authorizer = &Authorizer{
 		Type: "COGNITO_USER_POOLS",
 		AuthorizerID: Reference{
 			Ref: "ApiGatewayAuthorizer",
@@ -361,5 +366,5 @@ func (f *ServerlessFunction) addAuth() {
 
 // removeAuth removes the authorizer reference to the ServerlessFunction
 func (f *ServerlessFunction) removeAuth() {
-	f.Events[0].HTTP.Authorizer = Authorizer{}
+	f.Events[0].HTTP.Authorizer = nil
 }

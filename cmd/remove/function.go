@@ -32,27 +32,26 @@ var (
 		Use:   "function functionName",
 		Short: "Removes a function from a resource",
 		Run: func(cmd *cobra.Command, args []string) {
-			actual := args[0]
-			function := flect.New(actual).Camelize()
+			fName := flect.New(args[0]).Camelize().String()
 
 			// get config and add function to it
-			config := models.ReadConfig()
-			config.RemoveFunction(resourceName, function.String())
+			mc := models.ReadMUGConfig()
+			sc := mc.ReadServerlessConfig(assigned)
+
+			// remove function from ServerlessConfig
+			sc.RemoveFunction(fName)
+			sc.Write(mc.ProjectPath, assigned)
 
 			// remove files
-			models.RemoveFiles(config, resourceName, &function)
-			config.Write()
-
-			// update the yml files and Makefile with current config
-			models.UpdateYMLs(config, true)
+			models.RemoveFiles(mc.ProjectName, assigned, fName)
 		},
 	}
 
-	resourceName string
+	assigned string
 )
 
 func init() {
 	RemoveCmd.AddCommand(rmfunctionCmd)
 
-	rmfunctionCmd.Flags().StringVarP(&resourceName, "resource", "r", "", "Name of the resource the function should be added to")
+	rmfunctionCmd.Flags().StringVarP(&assigned, "assignedTo", "a", "", "Name of the resource or the function group the function was assigned to")
 }
