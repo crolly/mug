@@ -263,26 +263,26 @@ func (m MUGConfig) renderMakefile(t *template.Template, r string) {
 	log.Println("Makefile generated.")
 }
 
-func (m MUGConfig) make(list []string, kind string) {
+func (m MUGConfig) make(list []string, path, target string) {
 	// load Makefile template
 	t := LoadTemplateFromBox(MakeBox, "Makefile.tmpl")
 
 	for _, r := range list {
 		// clear the debug binaries
-		m.clearFolder(filepath.Join(r, kind))
+		m.clearFolder(filepath.Join(r, path))
 		// render for each resource/ function group
 		m.renderMakefile(t, r)
 		// and run the build
-		RunCmd("make", kind)
+		RunCmd("make", target)
 	}
 }
 
 // MakeDebug renders the Makefile and builds the debug binaries
 func (m MUGConfig) MakeDebug(list []string) {
-	m.make(list, "debug")
+	m.make(list, "debug", "debug")
 }
 
 // MakeBuild renders the Makefile and builds the binaries
 func (m MUGConfig) MakeBuild(list []string) {
-	m.make(list, "bin")
+	m.make(list, "bin", "build")
 }

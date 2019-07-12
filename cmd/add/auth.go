@@ -57,4 +57,5 @@ func init() {
 	authCmd.Flags().StringVarP(&pool, "user pool", "p", "", "define the user pool to authenticate against")
 	authCmd.Flags().StringVarP(&excludes, "excludes", "x", "", "list of functions in resource/ function group without authentication")
 
+	cobra.MarkFlagRequired(authCmd.Flags(), "user pool")
 }

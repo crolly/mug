@@ -49,24 +49,7 @@ var (
 			// get the config
 			mc := models.ReadMUGConfig()
 
-			// get list of resources
-			var list []string
-			if debugList != "all" {
-				// split list of resources/ function groups
-				list = strings.Split(debugList, ",")
-			} else {
-				// list of all resources and function groups
-				info, err := ioutil.ReadDir(filepath.Join(mc.ProjectPath, "functions"))
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				for _, f := range info {
-					if f.IsDir() {
-						list = append(list, f.Name())
-					}
-				}
-			}
+			list := models.GetList(mc.ProjectPath, debugList)
 
 			// make debug binaries overwriting previous
 			mc.MakeDebug(list)

@@ -287,18 +287,31 @@ func (s *ServerlessConfig) RemoveFunction(n string) {
 
 // AddPoolEnv adds the given cognito user pool arn as environment in .env
 func (s *ServerlessConfig) AddPoolEnv(mc MUGConfig, rName, pool string) {
-	path := filepath.Join(mc.ProjectPath, "functions", rName, ".env")
-	env, err := godotenv.Read(path)
+	path := filepath.Join(mc.ProjectPath, "functions", rName, "secrets.yml")
+	var secrets map[string]string
+
+	data, err := readDataFromFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			secrets = make(map[string]string)
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	if err := yaml.Unmarshal(data, &secrets); err != nil {
+		log.Fatal(err)
+	}
+
+	secrets["COGNITO_USER_POOL"] = pool
+
+	yml, err := yaml.Marshal(secrets)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	env["COGNITO_USER_POOL"] = pool
-	if err := godotenv.Write(env, path); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
+	err = ioutil.WriteFile(path, yml, 0644)
+	if err != nil {
 		log.Fatal(err)
 	}
 }
@@ -346,7 +359,7 @@ func (s *ServerlessConfig) addAuthResource() {
 				Ref: "ApiGatewayRestApi",
 			},
 			Type:         "COGNITO_USER_POOLS",
-			ProviderARNs: []string{"${env:COGNITO_USER_POOL}"},
+			ProviderARNs: []string{"${file(secrets.yml):COGNITO_USER_POOL}"},
 		},
 	}
 }

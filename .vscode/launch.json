@@ -146,7 +146,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "auth", "generic"]
+            "args": ["add", "auth", "generic", "-p", "arn:aws:cognito-idp:eu-central-1:285688367535:userpool/eu-central-1_OjjilcBGQ"]
         },
         {
             "name": "add auth with cognito user pool to user resource",
@@ -174,6 +174,15 @@
             "program": "${workspaceRoot}/main.go",
             "env": {},
             "args": ["debug"]
+        },
+        {
+            "name": "mug deploy function group generic and resource course",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["deploy", "-l", "generic,course"]
         },
     ]
 }

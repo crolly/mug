@@ -371,3 +371,34 @@ func Contains(s []string, v string) bool {
 	}
 	return false
 }
+
+// GetList returns the list of deployable/ debugable resources/ function groups
+func GetList(projectPath, wish string) []string {
+	var available []string
+	// list of all resources and function groups available in project
+	info, err := ioutil.ReadDir(filepath.Join(projectPath, "functions"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range info {
+		if f.IsDir() {
+			available = append(available, f.Name())
+		}
+	}
+
+	var list []string
+	if wish == "all" {
+		list = available
+	} else {
+		// split list of resources/ function groups
+		wishList := strings.Split(wish, ",")
+		for _, r := range available {
+			if Contains(wishList, r) {
+				list = append(list, r)
+			}
+		}
+	}
+
+	return list
+}
