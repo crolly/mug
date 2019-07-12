@@ -70,7 +70,7 @@ var (
 func init() {
 	AddCmd.AddCommand(functionCmd)
 
-	functionCmd.Flags().StringVarP(&rName, "resource", "r", "generic", "Name of the resource the function should be added to")
+	functionCmd.Flags().StringVarP(&rName, "assign", "a", "generic", "Name of the resource or function group the function should be assigned to")
 	functionCmd.Flags().StringVarP(&path, "path", "p", "", "Path the function will respond to e.g. /users")
 	functionCmd.Flags().StringVarP(&method, "method", "m", "", "Method the function will respond to e.g. get")
 
@@ -95,14 +95,14 @@ func renderFunction(config models.MUGConfig, rName, fName string) {
 	}
 	defer f.Close()
 
-	// get blueprint template
+	// get blueprint template determining wether function will be added to resource or function group
 	var t *template.Template
 	resourceFunc := false
-	if rName != "generic" {
+	if _, err := os.Stat(filepath.Join(folder, rName+".go")); os.IsNotExist(err) {
+		t = models.LoadTemplateFromBox(models.FunctionBox, "blueprint.tmpl")
+	} else {
 		t = models.LoadTemplateFromBox(models.FunctionBox, "resourceBlueprint.tmpl")
 		resourceFunc = true
-	} else {
-		t = models.LoadTemplateFromBox(models.FunctionBox, "blueprint.tmpl")
 	}
 
 	// execute template and save to file

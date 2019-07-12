@@ -18,28 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package remove
+package add
 
 import (
 	"github.com/crolly/mug/cmd/models"
+
 	"github.com/spf13/cobra"
 )
 
-// rmauthCmd represents the rmauth command
-var rmauthCmd = &cobra.Command{
-	Use:   "auth [resourceName]",
-	Short: "Remove authentication from the given resource or function group",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		rName := args[0]
+// functionGroupCmd represents the functionGroup command
+var (
+	functionGroupCmd = &cobra.Command{
+		Use:   "functionGroup name [flags]",
+		Short: "Adds a new function group, you can then add functions to with 'mug add function -r name [flags]'",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			// TODO: check if functionGroup exists already
 
-		mc := models.ReadMUGConfig()
-		sc := mc.ReadServerlessConfig(rName)
-		sc.RemoveAuth()
-		sc.Write(mc.ProjectPath, rName)
-	},
-}
+			// instantiate new functionGroup
+			groupName := args[0]
+
+			// create new ServerlessConfig
+			mc := models.ReadMUGConfig()
+			sc := mc.NewServerlessConfig()
+
+			// save to folder
+			sc.Write(mc.ProjectPath, groupName)
+		},
+	}
+)
 
 func init() {
-	RemoveCmd.AddCommand(rmauthCmd)
+	AddCmd.AddCommand(functionGroupCmd)
 }

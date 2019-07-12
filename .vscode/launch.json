@@ -41,6 +41,24 @@
             "args": ["add", "function", "testtwo", "-m", "POST", "-p", "test-2"]
         },
         {
+            "name": "add function group",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "functionGroup", "helper"]
+        }, 
+        {
+            "name": "add function to function group",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["add", "function", "calculate", "-m", "POST", "-p", "calculate", "-a", "helper"]
+        },
+        {
             "name": "add simple resource course",
             "type": "go",
             "request": "launch",
@@ -65,7 +83,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "function", "listAddresses", "-m", "GET", "-p", "user/addresses", "-r", "user"]
+            "args": ["add", "function", "listAddresses", "-m", "GET", "-p", "user/addresses", "-a", "user"]
         },
         {
             "name": "remove function",

@@ -314,6 +314,15 @@ func (s *ServerlessConfig) AddAuth(excludes string) {
 	}
 }
 
+// RemoveAuth removes Authorization from the ServerlessConfig
+func (s *ServerlessConfig) RemoveAuth() {
+	s.removeAuthResource()
+
+	for _, fn := range s.Functions {
+		fn.removeAuth()
+	}
+}
+
 // addAuthResource adds the Authorizer Resource to the ServerlessConfig
 func (s *ServerlessConfig) addAuthResource() {
 	// make sure map exists
@@ -336,7 +345,11 @@ func (s *ServerlessConfig) addAuthResource() {
 	}
 }
 
-// AddAuth adds the authorizer reference to the ServerlessFunction
+func (s *ServerlessConfig) removeAuthResource() {
+	s.Resources.Resources["ApiGatewayAuthorizer"] = ResourceDefinition{}
+}
+
+// addAuth adds the authorizer reference to the ServerlessFunction
 func (f *ServerlessFunction) addAuth() {
 	f.Events[0].HTTP.Authorizer = Authorizer{
 		Type: "COGNITO_USER_POOLS",
@@ -344,4 +357,9 @@ func (f *ServerlessFunction) addAuth() {
 			Ref: "ApiGatewayAuthorizer",
 		},
 	}
+}
+
+// removeAuth removes the authorizer reference to the ServerlessFunction
+func (f *ServerlessFunction) removeAuth() {
+	f.Events[0].HTTP.Authorizer = Authorizer{}
 }
