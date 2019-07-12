@@ -86,22 +86,31 @@
             "args": ["add", "function", "listAddresses", "-m", "GET", "-p", "user/addresses", "-a", "user"]
         },
         {
-            "name": "remove function",
+            "name": "remove function test",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["remove", "function", "listAddresses"]
+            "args": ["remove", "function", "test"]
         }, 
         {
-            "name": "remove resource course",
+            "name": "remove resource user",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["remove", "resource", "course"]
+            "args": ["remove", "user"]
+        },
+        {
+            "name": "remove function group helper",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["remove", "helper"]
         },
         {
             "name": "add resource w/ custom KeySchema",

@@ -281,7 +281,7 @@ func (s *ServerlessConfig) AddFunction(fn Function) {
 
 // RemoveFunction removes a function from the ServerlessConfig
 func (s *ServerlessConfig) RemoveFunction(n string) {
-	s.Functions[n] = nil
+	delete(s.Functions, n)
 }
 
 // AddPoolEnv adds the given cognito user pool arn as environment in .env
@@ -321,7 +321,7 @@ func (s *ServerlessConfig) AddAuth(excludes string) {
 
 // RemoveAuth removes Authorization from the ServerlessConfig
 func (s *ServerlessConfig) RemoveAuth() {
-	s.removeAuthResource()
+	s.removeResource("ApiGatewayAuthorizer")
 
 	for _, fn := range s.Functions {
 		fn.removeAuth()
@@ -350,8 +350,8 @@ func (s *ServerlessConfig) addAuthResource() {
 	}
 }
 
-func (s *ServerlessConfig) removeAuthResource() {
-	s.Resources.Resources["ApiGatewayAuthorizer"] = nil
+func (s *ServerlessConfig) removeResource(rN string) {
+	delete(s.Resources.Resources, rN)
 }
 
 // addAuth adds the authorizer reference to the ServerlessFunction

@@ -22,7 +22,6 @@ package remove
 
 import (
 	"github.com/crolly/mug/cmd/models"
-	"github.com/gobuffalo/flect"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +31,7 @@ var (
 		Use:   "function functionName",
 		Short: "Removes a function from a resource",
 		Run: func(cmd *cobra.Command, args []string) {
-			fName := flect.New(args[0]).Camelize().String()
+			fName := models.GetFuncName(assigned, args[0])
 
 			// get config and add function to it
 			mc := models.ReadMUGConfig()
@@ -43,7 +42,7 @@ var (
 			sc.Write(mc.ProjectPath, assigned)
 
 			// remove files
-			models.RemoveFiles(mc.ProjectName, assigned, fName)
+			models.RemoveFiles(mc.ProjectName, assigned, args[0])
 		},
 	}
 
@@ -53,5 +52,5 @@ var (
 func init() {
 	RemoveCmd.AddCommand(rmfunctionCmd)
 
-	rmfunctionCmd.Flags().StringVarP(&assigned, "assignedTo", "a", "", "Name of the resource or the function group the function was assigned to")
+	rmfunctionCmd.Flags().StringVarP(&assigned, "assignedTo", "a", "generic", "Name of the resource or the function group the function was assigned to")
 }

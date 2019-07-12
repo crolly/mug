@@ -21,18 +21,25 @@
 package remove
 
 import (
+	"github.com/crolly/mug/cmd/models"
 	"github.com/spf13/cobra"
 )
 
 // RemoveCmd represents the remove command
 var RemoveCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "Remove a simple lambda function or CRUDL functions for a resource to your project",
-}
+	Use:   "remove name",
+	Short: "Removes the given resource or function group",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		rName := args[0]
 
-func init() {
-	RemoveCmd.SetHelpCommand(&cobra.Command{
-		Use:    "no-help",
-		Hidden: true,
-	})
+		mc := models.ReadMUGConfig()
+
+		// delete resource from configuration
+		mc.RemoveResource(rName)
+
+		// delete resource folder
+		models.RemoveFiles(mc.ProjectPath, rName, "")
+		mc.Write()
+	},
 }

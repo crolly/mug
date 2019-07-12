@@ -228,3 +228,9 @@ func (m MUGConfig) ReadServerlessConfig(rn string) ServerlessConfig {
 
 	return sc
 }
+
+// RemoveResource removes a given resource from the MUGConfig and ServerlessConfig
+func (m *MUGConfig) RemoveResource(rN string) {
+	// remove from MUGConfig
+	delete(m.Resources, rN)
+}
