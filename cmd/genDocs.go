@@ -18,12 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package cmd
 
 import (
-	"github.com/crolly/mug/cmd"
+	"log"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
-func main() {
-	cmd.RootCmd.Execute()
+// genDocsCmd represents the genDocs command
+var genDocsCmd = &cobra.Command{
+	Use:   "genDocs",
+	Short: "Generates the documentation for mug",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := doc.GenMarkdownTree(RootCmd, "./docs")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(genDocsCmd)
 }
