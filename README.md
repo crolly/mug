@@ -12,14 +12,13 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [x] add resources with single line command
 - [x] resource definition with nested objects (structs and slices)
 - [x] automatically generate `serverless.yml` with resource definition for AWS Lamdba functions and AWS DynamoDB
-- [ ] easy configuration
 - [x] easy deployment
 - [x] remove functions from resource
 - [x] remove entire resources
 - [x] support for custom HASH key
 - [x] support for RANGE and SORT keys
+- [x] support for custom READ and WRITE CAPACITY units and ONDEMAND billing
 - [x] create command supports generation directly in `GOPATH` (e.g. `mug create github.com/user/project`)
-- [ ] resource generation from JSON
 - [x] support local debug of generated code (with aws-sam-cli)
 - [x] support for [secret environments](#deploying-with-secrets) 
 
@@ -297,10 +296,10 @@ layers:
 
 #### Deploying with secrets
 
-In case you have environment variables, you want to have added to your `serverless.yml` especially for those, you may not want to share in your git repository, you can easily create a `.env` file in the projects root path (where all the other yaml file are), which will be parsed during creation/ update of the `serverless.yml`.
+In case you have environment variables, you want to have added to your `serverless.yml` especially for those, you may not want to share in your git repository, you can easily create a `secrets.yml` file for that resource/ function group (where `serverless.yml` file is), which will be parsed during creation/ update of the `serverless.yml`.
 The environments will then be loaded to the environments section.
 
-For example, an `.env` file like this:
+For example:
 ```
 APP_NAME = Example
 APP_ENV = stage
@@ -315,8 +314,8 @@ provider:
   region: "eu-central-1"
   stage: ${opt:stage, 'dev'}
   environment:
-      APP_NAME: ${file(./.env):APP_NAME}
-      APP_ENV: ${file(./.env):APP_ENV}
+      APP_NAME: ${file(./secrets.yml):APP_NAME}
+      APP_ENV: ${file(./secrets.yml):APP_ENV}
 ```
 
-Simply adding your `.env` to your `.gitignore` would be a good practice to pass environment variables to your lambda function without exposing them to the world.
+Simply adding your `secrets.yml` to your `.gitignore` would be a good practice to pass environment variables to your lambda function without exposing them to the world.

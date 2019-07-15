@@ -8,10 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/imdario/mergo"
-
-	"github.com/joho/godotenv"
-
 	"gopkg.in/yaml.v2"
 )
 
@@ -166,12 +162,23 @@ func (s *ServerlessConfig) Write(projectPath, mn string) {
 	// resource path
 	rp := filepath.Join(projectPath, "functions", mn)
 
-	// read env file
-	env, _ := godotenv.Read(filepath.Join(projectPath, ".env"), filepath.Join(rp, ".env"))
-
-	// merge environment into ServerlessConfig
-	if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
+	// read secrets
+	secrets := map[string]string{}
+	data, err := readDataFromFile(filepath.Join(rp, "secrets.yml"))
+	if err != nil {
 		log.Fatal(err)
+	}
+
+	if err := yaml.Unmarshal(data, &secrets); err != nil {
+		log.Fatal(err)
+	}
+
+	// make sure map exists
+	if len(s.Provider.Environments) == 0 {
+		s.Provider.Environments = map[string]string{}
+	}
+	for k := range secrets {
+		s.Provider.Environments[k] = "${file(secrets.yml):" + k
 	}
 
 	fp := filepath.Join(rp, "serverless.yml")
