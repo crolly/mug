@@ -28,7 +28,7 @@ import (
 // RemoveCmd represents the remove command
 var RemoveCmd = &cobra.Command{
 	Use:   "remove name",
-	Short: "Removes the given resource or function group",
+	Short: "Remove resources, function groups or functions to your project",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rName := args[0]

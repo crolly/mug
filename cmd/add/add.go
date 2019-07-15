@@ -28,7 +28,7 @@ var (
 	// AddCmd represents the add command
 	AddCmd = &cobra.Command{
 		Use:   "add",
-		Short: "Add a simple lambda function or CRUDL functions for a resource to your project",
+		Short: "Add resources, function groups or functions to your project",
 	}
 
 	noUpdate bool

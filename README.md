@@ -22,6 +22,10 @@ Everythink can be built and deployed using `make` and `sls deploy`.
 - [x] support local debug of generated code (with aws-sam-cli)
 - [x] support for [secret environments](#deploying-with-secrets) 
 
+## Documentation
+
+The auto generated documentation can be found here: [https://crolly.github.io/mug](https://crolly.github.io/mug)
+
 ## Getting Started
 
 - [Requirements](#requirements)
@@ -42,7 +46,7 @@ In order to be able to deploy the generated code please make sure to have the fo
 * [serverless framework](https://serverless.com/framework/docs/getting-started/)
 * [dep](https://golang.github.io/dep/) (golang dependancy management tool)
 * [aws-cli](https://docs.aws.amazon.com/de_de/cli/latest/userguide/cli-chap-welcome.html) wouldn't hurt, but is not necessarily required
-* [aws-sam-cli]() in case you want to locally debug your code
+* [aws-sam-cli](https://github.com/awslabs/aws-sam-cli) in case you want to locally debug your code
 
 ### Installation
 
@@ -59,9 +63,9 @@ The create command generates the boilerplate for project.
 mug create projectname [flags]
 ```
 This will create the directory in case it doesn't already exist. The structure will generally look like this:
-
+<!-- 
 * Makefile - used for dep package management and compiling the functions, so only binaries will be uploaded to AWS
-* serverless.yml - defines the AWS Dynamo DB tables, AWS Lambda function definitions and AWS API Gateway events
+* serverless.yml - defines the AWS Dynamo DB tables, AWS Lambda function definitions and AWS API Gateway events -->
 * mug.config.json - used to register the project and resource generation as base for Makefile and serverless updates
 * Gopkg.toml - keeps track of the dependencies
 

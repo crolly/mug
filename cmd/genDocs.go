@@ -21,24 +21,52 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"path"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
 
 // genDocsCmd represents the genDocs command
-var genDocsCmd = &cobra.Command{
-	Use:   "genDocs",
-	Short: "Generates the documentation for mug",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := doc.GenMarkdownTree(RootCmd, "./docs")
-		if err != nil {
-			log.Fatal(err)
-		}
+var (
+	genDocsCmd = &cobra.Command{
+		Use:   "genDocs",
+		Short: "Generates the documentation for mug",
+		Run: func(cmd *cobra.Command, args []string) {
+			const fmTemplate = `---
+date: %s
+title: "%s"
+slug: %s
+url: %s
+---
+`
 
-	},
-}
+			filePrepender := func(filename string) string {
+				now := time.Now().Format(time.RFC3339)
+				name := filepath.Base(filename)
+				base := strings.TrimSuffix(name, path.Ext(name))
+				url := strings.ToLower(base) + "/"
+				return fmt.Sprintf(fmTemplate, now, strings.Replace(base, "_", " ", -1), base, url)
+			}
+
+			linkHandler := func(name string) string {
+				base := strings.TrimSuffix(name, path.Ext(name))
+				return strings.ToLower(base) + "/"
+			}
+
+			err := doc.GenMarkdownTreeCustom(RootCmd, "./docs", filePrepender, linkHandler)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		},
+	}
+)
 
 func init() {
 	RootCmd.AddCommand(genDocsCmd)

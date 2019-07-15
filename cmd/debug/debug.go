@@ -42,9 +42,8 @@ var (
 	// DebugCmd represents the debug command
 	DebugCmd = &cobra.Command{
 		Use:   "debug",
-		Short: "starts a aws-sam-cli local api",
-		Long: `This command generates a template.yml for aws-sam-cli and starts
-	a local api to test or debug against`,
+		Short: "Start Local API for debugging",
+		Long:  `This command generates a template.yml for aws-sam-cli and starts a local api to test or debug against`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// get the config
 			mc := models.ReadMUGConfig()
