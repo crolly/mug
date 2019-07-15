@@ -165,7 +165,7 @@ func (s *ServerlessConfig) Write(projectPath, mn string) {
 	// read secrets
 	secrets := map[string]string{}
 	data, err := readDataFromFile(filepath.Join(rp, "secrets.yml"))
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
 
