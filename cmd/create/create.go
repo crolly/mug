@@ -46,9 +46,9 @@ var (
 	region string
 	force  bool
 
-	gopkg = `"[[constraint]]
+	gopkg = `[[constraint]]
 	name = "github.com/aws/aws-lambda-go"
-	version = "^1.0.1""`
+	version = "^1.0.1"`
 )
 
 func init() {
