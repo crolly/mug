@@ -188,18 +188,10 @@ func (m *Model) parseAttributes(attrs string) {
 		// handle optional inputs
 		var (
 			goType = "string"
-			// hash   = false
-			// err    error
 		)
 
 		if len(inputs) > 1 {
 			goType = inputs[1]
-			// if len(inputs) > 2 {
-			// 	hash, err = strconv.ParseBool(inputs[2])
-			// 	if err != nil {
-			// 		log.Fatal(err)
-			// 	}
-			// }
 		}
 
 		attr := Attribute{

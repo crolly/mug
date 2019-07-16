@@ -21,13 +21,9 @@
 package debug
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -68,7 +64,7 @@ var (
 			t.Write(mc.ProjectPath)
 
 			// start aws-sam-cli local api
-			// startLocalAPI()
+			startLocalAPI()
 		},
 	}
 
@@ -219,25 +215,4 @@ func ensureDebugger() {
 	log.Println("Building dlv locally")
 	env := []string{"GOARCH=amd64", "GOOS=linux"}
 	models.RunCmdWithEnv(env, "go", "build", "-o", "./dlv/dlv", "github.com/go-delve/delve/cmd/dlv")
-}
-
-//reads model definition for a resource
-func getResourceForTable(table string) *models.Resource {
-	wd := models.ReadConfig().ProjectPath
-
-	configFile, err := os.Open(filepath.Join(wd, "mug.config.json"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer configFile.Close()
-
-	data, err := ioutil.ReadAll(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var config models.ResourceConfig
-	json.Unmarshal(data, &config)
-
-	return config.Resources[table]
 }

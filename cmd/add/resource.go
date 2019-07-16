@@ -38,8 +38,6 @@ var (
 		Short: "Adds CRUDL functions for the defined resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: check if resource exists already
-
 			// instantiate new resource model and parse given attributes
 			modelName := args[0]
 			capacityUnits := map[string]int64{
@@ -61,6 +59,11 @@ var (
 
 			// add resource to mug.config.json
 			mc, sc := m.GetConfigs()
+
+			// check if resource exists already
+			if _, err := os.Stat(filepath.Join(mc.ProjectPath, "functions", modelName)); !os.IsNotExist(err) {
+				log.Fatalf("Function Group or Resource with the given name (%s) already exists. \n", modelName)
+			}
 
 			// render templates with data
 			renderTemplates(mc, m)

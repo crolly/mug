@@ -39,11 +39,12 @@ var (
 		Short: "Creates the boilerplate for your AWS Lambda for golang project.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			createProjectStructure(args[0])
+			createProjectStructure(args[0], force)
 		},
 	}
 
 	region string
+	force  bool
 
 	gopkg = `"[[constraint]]
 	name = "github.com/aws/aws-lambda-go"
@@ -56,15 +57,17 @@ func init() {
 		Hidden: true,
 	})
 	CreateCmd.Flags().StringVarP(&region, "region", "r", "eu-central-1", "Region the project will be deployed to (e.g. us-east-1 or eu-central-1)")
+	CreateCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of the directory in case it exists already")
 }
 
 // createsProjectStructure creates the project structure with serverless.yml and mug.config.json
-func createProjectStructure(projectName string) {
+func createProjectStructure(projectName string, force bool) {
 	// create new config from project name
 	config := newConfig(projectName)
 
-	// create folder for project if it doesn't exist already
-	if _, err := os.Stat(config.ProjectPath); !os.IsNotExist(err) {
+	if force {
+		os.RemoveAll(config.ProjectPath)
+	} else if _, err := os.Stat(config.ProjectPath); !os.IsNotExist(err) {
 		// projectPath exists already
 		log.Fatal("folder already exists")
 	}

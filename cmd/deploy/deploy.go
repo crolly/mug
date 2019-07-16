@@ -38,7 +38,7 @@ var (
 			list := models.GetList(mc.ProjectPath, buildList)
 
 			// build binaries
-			// mc.MakeBuild(list)
+			mc.MakeBuild(list)
 			// deploy to AWS
 			for _, r := range list {
 				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";sls deploy")

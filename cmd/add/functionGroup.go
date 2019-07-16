@@ -21,6 +21,10 @@
 package add
 
 import (
+	"log"
+	"os"
+	"path/filepath"
+
 	"github.com/crolly/mug/cmd/models"
 
 	"github.com/spf13/cobra"
@@ -33,13 +37,18 @@ var (
 		Short: "Adds a new function group, you can then add functions to with 'mug add function -r name [flags]'",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: check if functionGroup exists already
-
 			// instantiate new functionGroup
 			groupName := args[0]
 
 			// create new ServerlessConfig
 			mc := models.ReadMUGConfig()
+
+			// check if functionGroup exists already
+			if _, err := os.Stat(filepath.Join(mc.ProjectPath, "functions", groupName)); !os.IsNotExist(err) {
+				log.Fatalf("Function Group or Resource with the given name (%s) already exists. \n", groupName)
+			}
+
+			// create new function group
 			sc := mc.NewServerlessConfig()
 
 			// save to folder
