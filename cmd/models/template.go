@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -63,7 +64,7 @@ func (t *TemplateConfig) AddFunctionsFromServerlessConfig(s ServerlessConfig, r 
 			Type: "AWS::Serverless::Function",
 			Properties: SAMFnProp{
 				Runtime: "go1.x",
-				Handler: f.Handler,
+				Handler: strings.TrimPrefix(f.Handler, "bin/"),
 				CodeURI: filepath.Join(".", "functions", r, "debug"),
 				Events: map[string]SAMEvent{
 					"http": SAMEvent{

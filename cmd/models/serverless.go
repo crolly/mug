@@ -270,29 +270,18 @@ func (s *ServerlessConfig) SetFunctions(fns []*Function) {
 	s.Functions = map[string]*ServerlessFunction{}
 
 	for _, fn := range fns {
-		s.Functions[fn.Name] = &ServerlessFunction{
-			Handler: fn.Handler,
-			Events: []Events{
-				Events{
-					HTTP: Event{
-						Path:   fn.Path,
-						Method: fn.Method,
-						CORS:   true,
-					},
-				},
-			},
-		}
+		s.AddFunction(fn)
 	}
 }
 
 // AddFunction adds a function to the ServerlessConfig
-func (s *ServerlessConfig) AddFunction(fn Function) {
+func (s *ServerlessConfig) AddFunction(fn *Function) {
 	// make sure map exists
 	if len(s.Functions) == 0 {
 		s.Functions = map[string]*ServerlessFunction{}
 	}
 	s.Functions[fn.Name] = &ServerlessFunction{
-		Handler: fn.Handler,
+		Handler: "bin/" + fn.Handler,
 		Events: []Events{
 			Events{
 				HTTP: Event{

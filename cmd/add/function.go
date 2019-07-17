@@ -47,7 +47,7 @@ var (
 			mc := models.ReadMUGConfig()
 			sc := mc.ReadServerlessConfig(rName)
 
-			fn := models.Function{
+			fn := &models.Function{
 				Name:    models.GetFuncName(rName, fName),
 				Path:    strings.TrimPrefix(path, "/"),
 				Method:  strings.ToLower(method),
