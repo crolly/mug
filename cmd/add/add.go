@@ -30,8 +30,6 @@ var (
 		Use:   "add",
 		Short: "Add resources, function groups or functions to your project",
 	}
-
-	noUpdate bool
 )
 
 func init() {

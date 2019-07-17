@@ -74,9 +74,9 @@ var (
 
 func init() {
 	DebugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicates whether you want to run a remote debugger (e.g. step through your code with VSCode)")
-	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "d", "5986", "defines the remote port if remoteDebugger is true [default: 5986]")
-	DebugCmd.Flags().StringVarP(&gwPort, "gwPort", "g", "3000", "defines the port of local API Gateway [default: 3000]")
-	DebugCmd.Flags().StringVarP(&debugList, "list", "l", "all", "comma separated list of resources/ function groups to debug [default: all]")
+	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "d", "5986", "defines the remote port if remoteDebugger is true")
+	DebugCmd.Flags().StringVarP(&gwPort, "gwPort", "g", "3000", "defines the port of local API Gateway")
+	DebugCmd.Flags().StringVarP(&debugList, "list", "l", "all", "comma separated list of resources/ function groups to debug")
 }
 
 func createLambdaNetwork() {
