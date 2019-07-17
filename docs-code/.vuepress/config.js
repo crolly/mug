@@ -2,7 +2,6 @@ module.exports = {
     title: 'mug Documentation',
     description: 'Documentation for mug which lets you create AWS Lambda for golang projects.',
     base: '/mug/',
-    dest: '../docs',
     markdown: {
         toc: {
             includeLevel: [ 1, 2 ],
