@@ -10,9 +10,12 @@ module.exports = {
         lineNumbers: true,
     },
     themeConfig: {
+        repo: 'crolly/mug',
+        docsDir: 'docs-src',
+        editLinks: true,
         nav: [
             { text: 'Guide', link: '/'},
-            { text: 'Command Reference', link: '/commands/'},
+            { text: 'Commands Reference', link: '/commands/'},
         ],
         sidebar: {
             '/commands/': [
