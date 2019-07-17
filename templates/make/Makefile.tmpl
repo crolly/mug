@@ -1,4 +1,4 @@
-bins = {{ range $fn := .Functions }}functions/{{$.Resource}}/bin/{{$fn.Handler}} {{ end }}
+bins = {{ range $fn := .Functions }}functions/{{$.Resource}}/{{$fn.Handler}} {{ end }}
 debugs = {{ range $fn := .Functions }}functions/{{$.Resource}}/debug/{{TrimBinPrefix $fn.Handler}} {{ end }}
 
 functions/{{.Resource}}/bin/%: functions/{{.Resource}}/%/main.go
