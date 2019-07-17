@@ -32,4 +32,4 @@ To eventually deploy just run `mug deploy`.
 
 You can run the same `curl` commands however this time use the provided URL from AWS and not the localhost.
 
-![Example GIF](./example.gif){style="display: block; margin: 0 auto"}
+<p align="center"><img src="./example.gif" width="480px" /></p>
