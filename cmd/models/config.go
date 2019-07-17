@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v2"
@@ -129,11 +128,6 @@ func (m MUGConfig) renderMakefile(t *template.Template, r string) {
 		"Functions": sc.Functions,
 		"Resource":  r,
 	}
-
-	// add FuncMap to remove bin/ for debug target
-	t = t.Funcs(template.FuncMap{
-		"TrimPrefix": strings.TrimPrefix,
-	})
 
 	err = t.Execute(f, data)
 	if err != nil {

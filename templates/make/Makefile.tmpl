@@ -1,5 +1,5 @@
 bins = {{ range $fn := .Functions }}functions/{{$.Resource}}/bin/{{$fn.Handler}} {{ end }}
-debugs = {{ range $fn := .Functions }}functions/{{$.Resource}}/debug/{{TrimPrefix($fn.Handler,"bin/")}} {{ end }}
+debugs = {{ range $fn := .Functions }}functions/{{$.Resource}}/debug/{{TrimBinPrefix $fn.Handler "bin/"}} {{ end }}
 
 functions/{{.Resource}}/bin/%: functions/{{.Resource}}/%/main.go
 		env GOOS=linux go build -ldflags="-s -w" -o $@ $<

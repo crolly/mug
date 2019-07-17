@@ -70,8 +70,15 @@ func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
 		log.Fatal(err)
 	}
 
+	// add FuncMap to remove bin/ for debug target
+	funcMap := template.FuncMap{
+		"TrimBinPrefix": func(s string) string {
+			return strings.TrimPrefix(s, "bin/")
+		},
+	}
+
 	// create new template with string
-	t, err := template.New(file).Parse(ts)
+	t, err := template.New(file).Funcs(funcMap).Parse(ts)
 	if err != nil {
 		log.Fatal(err)
 	}
