@@ -15,16 +15,16 @@ The documentation can be found [here](https://crolly.github.io/mug).
 
 The following commands will spin up a quick example project and add a simple resource.
 
-`go get github.com/crolly/mug`
-`mug create github.com/crolly/mug-example`
-`cd $GOPATH/src/github.com/crolly/mug-example`
-`mug add resource course -a "name,description,price:float32"`
+* `go get github.com/crolly/mug`
+* `mug create github.com/crolly/mug-example`
+* `cd $GOPATH/src/github.com/crolly/mug-example`
+* `mug add resource course -a "name,description,price:float32"`
 
 You can then start your newly created serverless API locally with `mug debug` and test it before deploying.
 
 Just open a new console window or tab and try the following commands:
-`curl -X POST http://127.0.0.1:3000/courses -d '{"name":"Test Course","description":"Course created to test the API","price":9.99}'`
-`curl http://127.0.0.1:3000/courses`
+* `curl -X POST http://127.0.0.1:3000/courses -d '{"name":"Test Course","description":"Course created to test the API","price":9.99}'`
+* `curl http://127.0.0.1:3000/courses`
 
 To eventually deploy just run `mug deploy`.
 
