@@ -31,7 +31,7 @@ func connectDB() (*dynamodb.DynamoDB, string) {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 		}))
-		tableName = "{{.Model.Ident.Pluralize.ToLower}}"
+		tableName = "{{.Model.Ident.Pluralize.ToLower}}-debug"
 	} else {
 		sess = session.Must(session.NewSession())
 		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")	
