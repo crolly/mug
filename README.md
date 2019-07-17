@@ -11,5 +11,29 @@ It boilerplates the project structure with a serverless framework configuration.
 
 The documentation can be found [here](https://crolly.github.io/mug).
 
-## Quick Look
+## Quick Start
 
+The following commands will spin up a quick example project and add a simple resource.
+
+```console
+go get github.com/crolly/mug
+mug create github.com/crolly/mug-example
+cd $GOPATH/src/github.com/crolly/mug-example
+mug add resource course -a "name,description,price:float32"
+```
+
+You can then start your newly created serverless API locally with and test it before deploying.
+```console
+mug debug
+```
+
+Just open a new console window or tab and try the following commands:
+```console
+
+```
+To eventually deploy just run:
+```console
+mug deploy
+```
+
+**Make sure to have your serverless framework configuration setup accordingly beforehand.**

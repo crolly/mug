@@ -1,13 +1,14 @@
 package models
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/imdario/mergo"
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v2"
 )
 
@@ -157,14 +158,10 @@ func NewDefaultServerlessConfig() ServerlessConfig {
 	return s
 }
 
-// Write writes the ServerlessConfig to serverless.yml for the given project path and model name
-func (s *ServerlessConfig) Write(projectPath, mn string) {
-	// resource path
-	rp := filepath.Join(projectPath, "functions", mn)
-
+func (s *ServerlessConfig) updateSecrets(path string) {
 	// read secrets
 	secrets := map[string]string{}
-	data, err := readDataFromFile(filepath.Join(rp, "secrets.yml"))
+	data, err := readDataFromFile(filepath.Join(path, "secrets.yml"))
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
@@ -178,8 +175,28 @@ func (s *ServerlessConfig) Write(projectPath, mn string) {
 		s.Provider.Environments = map[string]string{}
 	}
 	for k := range secrets {
-		s.Provider.Environments[k] = "${file(secrets.yml):" + k
+		s.Provider.Environments[k] = "${file(secrets.yml):" + k + "}"
 	}
+}
+
+func (s *ServerlessConfig) updateEnv(projectPath, resourcePath string) {
+	// read env file
+	if env, _ := godotenv.Read(filepath.Join(projectPath, ".env"), filepath.Join(resourcePath, ".env")); len(env) > 0 {
+		// merge environment into ServerlessConfig
+		if err := mergo.Merge(&s.Provider.Environments, env); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+// Write writes the ServerlessConfig to serverless.yml for the given project path and model name
+func (s *ServerlessConfig) Write(projectPath, mn string) {
+	// resource path
+	rp := filepath.Join(projectPath, "functions", mn)
+
+	// update secrets
+	s.updateSecrets(rp)
+	s.updateEnv(projectPath, rp)
 
 	fp := filepath.Join(rp, "serverless.yml")
 	// make sure directory exists
@@ -202,11 +219,12 @@ func (s *ServerlessConfig) Write(projectPath, mn string) {
 
 // SetResourceWithModel sets a Resource to the ServerlessConfig
 func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
+	tableName := r.Ident.Pluralize().String() + "-${opt:stage, self:provider.stage}"
 	rd := &ResourceDefinition{
 		Type:           "AWS::DynamoDB::Table",
 		DeletionPolicy: "Retain",
 		Properties: Properties{
-			TableName: fmt.Sprintf("${env:%s_TABLE_NAME}", m.Ident.ToUpper().String()),
+			TableName: tableName,
 		},
 	}
 
@@ -243,7 +261,7 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 
 	// set environment
 	s.Provider.Environments = map[string]string{
-		r.Ident.ToUpper().String() + "_TABLE_NAME": r.Ident.Pluralize().String() + "-${opt:stage, self:provider.stage}",
+		r.Ident.ToUpper().String() + "_TABLE_NAME": tableName,
 	}
 }
 
