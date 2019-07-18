@@ -41,7 +41,7 @@ var (
 			mc.MakeBuild(list)
 			// deploy to AWS
 			for _, r := range list {
-				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";sls deploy --stage"+stage)
+				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";sls deploy --stage "+stage)
 			}
 		},
 	}
