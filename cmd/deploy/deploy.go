@@ -41,17 +41,18 @@ var (
 			mc.MakeBuild(list)
 			// deploy to AWS
 			for _, r := range list {
-				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";sls deploy")
+				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";sls deploy --stage"+stage)
 			}
 		},
 	}
 
-	name, buildList string
-	noUpdate        bool
+	name, buildList, stage string
+	noUpdate               bool
 )
 
 func init() {
 	DeployCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml during execution")
 	DeployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
 	DeployCmd.Flags().StringVarP(&buildList, "list", "l", "all", "comma separated list of resources/ function groups to debug [default: all]")
+	DeployCmd.Flags().StringVarP(&stage, "stage", "s", "dev", "define deployment stage")
 }
