@@ -61,12 +61,12 @@ type Event struct {
 	Method     string
 	CORS       bool        `yaml:",omitempty"`
 	Authorizer *Authorizer `yaml:",omitempty"`
+	Scopes     []string    `yaml:",omitempty"`
 }
 
 // Authorizer ...
 type Authorizer struct {
-	Type         string
-	AuthorizerID Reference `yaml:"authorizerId"`
+	ARN string
 }
 
 // Resources ...
@@ -333,62 +333,25 @@ func (s *ServerlessConfig) AddPoolEnv(mc MUGConfig, rName, pool string) {
 // AddAuth adds Authorization to the ServerlessConfig
 func (s *ServerlessConfig) AddAuth(excludes string) {
 	excludeSlice := strings.Split(excludes, ",")
-	resRequired := false
 
 	for _, fn := range s.Functions {
-		if !Contains(excludeSlice, fn.Handler) {
-			resRequired = true
+		if !Contains(excludeSlice, strings.TrimPrefix(fn.Handler, "bin/")) {
 			fn.addAuth()
 		}
-	}
-
-	if resRequired {
-		s.addAuthResource()
 	}
 }
 
 // RemoveAuth removes Authorization from the ServerlessConfig
 func (s *ServerlessConfig) RemoveAuth() {
-	s.removeResource("ApiGatewayAuthorizer")
-
 	for _, fn := range s.Functions {
 		fn.removeAuth()
 	}
 }
 
-// addAuthResource adds the Authorizer Resource to the ServerlessConfig
-func (s *ServerlessConfig) addAuthResource() {
-	// make sure map exists
-	if len(s.Resources.Resources) == 0 {
-		s.Resources.Resources = map[string]*ResourceDefinition{}
-	}
-
-	s.Resources.Resources["ApiGatewayAuthorizer"] = &ResourceDefinition{
-		DependsOn: []string{"ApiGatewayRestApi"},
-		Type:      "AWS::ApiGateway::Authorizer",
-		Properties: Properties{
-			Name:           "cognito-authorizer",
-			IdentitySource: "method.request.header.Authorization",
-			RestAPIID: Reference{
-				Ref: "ApiGatewayRestApi",
-			},
-			Type:         "COGNITO_USER_POOLS",
-			ProviderARNs: []string{"${file(secrets.yml):COGNITO_USER_POOL}"},
-		},
-	}
-}
-
-func (s *ServerlessConfig) removeResource(rN string) {
-	delete(s.Resources.Resources, rN)
-}
-
 // addAuth adds the authorizer reference to the ServerlessFunction
 func (f *ServerlessFunction) addAuth() {
 	f.Events[0].HTTP.Authorizer = &Authorizer{
-		Type: "COGNITO_USER_POOLS",
-		AuthorizerID: Reference{
-			Ref: "ApiGatewayAuthorizer",
-		},
+		ARN: "${file(secrets.yml):COGNITO_USER_POOL}",
 	}
 }
 
