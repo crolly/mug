@@ -13,6 +13,8 @@ The documentation can be found [here](https://crolly.github.io/mug).
 
 ## Quick Start
 
+<p align="center"><img src="./example.gif" /></p>
+
 The following commands will spin up a quick example project and add a simple resource.
 
 * `go get github.com/crolly/mug`
@@ -31,5 +33,3 @@ To eventually deploy just run `mug deploy`.
 **Make sure to have your serverless framework configuration setup accordingly beforehand.**
 
 You can run the same `curl` commands however this time use the provided URL from AWS and not the localhost.
-
-<p align="center"><img src="./exmaple.gif" width="480px" /></p>
