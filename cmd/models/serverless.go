@@ -14,21 +14,49 @@ import (
 
 // ServerlessConfig ...
 type ServerlessConfig struct {
-	Service   string
+	Service   Service
 	Provider  Provider
 	Package   Package
 	Functions map[string]*ServerlessFunction `yaml:",omitempty"`
+	Layers    map[string]Layer               `yaml:",omitempty"`
 	Resources Resources                      `yaml:",omitempty"`
+}
+
+// Service ...
+type Service struct {
+	Name         string
+	AWSKMSKeyARN string `yaml:"awsKmsKeyArn,omitempty"`
 }
 
 // Provider ...
 type Provider struct {
-	Name           string
-	Runtime        string
-	Region         string
-	Stage          string
-	Environments   map[string]string `yaml:"environment,omitempty"`
-	RoleStatements []RoleStatement   `yaml:"iamRoleStatements"`
+	Name                string
+	Runtime             string
+	Region              string
+	Stage               string
+	StackName           string            `yaml:"stackName,omitempty"`
+	APIName             string            `yaml:"apiName,omitempty"`
+	Profile             string            `yaml:",omitempty"`
+	MemSize             string            `yaml:"memorySize,omitempty"`
+	ReservedConcurrency int               `yaml:"reservedConcurrency,omitempty"`
+	Timeout             int               `yaml:"timeout,omitempty"`
+	logRetention        int               `yaml:"logRetentionInDays,omitempty"`
+	DeyploymentBucket   DeploymentBucket  `yaml:"deploymendBucket,omitempty"`
+	DeploymentPrefix    string            `yaml:"deploymentPrefix,omitempty"`
+	Environments        map[string]string `yaml:"environment,omitempty"`
+	RoleStatements      []RoleStatement   `yaml:"iamRoleStatements"`
+	EndpointType        string            `yaml:"endpointType,omitempty"`
+	NotificationARNs    []string          `yaml:"notificationArns,omitempty"`
+	Tags                map[string]string `yaml:",omitempty"`
+	Tracing             TracingConfig     `yaml:",omitempty"`
+	Logs                LogConfig         `yaml:",omitempty"`
+}
+
+// DeploymentBucket ...
+type DeploymentBucket struct {
+	Name string
+	SSE  string            `yaml:"serverSideEncryption,omitempty"`
+	Tags map[string]string `yaml:",omitempty"`
 }
 
 // RoleStatement ...
@@ -36,6 +64,18 @@ type RoleStatement struct {
 	Effect   string   `yaml:"Effect"`
 	Actions  []string `yaml:"Action"`
 	Resource string   `yaml:"Resource"`
+}
+
+// TracingConfig ...
+type TracingConfig struct {
+	APIGateway bool `yaml:"apiGateway,omitempty"`
+	Lambda     bool `yaml:",omitempty"`
+}
+
+// LogConfig ...
+type LogConfig struct {
+	RESTAPI   bool `yaml:"restApi,omitempty"`
+	WebSocket bool `yaml:"websocket,omitempty"`
 }
 
 // Package ...
@@ -46,27 +86,135 @@ type Package struct {
 
 // ServerlessFunction ...
 type ServerlessFunction struct {
-	Handler string
-	Events  []Events
+	Handler             string
+	Name                string            `yaml:",omitempty"`
+	Description         string            `yaml:",omitempty"`
+	MemorySize          int               `yaml:",omitempty"`
+	ReservedConcurrency int               `yaml:"reservedConcurrency,omitempty"`
+	RunTime             string            `yaml:"runtime,omitempty"`
+	Timeout             int               `yaml:",omitempty"`
+	AWSKMSKeyARN        string            `yaml:"awsKmsKeyArn,omitempty"`
+	Environments        map[string]string `yaml:"environment,omitempty"`
+	Tags                map[string]string `yaml:",omitempty"`
+	Layers              []string          `yaml:",omitempty"`
+	Events              []Events
 }
 
 // Events ...
 type Events struct {
-	HTTP Event `yaml:"http"`
+	HTTP            *HTTPEvent      `yaml:"http,omitempty"`
+	WebSocket       *WebSocketEvent `yaml:"websocket,omitempty"`
+	S3              *S3Event        `yaml:"s3,omitempty"`
+	Schedule        *ScheduleEvent  `yaml:"schedule,omitempty"`
+	SNS             *SNSEvent       `yaml:"sns,omitempty"`
+	SQS             *SQSEvent       `yaml:"sqs,omitempty"`
+	Stream          *StreamEvent    `yaml:"stream,omitempty"`
+	AlexaSkill      *AlexaEvent     `yaml:"alexaSkill,omitempty"`
+	AlexaSmartHome  *AlexaEvent     `yaml:"alexaSmartHome,omitempty"`
+	IOT             *IOTEvent       `yaml:"iot,omitempty"`
+	CognitoUserPool *CognitoEvent   `yaml:"cognitoUserPool,omitempty"`
+	ALB             *ALBEvent       `yaml:"alb,omitempty"`
 }
 
-// Event ...
-type Event struct {
+// HTTPEvent ...
+type HTTPEvent struct {
 	Path       string
 	Method     string
 	CORS       bool        `yaml:",omitempty"`
+	Private    bool        `yaml:",omitempty"`
 	Authorizer *Authorizer `yaml:",omitempty"`
 	Scopes     []string    `yaml:",omitempty"`
 }
 
+// WebSocketEvent ...
+type WebSocketEvent struct {
+	Route      string
+	Authorizer *Authorizer `yaml:",omitempty"`
+}
+
+// S3Event ...
+type S3Event struct {
+	Bucket string
+	Event  string
+	Rules  map[string]string `yaml:",omitempty"`
+}
+
+// ScheduleEvent ...
+type ScheduleEvent struct {
+	Name        string
+	Description string `yaml:",omitempty"`
+	Rate        string
+	Enabled     bool   `yaml:",omitempty"`
+	InputPath   string `yaml:"inputPath,omitempty"`
+}
+
+// SNSEvent ...
+type SNSEvent struct {
+	TopicName   string `yaml:"topicName"`
+	DisplayName string `yaml:"displayName,omitempty"`
+}
+
+// SQSEvent ...
+type SQSEvent struct {
+	ARN       string `yaml:"arn"`
+	BatchSize int    `yaml:"batchSize,omitempty"`
+}
+
+// StreamEvent ...
+type StreamEvent struct {
+	ARN              string `yaml:"arn"`
+	BatchSize        int    `yaml:"batchSize,omitempty"`
+	StartingPosition string `yaml:"startingPosition,omitempty"`
+	Enabled          bool   `yaml:",omitempty"`
+}
+
+// AlexaEvent ...
+type AlexaEvent struct {
+	AppID   string `yaml:"appId"`
+	Enabled bool   `yaml:",omitempty"`
+}
+
+// IOTEvent ...
+type IOTEvent struct {
+	Name        string `yaml:",omitempty"`
+	Description string `yaml:",omitempty"`
+	Enabled     bool   `yaml:",omitempty"`
+	SQL         string `yaml:"sql,omitempty"`
+	SQLVersion  string `yaml:"sqlVersion,omitempty"`
+}
+
+// CognitoEvent ...
+type CognitoEvent struct {
+	Pool    string
+	Trigger string
+}
+
+// ALBEvent ...
+type ALBEvent struct {
+	ListenerARN string            `yaml:"listenerArn"`
+	Priority    int               `yaml:",omitempty"`
+	Conditions  map[string]string `yaml:",omitempty"`
+}
+
 // Authorizer ...
 type Authorizer struct {
-	ARN string
+	ARN                          string
+	Name                         string `yaml:",omitempty"`
+	ResultTTL                    int    `yaml:"resultTtlInSeconds,omitempty"`
+	IdentitySource               string `yaml:"identitySource,omitempty"`
+	IdentityValidationExpression string `yaml:"identityValidationExpression,omitempty"`
+	Type                         string `yaml:",omitempty"`
+}
+
+// Layer ...
+type Layer struct {
+	Path               string
+	Name               string   `yaml:",omitempty"`
+	Description        string   `yaml:",omitempty"`
+	CompatibleRuntimes []string `yaml:"compatibleRuntimes,omitempty"`
+	License            string   `yaml:"licenseInfo,omitempty"`
+	AllowedAccounts    []string `yaml:"allowedAccounts,omitempty"`
+	Retain             bool     `yaml:",omitempty"`
 }
 
 // Resources ...
@@ -284,7 +432,7 @@ func (s *ServerlessConfig) AddFunction(fn *Function) {
 		Handler: "bin/" + fn.Handler,
 		Events: []Events{
 			Events{
-				HTTP: Event{
+				HTTP: &HTTPEvent{
 					Path:   fn.Path,
 					Method: fn.Method,
 					CORS:   true,

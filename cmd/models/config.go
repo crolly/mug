@@ -78,7 +78,7 @@ func (m MUGConfig) Write() {
 // NewFromResourceConfig returns a ServerlessConfig from a provided ResourceConfig
 func (m MUGConfig) NewServerlessConfig() ServerlessConfig {
 	s := NewDefaultServerlessConfig()
-	s.Service = m.ProjectName
+	s.Service = Service{Name: m.ProjectName}
 	s.Provider.Region = m.Region
 
 	return s
