@@ -6,7 +6,7 @@ import (
 	
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/gofrs/uuid"
+	{{ if .Model.GeneratedID }}"github.com/gofrs/uuid"{{ end }}
 
 	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
 )
