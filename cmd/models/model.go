@@ -295,8 +295,11 @@ func (m *Model) checkKeys() (bool, error) {
 		return false, fmt.Errorf("No Hash Key defined for %s. Cannot identify ID Attribute", m.Name)
 	}
 
-	if check["hash"] == 1 && check["range"] >= 1 {
-		m.CompositeKey = true
+	if check["hash"] == 1 {
+		if check["range"] >= 1 {
+			m.CompositeKey = true
+		}
+
 		return true, nil
 	}
 
