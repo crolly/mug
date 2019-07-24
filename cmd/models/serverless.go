@@ -80,13 +80,15 @@ type LogConfig struct {
 
 // Package ...
 type Package struct {
-	Excludes []string `yaml:"exclude"`
-	Includes []string `yaml:"include"`
+	Excludes     []string `yaml:"exclude,omitempty"`
+	Includes     []string `yaml:"include,omitempty"`
+	Individually bool     `yaml:",omitempty"`
 }
 
 // ServerlessFunction ...
 type ServerlessFunction struct {
 	Handler             string
+	Package             Package           `yaml:",omitempty"`
 	Name                string            `yaml:",omitempty"`
 	Description         string            `yaml:",omitempty"`
 	MemorySize          int               `yaml:",omitempty"`
@@ -295,12 +297,7 @@ func NewDefaultServerlessConfig() ServerlessConfig {
 			},
 		},
 		Package: Package{
-			Excludes: []string{
-				"./**",
-			},
-			Includes: []string{
-				"bin/**",
-			},
+			Individually: true,
 		},
 	}
 
@@ -431,6 +428,14 @@ func (s *ServerlessConfig) AddFunction(fn *Function) {
 	}
 	s.Functions[fn.Name] = &ServerlessFunction{
 		Handler: "bin/" + fn.Handler,
+		Package: Package{
+			Includes: []string{
+				"bin/" + fn.Handler,
+			},
+			Excludes: []string{
+				"./**",
+			},
+		},
 		Events: []Events{
 			Events{
 				HTTP: &HTTPEvent{
