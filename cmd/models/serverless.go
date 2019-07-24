@@ -185,8 +185,9 @@ type IOTEvent struct {
 
 // CognitoEvent ...
 type CognitoEvent struct {
-	Pool    string
-	Trigger string
+	Pool     string
+	Trigger  string
+	Existing bool
 }
 
 // ALBEvent ...
