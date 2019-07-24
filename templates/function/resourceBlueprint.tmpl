@@ -10,7 +10,7 @@ import (
 	"{{.Config.ImportPath}}/functions/{{.ResourceName}}"
 )
 
-// {{.Function.Pascalize}} function description
+// {{.Function.Pascalize}}Handler function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
 	values, err := {{.ResourceName}}.{{.Function.Pascalize}}()

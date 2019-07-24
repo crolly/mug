@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// {{.Function.Pascalize}} function description
+// {{.Function.Pascalize}}Handler function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
 	jsonItem, err := json.MarshalIndent(map[string]string{"msg": "{{.Function.Pascalize}} invoked successfully"}, "", "  ")
