@@ -43,7 +43,7 @@ var (
 			sc.Write(mc.ProjectPath, assigned)
 
 			// remove files
-			models.RemoveFiles(mc.ProjectName, assigned, args[0])
+			models.RemoveFiles(mc.ProjectPath, assigned, args[0])
 		},
 	}
 
