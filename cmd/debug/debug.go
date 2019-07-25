@@ -141,7 +141,7 @@ func createResourceTables(m models.MUGConfig, list []string) {
 			sc := m.ReadServerlessConfig(n)
 			rName := r.Ident.Pascalize().String() + "DynamoDbTable"
 			props := sc.Resources.Resources[rName].Properties
-			tableName := r.Ident.Pluralize().Camelize().String() + "-debug"
+			tableName := m.ProjectName + "-" + r.Ident.Pluralize().Camelize().String() + "-debug"
 
 			if tables[tableName] {
 				log.Printf("Table %s already exists, skipping creation...", tableName)
