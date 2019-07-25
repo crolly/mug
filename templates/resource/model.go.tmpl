@@ -20,21 +20,16 @@ import (
 
 func connectDB() (*dynamodb.DynamoDB, string) {
 	var sess *session.Session
-	var tableName string
+	tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
 
-	local, err := strconv.ParseBool(os.Getenv("AWS_SAM_LOCAL"))
-	if err != nil {
-		local = false
-	}
-	// Create dynamo client object locally if running SAM CLI
-	if local {
+	if len(tableName) > 0 {
+		sess = session.Must(session.NewSession())
+	} else {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
+			Region:   aws.String("{{.Config.Region}}"),
 		}))
 		tableName = "{{.Config.ProjectName}}-{{.Model.Ident.Pluralize.ToLower}}-debug"
-	} else {
-		sess = session.Must(session.NewSession())
-		tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")	
 	}
 
 	return dynamodb.New(sess), tableName
