@@ -133,6 +133,8 @@ func RemoveFiles(pPath, aName, fName string) {
 		folder = filepath.Join(folder, fName)
 	}
 
+	log.Println("Try deleting files from ", folder)
+
 	err := os.RemoveAll(folder)
 	if err != nil {
 		log.Fatalf("Error deleting function folder %s: %s", folder, err)
