@@ -30,6 +30,7 @@ var (
 	rmfunctionCmd = &cobra.Command{
 		Use:   "function functionName",
 		Short: "Removes a function from a resource",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			fName := models.GetFuncName(assigned, args[0])
 
