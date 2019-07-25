@@ -236,11 +236,14 @@ type ResourceDefinition struct {
 // Properties ...
 type Properties struct {
 	// Properties for Resources
-	AttributeDefinitions  []AttributeDef         `yaml:"AttributeDefinitions,omitempty"`
-	KeySchema             []KeySchema            `yaml:"KeySchema,omitempty"`
-	ProvisionedThroughput *ProvisionedThroughput `yaml:"ProvisionedThroughput,omitempty"`
-	BillingMode           string                 `yaml:"BillingMode,omitempty"`
-	TableName             string                 `yaml:"TableName,omitempty"`
+	AttributeDefinitions   []AttributeDef         `yaml:"AttributeDefinitions,omitempty"`
+	KeySchema              []KeySchema            `yaml:"KeySchema,omitempty"`
+	ProvisionedThroughput  *ProvisionedThroughput `yaml:"ProvisionedThroughput,omitempty"`
+	BillingMode            string                 `yaml:"BillingMode,omitempty"`
+	TableName              string                 `yaml:"TableName,omitempty"`
+	LocalSecondaryIndexes  []LocalIndex           `yaml:"LocalSecondaryIndexes,omitempty"`
+	GlobalSecondaryIndexes []GlobalIndex          `yaml:"GlobalSecondaryIndexes,omitempty"`
+	TTLSpecification       TTLSpecification       `yaml:"TimeToLiveSpecification,omitempty"`
 
 	//Properties for Authorizer
 	Name           string    `yaml:"Name,omitempty"`
@@ -271,6 +274,31 @@ type KeySchema struct {
 type ProvisionedThroughput struct {
 	ReadCapacityUnits  int64 `yaml:"ReadCapacityUnits"`
 	WriteCapacityUnits int64 `yaml:"WriteCapacityUnits"`
+}
+
+// LocalIndex ...
+type LocalIndex struct {
+	IndexName  string      `yaml:"IndexName"`
+	KeySchema  []KeySchema `yaml:"KeySchema"`
+	Projection Projection  `yaml:"Projection"`
+}
+
+// GlobalIndex ...
+type GlobalIndex struct {
+	LocalIndex
+	ProvisionedThroughput *ProvisionedThroughput `yaml:"ProvisionedTroughput,omitempty"`
+}
+
+// Projection ...
+type Projection struct {
+	NonKeyAttributes []string `yaml:"NonKeyAttributes,omitempty"`
+	ProjectionType   string   `yaml:"ProjectionType,omitempty"`
+}
+
+// TTLSpecification ...
+type TTLSpecification struct {
+	AttributeName string `yaml:"AttributeName"`
+	Enabled       bool   `yaml:"Enabled"`
 }
 
 // NewDefaultServerlessConfig return a default ServerlessConfig object
