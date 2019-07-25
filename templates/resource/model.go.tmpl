@@ -87,7 +87,7 @@ func Read(id string) ({{.Model.Type}}, error) {
 	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 
 	// Perform the query
-	fmt.Println("Trying to read from table: ", "{{.Model.Ident.Pluralize}}")
+	fmt.Println("Trying to read from table: ", tableName)
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{

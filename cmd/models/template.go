@@ -60,22 +60,26 @@ func (t *TemplateConfig) AddFunctionsFromServerlessConfig(s ServerlessConfig, r 
 
 	for n, f := range s.Functions {
 		fName := flect.New(n).Camelize().String() + "Function"
-		t.Resources[fName] = SAMFunction{
-			Type: "AWS::Serverless::Function",
-			Properties: SAMFnProp{
-				Runtime: "go1.x",
-				Handler: strings.TrimPrefix(f.Handler, "bin/"),
-				CodeURI: filepath.Join(".", "functions", r, "debug"),
-				Events: map[string]SAMEvent{
-					"http": SAMEvent{
-						Type: "Api",
-						Properties: SAMProp{
-							Path:   "/" + f.Events[0].HTTP.Path,
-							Method: f.Events[0].HTTP.Method,
+		// ensure to add only http event functions
+		ev := f.Events[0].HTTP
+		if ev != nil {
+			t.Resources[fName] = SAMFunction{
+				Type: "AWS::Serverless::Function",
+				Properties: SAMFnProp{
+					Runtime: "go1.x",
+					Handler: strings.TrimPrefix(f.Handler, "bin/"),
+					CodeURI: filepath.Join(".", "functions", r, "debug"),
+					Events: map[string]SAMEvent{
+						"http": SAMEvent{
+							Type: "Api",
+							Properties: SAMProp{
+								Path:   "/" + ev.Path,
+								Method: ev.Method,
+							},
 						},
 					},
 				},
-			},
+			}
 		}
 	}
 }
