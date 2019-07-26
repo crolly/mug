@@ -1,0 +1,62 @@
+package main
+
+import (
+	"encoding/json"
+	"testing"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-lambda-go/events"
+)
+
+func Test{{.Model.Ident.Singularize.Pascalize}}Exists(t *testing.T) {
+	{{First .Model.Ident.Singularize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.Mock()
+	assert.NoError(t, err)
+
+	req := events.APIGatewayProxyRequest{
+		PathParameters: map[string]string{
+			{{ if .Model.CompositeKey -}}
+			"hash": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
+			"range": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "RANGE")}},
+			{{ else -}}
+			"{{index .Model.KeySchema "HASH"}}": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
+			{{ end -}}
+		},
+	}
+
+	resp, err := ReadHandler(req)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	response{{.Model.Ident.Singularize.Pascalize}} := {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	err = json.Unmarshal([]byte(resp.Body), &response{{.Model.Ident.Singularize.Pascalize}})
+	assert.EqualValues(t, {{First .Model.Ident.Singularize.ToLower}}, response{{.Model.Ident.Singularize.Pascalize}})
+
+	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mockups.CleanUp({{First .Model.Ident.Singularize.ToLower}}))
+}
+
+func Test{{.Model.Ident.Singularize.Pascalize}}DoesNotExist(t *testing.T) {
+	req := events.APIGatewayProxyRequest{
+		PathParameters: map[string]string{
+			{{ if .Model.CompositeKey -}}
+			"hash": "not-existing-hash-value",
+			"range": "not-existing-range-value",
+			{{ else -}}
+			"{{index .Model.KeySchema "HASH"}}": "not-existing",
+			{{ end -}}
+		},
+	}
+
+	resp, err := ReadHandler(req)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 404, resp.StatusCode)
+
+	response{{.Model.Ident.Singularize.Pascalize}} := {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	err = json.Unmarshal([]byte(resp.Body), &response{{.Model.Ident.Singularize.Pascalize}})
+	assert.EqualValues(t, {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}, response{{.Model.Ident.Singularize.Pascalize}})
+}
+

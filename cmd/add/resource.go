@@ -24,7 +24,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/crolly/mug/cmd/models"
 
@@ -93,37 +92,57 @@ func init() {
 }
 
 func renderTemplates(config models.MUGConfig, m models.Model) {
-	// iterate over templates and execute
-	for _, tmpl := range models.ResourceBox.List() {
+	temps := []string{
+		"create",
+		"read",
+		"update",
+		"delete",
+		"list",
+		"model",
+		"modelMockups",
+	}
+
+	data := map[string]interface{}{
+		"Model":  m,
+		"Config": config,
+	}
+
+	mName := m.Ident.Camelize().String()
+
+	// iterate over resource templates and execute
+	for _, t := range temps {
 		// create the function folder for function templete (except model)
-		folder := filepath.Join(config.ProjectPath, "functions", m.Ident.Camelize().String())
-		if tmpl != "model.go.tmpl" {
-			folder = filepath.Join(folder, strings.Replace(tmpl, ".tmpl", "", 1))
+		folder := filepath.Join(config.ProjectPath, "functions", mName)
+		if t == "model" {
+			os.MkdirAll(folder, 0755)
+			createFile(mName+".go", "model.tmpl", folder, data)
+		} else if t == "modelMockups" {
+			mockString := mName + "Mockups"
+			folder = filepath.Join(config.ProjectPath, "mockups", mockString)
+			os.MkdirAll(folder, 0755)
+			createFile(mockString+".go", "modelMockups.tmpl", folder, data)
+		} else {
+			folder = filepath.Join(folder, t)
+			os.MkdirAll(folder, 0755)
+			for _, tf := range []string{"main", "main_test"} {
+				createFile(tf+".go", filepath.Join(t, tf+".tmpl"), folder, data)
+			}
 		}
-		os.MkdirAll(folder, 0755)
+	}
+}
 
-		// create files
-		file := "main.go"
-		if tmpl == "model.go.tmpl" {
-			file = m.Ident.Camelize().String() + ".go"
-		}
-		f, err := os.Create(filepath.Join(folder, file))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
+func createFile(fName, tPath, folder string, data map[string]interface{}) {
+	f, err := os.Create(filepath.Join(folder, fName))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
 
-		// load template
-		t := models.LoadTemplateFromBox(models.ResourceBox, tmpl)
+	// load template
+	tmpl := models.LoadTemplateFromBox(models.ResourceBox, tPath)
 
-		// execute template and save to file
-		data := map[string]interface{}{
-			"Model":  m,
-			"Config": config,
-		}
-		err = t.Execute(f, data)
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = tmpl.Execute(f, data)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

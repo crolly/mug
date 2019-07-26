@@ -1,0 +1,49 @@
+package {{.Model.Ident.Singularize.ToLower}}Mockups
+
+import (
+	"github.com/brianvoe/gofakeit"
+	"github.com/gofrs/uuid"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+)
+
+// Mock returns a new {{.Model.Type}} with fake data
+func Mock() ({{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}, error) {
+	{{.Model.Ident.Singularize.ToLower}} := {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{
+		// add your custom mockup here
+	}
+
+	err := {{.Model.Ident.Singularize.ToLower}}.Put()
+
+	return {{.Model.Ident.Singularize.ToLower}}, err
+}
+
+// MockSlice returns a slice of a given count Users with fake data
+func MockSlice(count int) ([]{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}, error) {
+	{{.Model.Ident.Pluralize.ToLower}} := []{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	for i := 0; i < count; i++ {
+		{{.Model.Ident.Singularize.ToLower}}, err := Mock()
+		if err != nil {
+			CleanUpSlice({{.Model.Ident.Pluralize.ToLower}})
+
+			return nil, err
+		}
+
+		{{.Model.Ident.Pluralize.ToLower}} = append({{.Model.Ident.Pluralize.ToLower}}, {{.Model.Ident.Singularize.ToLower}})
+	}
+
+	return {{.Model.Ident.Pluralize.ToLower}}, nil
+}
+
+// CleanUp cleans up the initial mock
+func CleanUp({{.Model.Ident.Singularize.ToLower}} {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}) error {
+	return {{.Model.Ident.Singularize.ToLower}}.Delete()
+}
+
+// CleanUpSlice cleans up the initial slice mock
+func CleanUpSlice({{.Model.Ident.Pluralize.ToLower}} []{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}) error {
+	for _, {{.Model.Ident.Singularize.ToLower}} := range {{.Model.Ident.Pluralize.ToLower}} {
+		{{.Model.Ident.Singularize.ToLower}}.Delete()
+	}
+	return nil
+}

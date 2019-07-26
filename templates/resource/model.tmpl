@@ -2,9 +2,9 @@ package {{.Model.Ident.Singularize.ToLower}}
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
     "os"
-	"strconv"
 
     "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -20,7 +20,7 @@ import (
 
 func connectDB() (*dynamodb.DynamoDB, string) {
 	var sess *session.Session
-	tableName = os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+	tableName := os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
 
 	if len(tableName) > 0 {
 		sess = session.Must(session.NewSession())
@@ -29,10 +29,80 @@ func connectDB() (*dynamodb.DynamoDB, string) {
 			Endpoint: aws.String("http://dynamodb:8000"),
 			Region:   aws.String("{{.Config.Region}}"),
 		}))
-		tableName = "{{.Config.ProjectName}}-{{.Model.Ident.Pluralize.ToLower}}-debug"
+		mode := os.Getenv("MODE", "debug")
+		if len(mode) == 0 {
+			mode = "debug"
+		}
+		tableName = "{{.Config.ProjectName}}-{{.Model.Ident.Pluralize.ToLower}}-" + mode
 	}
 
 	return dynamodb.New(sess), tableName
+}
+
+// Unmarshal returns a new {{.Model.Type}} from a string
+func Unmarshal(body string) ({{.Model.Type}}, error) {
+	{{.Model.Ident.Singularize.Camelize}} := {{.Model.Type}}{}
+	err := json.Unmarshal([]byte(body), &{{.Model.Ident.Singularize.Camelize}})
+
+	return {{.Model.Ident.Singularize.Camelize}}, err
+}
+
+// Marshal return the JSON string for the {{.Model.Type}}
+func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Marshal() string {
+	jsonItem, err := json.MarshalIndent({{.Model.Ident.Singularize.Camelize}}, "", "  ")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(jsonItem)
+}
+
+// Put writes the {{.Model.Type}} to the database
+func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Put() error {
+	svc, tableName := connectDB()
+	// Marshall the Item into a Map DynamoDB can deal with
+	av, err := dynamodbattribute.MarshalMap({{.Model.Ident.Singularize.Camelize}})
+	if err != nil {
+		fmt.Println("Got error marshalling map:", err.Error())
+		return err
+	}
+
+	// Create Item in table and return
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(tableName),
+	}
+
+	_, err = svc.PutItem(input)
+
+	return err
+}
+
+// Delete removes the {{.Model.Type}} from the database
+func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
+	svc, tableName := connectDB()
+
+	// Perform the delete
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"{{ index .Model.KeySchema "HASH" }}": {
+				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}),
+			},
+			{{ if .Model.CompositeKey -}}
+			"{{ index .Model.KeySchema "RANGE" }}": {
+				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "RANGE") }}),
+			},
+			{{ end -}}
+		},
+		TableName: aws.String(tableName),
+	}
+
+	_, err := svc.DeleteItem(input)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	return nil
 }
 
 // Put extracts the {{.Model.Type}} from JSON and writes it to DynamoDB
@@ -108,6 +178,17 @@ func Read(id string) ({{.Model.Type}}, error) {
 		return {{.Model.Ident.Camelize}}, err
 	}
 
+	// check whether actual object is found
+	if len({{.Model.Ident.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}) == 0 {
+		// nothing found
+		{{ if .Model.CompositeKey -}}
+		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}} " + hashKey + " and {{index .Model.KeySchema "RANGE"}} " + rangeKey
+		{{- else -}}
+		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}}: " + id
+		{{- end }}
+		return {{.Model.Ident.Camelize}}, errors.New(msg)
+	}
+
 	return {{.Model.Ident.Camelize}}, nil
 }
 
@@ -117,29 +198,16 @@ func Delete(hashKey, rangeKey string) error {
 {{ else -}}
 func Delete(id string) error {
 {{ end -}}
-    svc, tableName := connectDB()
-
-	// Perform the delete
-	input := &dynamodb.DeleteItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"{{ index .Model.KeySchema "HASH" }}": {
-				S: aws.String({{if .Model.CompositeKey}}hashKey{{else}}id{{end}}),
-			},
-			{{ if .Model.CompositeKey -}}
-			"{{ index .Model.KeySchema "RANGE" }}": {
-				S: aws.String(rangeKey),
-			},
-			{{ end -}}
-		},
-		TableName: aws.String(tableName),
+    {{.Model.Ident.Singularize.Camelize}} := {{.Model.Type}}{
+		{{ if .Model.CompositeKey -}}
+		{{Pascalize (index .Model.KeySchema "HASH") }}: hashKey,
+		{{Pascalize (index .Model.KeySchema "RANGE") }}: rangeKey,
+		{{ else -}}
+		{{Pascalize (index .Model.KeySchema "HASH") }}: id,
+		{{ end -}}
 	}
 
-	_, err := svc.DeleteItem(input)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-	return nil
+	return {{.Model.Ident.Singularize.Camelize}}.Delete()
 }
 
 // List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB

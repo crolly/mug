@@ -1,0 +1,35 @@
+package main
+
+import (
+	"testing"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-lambda-go/events"
+)
+
+func TestDelete{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
+	{{First .Model.Ident.Singularize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.Mock()
+	assert.NoError(t, err)
+
+	resp, err := DeleteHandler(events.APIGatewayProxyRequest{
+		PathParameters: map[string]string{
+			{{ if .Model.CompositeKey -}}
+			"hash": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
+			"range": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "RANGE")}},
+			{{ else -}}
+			"{{index .Model.KeySchema "HASH"}}": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
+			{{ end -}}
+		},
+	})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.EqualValues(t, "Deleted {{.Model.Ident.Singularize.ToLower}} \n", resp.Body)
+
+
+	{{First .Model.Ident.Singularize.ToLower}}, err = {{.Model.Ident.Singularize.ToLower}}.Read({{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}})
+	assert.Error(t, err, "Not able to find {{.Model.Ident.Singularize.ToLower}} with {{index .Model.KeySchema "HASH"}}: "+{{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}})
+}

@@ -119,7 +119,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}/main.go",
             "env": {},
-            "args": ["add", "resource", "geo", "-a", "name,address,hashKey:uint64,geoHash:uint64", "-n", "-k", "hashKey:HASH,geoHash:RANGE"]
+            "args": ["add", "resource", "geo", "-a", "name,address,hashKey,geoHash", "-n", "-k", "hashKey:HASH,geoHash:RANGE"]
         },
         {
             "name": "add resource with high CUs",

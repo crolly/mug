@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -74,6 +75,12 @@ func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
 	funcMap := template.FuncMap{
 		"TrimBinPrefix": func(s string) string {
 			return strings.TrimPrefix(s, "bin/")
+		},
+		"Pascalize": func(s string) string {
+			return flect.New(s).Pascalize().String()
+		},
+		"First": func(s flect.Ident) string {
+			return string(s.String()[0])
 		},
 	}
 
@@ -205,4 +212,43 @@ func GetList(projectPath, wish string) []string {
 	}
 
 	return list
+}
+
+// CreateLambdaNetwork spins up a lambda network for dynamodb and AWS SAM to interact with one another
+func CreateLambdaNetwork() {
+	// check if network exists
+	out, err := exec.Command("docker", "network", "ls", "--filter", "name=^lambda-local$", "--format", "{{.Name}}").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// create network if it doesn't exist
+	if len(out) == 0 {
+		log.Println("Creating lambda-local docker network")
+		RunCmd("docker", "network", "create", "lambda-local")
+	} else {
+		log.Println("Docker network lambda-local already exists, skipping creation...")
+	}
+}
+
+// StartLocalDynamoDB spins up the dynamodb-local docker image
+func StartLocalDynamoDB() {
+	// check if container exists
+	out, err := exec.Command("docker", "ps", "-a", "--filter", "network=lambda-local", "--filter", "ancestor=amazon/dynamodb-local", "--filter", "name=dynamodb", "--format", "{{.Status}}").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if strings.HasPrefix(string(out), "Exited") {
+		log.Println("Restarting dynamodb-local container...")
+		RunCmd("docker", "restart", "dynamodb")
+	}
+
+	// create container if it doesn't exist already
+	if len(out) == 0 {
+		log.Println("Starting dynamodb-local...")
+		wd := GetWorkingDir()
+		RunCmd("docker", "run", "-v", fmt.Sprintf("%s:/dynamodb_local_db", wd), "-p", "8000:8000", "--net=lambda-local", "--name", "dynamodb", "-d", "amazon/dynamodb-local")
+	}
+
+	log.Println("dynamodb-local running.")
 }

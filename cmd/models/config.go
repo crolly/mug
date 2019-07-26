@@ -10,6 +10,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/gobuffalo/flect"
 )
 
@@ -136,7 +139,7 @@ func (m MUGConfig) renderMakefile(t *template.Template, r string) {
 	log.Println("Makefile generated.")
 }
 
-func (m MUGConfig) make(list []string, path, target string) {
+func (m MUGConfig) make(list []string, path, target string, test bool) {
 	// load Makefile template
 	t := LoadTemplateFromBox(MakeBox, "Makefile.tmpl")
 
@@ -145,6 +148,10 @@ func (m MUGConfig) make(list []string, path, target string) {
 		m.clearFolder(filepath.Join(r, path))
 		// render for each resource/ function group
 		m.renderMakefile(t, r)
+		// run test if flag indicates so
+		if test {
+			RunCmd("make test")
+		}
 		// and run the build
 		RunCmd("make", target)
 	}
@@ -152,10 +159,94 @@ func (m MUGConfig) make(list []string, path, target string) {
 
 // MakeDebug renders the Makefile and builds the debug binaries
 func (m MUGConfig) MakeDebug(list []string) {
-	m.make(list, "debug", "debug")
+	m.make(list, "debug", "debug", false)
 }
 
 // MakeBuild renders the Makefile and builds the binaries
-func (m MUGConfig) MakeBuild(list []string) {
-	m.make(list, "bin", "build")
+func (m MUGConfig) MakeBuild(list []string, test bool) {
+	m.make(list, "bin", "build", test)
+}
+
+// CreateResourceTables creates the tables in the local DynamoDB named by the given mode
+func (m MUGConfig) CreateResourceTables(list []string, mode string) {
+	// create service to dynamodb
+	sess := session.Must(session.NewSession(&aws.Config{
+		Endpoint: aws.String("http://localhost:8000"),
+		Region:   aws.String(m.Region),
+	}))
+	svc := dynamodb.New(sess)
+
+	// get list of tables
+	result, err := svc.ListTables(&dynamodb.ListTablesInput{})
+	if err != nil {
+		log.Fatalf("Error during creation of resource tables: %s\n", err)
+	}
+
+	tables := make(map[string]bool)
+	for _, t := range result.TableNames {
+		tables[*t] = true
+	}
+
+	// iterate over resources
+	for n, r := range m.Resources {
+		if Contains(list, n) {
+			sc := m.ReadServerlessConfig(n)
+			rName := r.Ident.Pascalize().String() + "DynamoDbTable"
+			props := sc.Resources.Resources[rName].Properties
+			tableName := m.ProjectName + "-" + r.Ident.Pluralize().Camelize().String() + "-" + mode
+
+			if tables[tableName] {
+				log.Printf("Table %s already exists, skipping creation...", tableName)
+			} else {
+				createTableForResource(svc, tableName, props)
+			}
+		}
+	}
+}
+
+func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Properties) {
+	// get attributes
+	attributes := []*dynamodb.AttributeDefinition{}
+	for _, a := range props.AttributeDefinitions {
+		attributes = append(attributes, &dynamodb.AttributeDefinition{
+			AttributeName: aws.String(a.AttributeName),
+			AttributeType: aws.String(a.AttributeType),
+		})
+	}
+
+	// get keySchema
+	keySchema := []*dynamodb.KeySchemaElement{}
+	for _, k := range props.KeySchema {
+		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
+			AttributeName: aws.String(k.AttributeName),
+			KeyType:       aws.String(k.KeyType),
+		})
+	}
+
+	// get throughput
+	throughput := &dynamodb.ProvisionedThroughput{
+		ReadCapacityUnits:  aws.Int64(10),
+		WriteCapacityUnits: aws.Int64(10),
+	}
+	if props.ProvisionedThroughput != nil {
+		throughput = &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(props.ProvisionedThroughput.ReadCapacityUnits),
+			WriteCapacityUnits: aws.Int64(props.ProvisionedThroughput.WriteCapacityUnits),
+		}
+	}
+
+	// create the table input for the resource
+	input := &dynamodb.CreateTableInput{
+		TableName:             aws.String(tableName),
+		AttributeDefinitions:  attributes,
+		KeySchema:             keySchema,
+		ProvisionedThroughput: throughput,
+	}
+
+	out, err := svc.CreateTable(input)
+	if err != nil {
+		log.Fatalf("Error creating table %s: %s", tableName, err)
+	}
+
+	log.Printf("Table %s created: %s", tableName, out)
 }

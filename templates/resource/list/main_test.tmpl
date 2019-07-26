@@ -1,0 +1,28 @@
+package main
+
+import (
+	"encoding/json"
+	"testing"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-lambda-go/events"
+)
+
+func TestList{{.Model.Ident.Pluralize.Pascalize}}(t *testing.T) {
+	{{.Model.Ident.Pluralize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.MockSlice(10)
+	assert.NoError(t, err)
+
+	resp, err := ListHandler(events.APIGatewayProxyRequest{})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	response{{.Model.Ident.Pluralize.Pascalize}} := []{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	err = json.Unmarshal([]byte(resp.Body), &response{{.Model.Ident.Pluralize.Pascalize}})
+	assert.ElementsMatch(t, {{.Model.Ident.Pluralize.ToLower}}, response{{.Model.Ident.Pluralize.Pascalize}})
+
+	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mockups.CleanUpSlice({{.Model.Ident.Pluralize.ToLower}}))
+}

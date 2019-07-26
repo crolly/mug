@@ -37,26 +37,36 @@ var (
 
 			list := models.GetList(mc.ProjectPath, buildList)
 
+			if !noTest {
+				// create lambda-local network if it doesn't exist already
+				models.CreateLambdaNetwork()
+				// start dynamodb-local
+				models.StartLocalDynamoDB()
+				// create tables for resources
+				mc.CreateResourceTables(list, "test")
+			}
+
 			// build binaries
-			mc.MakeBuild(list)
+			mc.MakeBuild(list, !noTest)
 			// deploy to AWS
 			sls := "sls deploy --stage " + stage
 			if len(profile) > 0 {
 				sls = sls + " --aws-profile " + profile
 			}
 			for _, r := range list {
-				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";"+sls)
+				models.RunCmd("MODE=test /bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";"+sls)
 			}
 		},
 	}
 
 	name, buildList, stage, profile string
-	noUpdate                        bool
+	noUpdate, noTest                bool
 )
 
 func init() {
 	DeployCmd.Flags().BoolVarP(&noUpdate, "ignoreYMLUpdate", "i", false, "Ignore update of serverless.yml during execution")
-	DeployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy.")
+	DeployCmd.Flags().BoolVarP(&noTest, "do not test", "t", false, "Don't run tests before deploying")
+	DeployCmd.Flags().StringVarP(&name, "name", "n", "", "Name of the resource of function to deploy")
 	DeployCmd.Flags().StringVarP(&buildList, "list", "l", "all", "comma separated list of resources/ function groups to debug")
 	DeployCmd.Flags().StringVarP(&stage, "stage", "s", "dev", "define deployment stage")
 	DeployCmd.Flags().StringVarP(&profile, "profile", "p", "", "define deployment profile")

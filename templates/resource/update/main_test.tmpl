@@ -1,0 +1,46 @@
+package main
+
+import (
+	"encoding/json"
+	"testing"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-lambda-go/events"
+)
+
+func TestUpdate{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
+	{{First .Model.Ident.Singularize.ToLower}}Old, err := {{.Model.Ident.Singularize.ToLower}}Mockups.Mock()
+	assert.NoError(t, err)
+
+	// Update
+	{{First .Model.Ident.Singularize.ToLower}}New := {{First .Model.Ident.Singularize.ToLower}}Old
+	
+	// Make your update changes here
+
+	{{First .Model.Ident.Singularize.ToLower}}String, err := json.Marshal({{First .Model.Ident.Singularize.ToLower}}New)
+	assert.NoError(t, err)
+
+	resp, err := UpdateHandler(events.APIGatewayProxyRequest{
+		Body:           string({{First .Model.Ident.Singularize.ToLower}}String),
+		PathParameters: map[string]string{
+			{{ if .Model.CompositeKey -}}
+			"hash": {{First .Model.Ident.Singularize.ToLower}}Old.{{Pascalize (index .Model.KeySchema "HASH")}},
+			"range": {{First .Model.Ident.Singularize.ToLower}}Old.{{Pascalize (index .Model.KeySchema "RANGE")}},
+			{{ else -}}
+			"{{index .Model.KeySchema "HASH"}}": {{First .Model.Ident.Singularize.ToLower}}Old.{{Pascalize (index .Model.KeySchema "HASH")}},
+			{{ end -}}
+		},
+	})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	response{{First .Model.Ident.Singularize.ToLower}} := {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	err = json.Unmarshal([]byte(resp.Body), &response{{First .Model.Ident.Singularize.ToLower}})
+	assert.EqualValues(t, {{First .Model.Ident.Singularize.ToLower}}New, response{{First .Model.Ident.Singularize.ToLower}})
+
+	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mockups.CleanUp({{First .Model.Ident.Singularize.ToLower}}New))
+}

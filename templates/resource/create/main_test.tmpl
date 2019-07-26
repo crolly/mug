@@ -1,0 +1,31 @@
+package main
+
+import (
+	"encoding/json"
+	"testing"
+
+    "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
+    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-lambda-go/events"
+)
+
+func TestCreate{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
+	{{First .Model.Ident.Singularize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.Mock()
+	assert.NoError(t, err)
+
+	{{First .Model.Ident.Singularize.ToLower}}String, err := json.Marshal({{First .Model.Ident.Singularize.ToLower}})
+	assert.NoError(t, err)
+
+	resp, err := CreateHandler(events.APIGatewayProxyRequest{Body: string({{First .Model.Ident.Singularize.ToLower}}String)})
+	assert.NoError(t, err)
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	response{{.Model.Ident.Singularize.Pascalize}} := {{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
+	err = json.Unmarshal([]byte(resp.Body), &response{{.Model.Ident.Singularize.Pascalize}})
+	assert.EqualValues(t, {{First .Model.Ident.Singularize.ToLower}}, response{{.Model.Ident.Singularize.Pascalize}})
+
+	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mockups.CleanUp({{First .Model.Ident.Singularize.ToLower}}))
+}

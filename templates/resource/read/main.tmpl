@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	
 	"github.com/aws/aws-lambda-go/events"
@@ -25,7 +24,14 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	{{.Model.Ident.Camelize}}, err := {{.Model.Ident.Singularize.ToLower}}.Read({{index .Model.KeySchema "HASH"}})
 	{{ end -}}
 	if err != nil {
-		panic(fmt.Sprintf("Failed to find {{.Model.Ident.Camelize}}, %v", err))
+		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin": "*",
+			},
+			Body:       err.Error(),
+			StatusCode: 404,
+		}, nil
 	}
 
 	{{ if .Model.GeneratedID -}}
@@ -36,16 +42,13 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	}
 	{{- end }}
 
-	// Log and return result
-	jsonItem, _ := json.MarshalIndent({{.Model.Ident.Camelize}}, "", "  ")
-	stringItem := string(jsonItem)
-	fmt.Println("Found item: ", stringItem)
+	// Return result
 	return events.APIGatewayProxyResponse{
 		Headers: map[string]string{
 			"Content-Type":                "application/json",
 			"Access-Control-Allow-Origin": "*",
 		},
-		Body:       stringItem,
+		Body:       {{.Model.Ident.Camelize}}.Marshal(),
 		StatusCode: 200,
 	}, nil
 }
