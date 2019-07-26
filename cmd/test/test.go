@@ -46,7 +46,7 @@ var (
 			// create tables for resources
 			mc.CreateResourceTables(list, "test")
 
-			env := []string{"MODE=TEST"}
+			env := []string{"MODE=test"}
 			for _, r := range list {
 				t := "go test ./functions/" + r + "/... -cover"
 				fmt.Println(t)

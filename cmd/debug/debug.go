@@ -82,7 +82,8 @@ func startLocalAPI() {
 		log.Printf("Starting local API at port %s with debugger at %s...\n", gwPort, debugPort)
 	}
 
-	models.RunCmd("sam", args...)
+	env := []string{"MODE=debug"}
+	models.RunCmdWithEnv(env, "sam", args...)
 }
 
 func ensureDebugger() {
