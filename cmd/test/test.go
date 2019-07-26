@@ -46,10 +46,11 @@ var (
 			// create tables for resources
 			mc.CreateResourceTables(list, "test")
 
+			env := []string{"MODE=TEST"}
 			for _, r := range list {
 				t := "go test ./functions/" + r + "/... -cover"
 				fmt.Println(t)
-				models.RunCmd("MODE=test /bin/sh", "-c", t)
+				models.RunCmdWithEnv(env, "/bin/sh", "-c", t)
 			}
 		},
 	}
