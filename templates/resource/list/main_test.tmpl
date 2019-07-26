@@ -7,8 +7,8 @@ import (
     "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
     "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestList{{.Model.Ident.Pluralize.Pascalize}}(t *testing.T) {

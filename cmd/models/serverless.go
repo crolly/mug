@@ -410,11 +410,15 @@ func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
 		})
 	}
 
-	for t, n := range m.KeySchema {
-		rd.Properties.KeySchema = append(rd.Properties.KeySchema, KeySchema{
-			AttributeName: n,
-			KeyType:       t,
-		})
+	rd.Properties.KeySchema = []KeySchema{
+		{
+			AttributeName: m.KeySchema["HASH"],
+			KeyType:       "HASH",
+		},
+		{
+			AttributeName: m.KeySchema["RANGE"],
+			KeyType:       "RANGE",
+		},
 	}
 
 	// set billing mode and capacity units

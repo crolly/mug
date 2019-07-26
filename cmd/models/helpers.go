@@ -79,6 +79,9 @@ func LoadTemplateFromBox(b *packr.Box, file string) *template.Template {
 		"Pascalize": func(s string) string {
 			return flect.New(s).Pascalize().String()
 		},
+		"Underscore": func(s string) string {
+			return flect.New(s).Underscore().String()
+		},
 		"First": func(s flect.Ident) string {
 			return string(s.String()[0])
 		},

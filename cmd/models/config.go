@@ -209,7 +209,7 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 	attributes := []*dynamodb.AttributeDefinition{}
 	for _, a := range props.AttributeDefinitions {
 		attributes = append(attributes, &dynamodb.AttributeDefinition{
-			AttributeName: aws.String(a.AttributeName),
+			AttributeName: aws.String(flect.New(a.AttributeName).Underscore().String()),
 			AttributeType: aws.String(a.AttributeType),
 		})
 	}
@@ -218,7 +218,7 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 	keySchema := []*dynamodb.KeySchemaElement{}
 	for _, k := range props.KeySchema {
 		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
-			AttributeName: aws.String(k.AttributeName),
+			AttributeName: aws.String(flect.New(k.AttributeName).Underscore().String()),
 			KeyType:       aws.String(k.KeyType),
 		})
 	}

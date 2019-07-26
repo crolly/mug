@@ -6,8 +6,8 @@ import (
     "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
     "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDelete{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
@@ -30,6 +30,6 @@ func TestDelete{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
 	assert.EqualValues(t, "Deleted {{.Model.Ident.Singularize.ToLower}} \n", resp.Body)
 
 
-	{{First .Model.Ident.Singularize.ToLower}}, err = {{.Model.Ident.Singularize.ToLower}}.Read({{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}})
+	{{First .Model.Ident.Singularize.ToLower}}, err = {{.Model.Ident.Singularize.ToLower}}.Read({{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}}{{if .Model.CompositeKey}},{{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "RANGE")}}{{end}})
 	assert.Error(t, err, "Not able to find {{.Model.Ident.Singularize.ToLower}} with {{index .Model.KeySchema "HASH"}}: "+{{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}})
 }

@@ -18,53 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package cmd
+package test
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/crolly/mug/cmd/test"
-
-	"github.com/crolly/mug/cmd/remove"
-
-	"github.com/crolly/mug/cmd/deploy"
-
-	"github.com/crolly/mug/cmd/add"
-	"github.com/crolly/mug/cmd/create"
-	"github.com/crolly/mug/cmd/debug"
+	"github.com/crolly/mug/cmd/models"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	cfgFile string
+	// TestCmd represents the debug command
+	TestCmd = &cobra.Command{
+		Use:   "test",
+		Short: "Run go tests for your project",
+		Run: func(cmd *cobra.Command, args []string) {
+			// get the config
+			mc := models.ReadMUGConfig()
+
+			list := models.GetList(mc.ProjectPath, list)
+
+			// create lambda-local network if it doesn't exist already
+			models.CreateLambdaNetwork()
+			// start dynamodb-local
+			models.StartLocalDynamoDB()
+			// create tables for resources
+			mc.CreateResourceTables(list, "test")
+
+			for _, r := range list {
+				t := "go test ./functions/" + r + "/... -cover"
+				fmt.Println(t)
+				models.RunCmd("MODE=test /bin/sh", "-c", t)
+			}
+		},
+	}
+
+	list string
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "mug",
-	Short: "microservices understand golang - easily creating serverless AWS Lambda CRUDL apps",
-	Long: `
-mug lets you create AWS Lambda for golang projects and boilerplates
-the project structure with serverless configuration and a required Makefile
-to build the functions. You can easily add CRUDL functions as resources.`,
-}
-
 func init() {
-	RootCmd.AddCommand(create.CreateCmd)
-	RootCmd.AddCommand(add.AddCmd)
-	RootCmd.AddCommand(debug.DebugCmd)
-	RootCmd.AddCommand(deploy.DeployCmd)
-	RootCmd.AddCommand(test.TestCmd)
-	RootCmd.AddCommand(remove.RemoveCmd)
-}
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	TestCmd.Flags().StringVarP(&list, "list", "l", "all", "comma separated list of resources/ function groups to debug")
 }

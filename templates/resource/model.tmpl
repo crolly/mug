@@ -29,7 +29,7 @@ func connectDB() (*dynamodb.DynamoDB, string) {
 			Endpoint: aws.String("http://dynamodb:8000"),
 			Region:   aws.String("{{.Config.Region}}"),
 		}))
-		mode := os.Getenv("MODE", "debug")
+		mode := os.Getenv("MODE")
 		if len(mode) == 0 {
 			mode = "debug"
 		}
@@ -85,11 +85,11 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 	// Perform the delete
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"{{ index .Model.KeySchema "HASH" }}": {
+			"{{ Underscore (index .Model.KeySchema "HASH") }}": {
 				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}),
 			},
 			{{ if .Model.CompositeKey -}}
-			"{{ index .Model.KeySchema "RANGE" }}": {
+			"{{ Underscore (index .Model.KeySchema "RANGE") }}": {
 				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "RANGE") }}),
 			},
 			{{ end -}}
@@ -103,43 +103,6 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 		return err
 	}
 	return nil
-}
-
-// Put extracts the {{.Model.Type}} from JSON and writes it to DynamoDB
-func Put(body string) ({{.Model.Type}}, error) {
-	svc, tableName := connectDB()
-
-	// Marshall the requrest body
-	var {{.Model.Ident.Camelize}} {{.Model.Type}}
-	err := json.Unmarshal([]byte(body), &{{.Model.Ident.Camelize}})
-	if err != nil {
-		fmt.Println("Got error unmarshalling request body: ", err.Error())
-		return {{.Model.Ident.Camelize}}, err 
-	}
-
-	{{ if .Model.GeneratedID -}}
-	// Generate new UUID to store {{.Model.Type}} in case {{.Model.Ident.Camelize}} doesn't have one
-	givenID, err := uuid.FromString({{.Model.Ident.Camelize}}.ID)
-	if err != nil || givenID == uuid.Nil {
-        id, _ := uuid.NewV4()
-        {{.Model.Ident.Camelize}}.ID = id.String()
-    }
-	{{- end }}
-
-	// Marshall the Item into a Map DynamoDB can deal with
-	av, err := dynamodbattribute.MarshalMap({{.Model.Ident.Camelize}})
-	if err != nil {
-		fmt.Println("Got error marshalling map:", err.Error())
-		return {{.Model.Ident.Camelize}}, err
-	}
-
-	// Create Item in table and return
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String(tableName),
-	}
-	_, err = svc.PutItem(input)
-	return {{.Model.Ident.Camelize}}, err
 }
 
 // Read gets the {{.Model.Type}} from DynamoDB
@@ -156,11 +119,11 @@ func Read(id string) ({{.Model.Type}}, error) {
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"{{ index .Model.KeySchema "HASH" }}": {
+			"{{ Underscore (index .Model.KeySchema "HASH") }}": {
 				S: aws.String({{if .Model.CompositeKey}}hashKey{{else}}id{{end}}),
 			},
 			{{ if .Model.CompositeKey -}}
-			"{{ index .Model.KeySchema "RANGE" }}": {
+			"{{ Underscore (index .Model.KeySchema "RANGE") }}": {
 				S: aws.String(rangeKey),
 			},
 			{{ end -}}

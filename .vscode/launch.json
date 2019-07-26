@@ -176,6 +176,15 @@
             "args": ["debug"]
         },
         {
+            "name": "mug deploy",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["deploy"]
+        },
+        {
             "name": "mug deploy function group generic and resource course",
             "type": "go",
             "request": "launch",
@@ -183,6 +192,15 @@
             "program": "${workspaceRoot}/main.go",
             "env": {},
             "args": ["deploy", "-l", "generic,course"]
+        },
+        {
+            "name": "mug test",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceRoot}/main.go",
+            "env": {},
+            "args": ["test"]
         },
     ]
 }
