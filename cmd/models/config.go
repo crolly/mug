@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -243,9 +242,6 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 		KeySchema:             keySchema,
 		ProvisionedThroughput: throughput,
 	}
-
-	iString, _ := json.Marshal(input)
-	fmt.Println(iString)
 
 	out, err := svc.CreateTable(input)
 	if err != nil {
