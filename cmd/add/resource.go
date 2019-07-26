@@ -99,7 +99,7 @@ func renderTemplates(config models.MUGConfig, m models.Model) {
 		"delete",
 		"list",
 		"model",
-		"modelMockups",
+		"modelMocks",
 	}
 
 	data := map[string]interface{}{
@@ -116,11 +116,11 @@ func renderTemplates(config models.MUGConfig, m models.Model) {
 		if t == "model" {
 			os.MkdirAll(folder, 0755)
 			createFile(mName+".go", "model.tmpl", folder, data)
-		} else if t == "modelMockups" {
-			mockString := mName + "Mockups"
-			folder = filepath.Join(config.ProjectPath, "mockups", mockString)
+		} else if t == "modelMocks" {
+			mockString := mName + "Mocks"
+			folder = filepath.Join(config.ProjectPath, "mocks", mockString)
 			os.MkdirAll(folder, 0755)
-			createFile(mockString+".go", "modelMockups.tmpl", folder, data)
+			createFile(mockString+".go", "modelMocks.tmpl", folder, data)
 		} else {
 			folder = filepath.Join(folder, t)
 			os.MkdirAll(folder, 0755)

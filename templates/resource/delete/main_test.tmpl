@@ -4,14 +4,14 @@ import (
 	"testing"
 
     "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
-    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+    "{{.Config.ImportPath}}/mocks/{{.Model.Ident.Singularize.ToLower}}Mocks"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDelete{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
-	{{First .Model.Ident.Singularize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.Mock()
+	{{First .Model.Ident.Singularize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mocks.Mock()
 	assert.NoError(t, err)
 
 	resp, err := DeleteHandler(events.APIGatewayProxyRequest{

@@ -5,14 +5,14 @@ import (
 	"testing"
 
     "{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
-    "{{.Config.ImportPath}}/mockups/{{.Model.Ident.Singularize.ToLower}}Mockups"
+    "{{.Config.ImportPath}}/mocks/{{.Model.Ident.Singularize.ToLower}}Mocks"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestList{{.Model.Ident.Pluralize.Pascalize}}(t *testing.T) {
-	{{.Model.Ident.Pluralize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mockups.MockSlice(10)
+	{{.Model.Ident.Pluralize.ToLower}}, err := {{.Model.Ident.Singularize.ToLower}}Mocks.MockSlice(10)
 	assert.NoError(t, err)
 
 	resp, err := ListHandler(events.APIGatewayProxyRequest{})
@@ -24,5 +24,5 @@ func TestList{{.Model.Ident.Pluralize.Pascalize}}(t *testing.T) {
 	err = json.Unmarshal([]byte(resp.Body), &response{{.Model.Ident.Pluralize.Pascalize}})
 	assert.ElementsMatch(t, {{.Model.Ident.Pluralize.ToLower}}, response{{.Model.Ident.Pluralize.Pascalize}})
 
-	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mockups.CleanUpSlice({{.Model.Ident.Pluralize.ToLower}}))
+	assert.NoError(t, {{.Model.Ident.Singularize.ToLower}}Mocks.CleanUpSlice({{.Model.Ident.Pluralize.ToLower}}))
 }
