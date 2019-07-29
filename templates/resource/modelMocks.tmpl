@@ -18,7 +18,7 @@ func Mock() ({{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}, error) {
 	return {{.Model.Ident.Singularize.ToLower}}, err
 }
 
-// MockSlice returns a slice of a given count Users with fake data
+// MockSlice returns a slice of a given count {{.Model.Type}} with fake data
 func MockSlice(count int) ([]{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}, error) {
 	{{.Model.Ident.Pluralize.ToLower}} := []{{.Model.Ident.Singularize.ToLower}}.{{.Model.Type}}{}
 	for i := 0; i < count; i++ {
