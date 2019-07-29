@@ -235,12 +235,33 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 		}
 	}
 
+	// get the local secondary indexex
+	// TODO: support for non index attributes
+	lsi := []*dynamodb.LocalSecondaryIndex{}
+	for _, i := range props.LocalSecondaryIndexes {
+		keySchema := []*dynamodb.KeySchemaElement{}
+		for _, k := range i.KeySchema {
+			keySchema = append(keySchema, &dynamodb.KeySchemaElement{
+				AttributeName: aws.String(flect.New(k.AttributeName).Underscore().String()),
+				KeyType:       aws.String(k.KeyType),
+			})
+		}
+		lsi = append(lsi, &dynamodb.LocalSecondaryIndex{
+			IndexName: aws.String(i.IndexName),
+			KeySchema: keySchema,
+			Projection: &dynamodb.Projection{
+				ProjectionType: aws.String(i.Projection.ProjectionType),
+			},
+		})
+	}
+
 	// create the table input for the resource
 	input := &dynamodb.CreateTableInput{
 		TableName:             aws.String(tableName),
 		AttributeDefinitions:  attributes,
 		KeySchema:             keySchema,
 		ProvisionedThroughput: throughput,
+		LocalSecondaryIndexes: lsi,
 	}
 
 	out, err := svc.CreateTable(input)
