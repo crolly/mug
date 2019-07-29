@@ -19,7 +19,7 @@ func ListHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	}
 
 	// Log and return result
-	jsonItems, _ := json.MarshalIndent({{.Model.Ident.Pluralize}}, "", "  ")
+	jsonItems, _ := json.Marshal({{.Model.Ident.Pluralize}})
 	stringItems := string(jsonItems)
 	fmt.Println("Found items: ", stringItems)
 	return events.APIGatewayProxyResponse{

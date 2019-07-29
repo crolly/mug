@@ -49,7 +49,7 @@ func Unmarshal(body string) ({{.Model.Type}}, error) {
 
 // Marshal return the JSON string for the {{.Model.Type}}
 func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Marshal() string {
-	jsonItem, err := json.MarshalIndent({{.Model.Ident.Singularize.Camelize}}, "", "  ")
+	jsonItem, err := json.Marshal({{.Model.Ident.Singularize.Camelize}})
 	if err != nil {
 		panic(err.Error())
 	}
