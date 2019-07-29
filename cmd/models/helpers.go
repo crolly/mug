@@ -137,15 +137,20 @@ func execCmd(cmd *exec.Cmd) error {
 
 // RemoveFiles ...
 func RemoveFiles(pPath, aName, fName string) {
-	// create the function folder
+	// function folder
 	folder := filepath.Join(pPath, "functions", aName)
 	if fName != "" {
 		folder = filepath.Join(folder, fName)
 	}
 
-	err := os.RemoveAll(folder)
-	if err != nil {
-		log.Fatalf("Error deleting function folder %s: %s", folder, err)
+	// add mocks folder
+	folders := []string{folder, filepath.Join(pPath, "mocks", aName)}
+
+	for _, folder := range folders {
+		err := os.RemoveAll(folder)
+		if err != nil {
+			log.Fatalf("Error deleting function folder %s: %s", folder, err)
+		}
 	}
 }
 
