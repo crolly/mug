@@ -185,23 +185,44 @@ func Delete(id string) error {
 
 // List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB
 func List() ([]{{.Model.Type}}, error){
-    svc, tableName := connectDB()
+    return scanResults(&dynamodb.ScanInput{})
+}
 
-    params := &dynamodb.ScanInput{
-        TableName: aws.String(tableName),
-    }
-    result, err := svc.Scan(params)
-    if err != nil {
-        fmt.Println(err.Error())
-        return nil, err
-    } 
+func scanResults(input *dynamodb.ScanInput) ([]{{.Model.Type}}, error) {
+	svc, tableName := connectDB()
+	input.TableName = aws.String(tableName)
 
-   var {{.Model.Ident.Pluralize}} []{{.Model.Type}}
-   dynamodbattribute.UnmarshalListOfMaps(result.Items, &{{.Model.Ident.Pluralize}}) 
-   if err != nil {
-       fmt.Println(err.Error())
-       return nil, err
-   }
+	result, err := svc.Scan(input)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
 
-   return {{.Model.Ident.Pluralize}}, nil 
+	items := []{{.Model.Type}}{}
+	tmp := []{{.Model.Type}}{}
+
+	for result.LastEvaluatedKey != nil {
+		dynamodbattribute.UnmarshalListOfMaps(result.Items, &tmp)
+		if err != nil {
+			fmt.Println(err.Error())
+			return nil, err
+		}
+		items = append(items, tmp...)
+
+		input.ExclusiveStartKey = result.LastEvaluatedKey
+		result, err = svc.Scan(input)
+		if err != nil {
+			fmt.Println(err.Error())
+			return nil, err
+		}
+	}
+
+	dynamodbattribute.UnmarshalListOfMaps(result.Items, &tmp)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, err
+	}
+	items = append(items, tmp...)
+
+	return items, nil
 }
