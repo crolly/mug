@@ -21,6 +21,7 @@
 package remove
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/crolly/mug/cmd/models"
@@ -40,8 +41,10 @@ var RemoveCmd = &cobra.Command{
 		// delete resource from configuration
 		mc.RemoveResource(rName)
 
-		// remove the deployment
-		models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", rName)+"; sls remove")
+		// remove the deployment if it exists
+		if _, err := os.Stat(filepath.Join(mc.ProjectPath, "functions", rName, ".serverless")); !os.IsNotExist(err) {
+			models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", rName)+"; sls remove")
+		}
 
 		// delete resource folder
 		models.RemoveFiles(mc.ProjectPath, rName, "")
