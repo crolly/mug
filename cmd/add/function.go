@@ -25,7 +25,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/gobuffalo/flect"
 
@@ -86,32 +85,38 @@ func renderFunction(config models.MUGConfig, rName, fName string) {
 	funcFolder := filepath.Join(folder, fName)
 	os.MkdirAll(funcFolder, 0755)
 
-	// create main.go file
-	f, err := os.Create(filepath.Join(funcFolder, "main.go"))
-	if err != nil {
-		log.Fatal(err)
+	// determine function templates and file names for resource or function group function
+	funcNames := map[string]string{
+		"blueprint_test.tmpl": "main_test.go",
 	}
-	defer f.Close()
-
-	// get blueprint template determining wether function will be added to resource or function group
-	var t *template.Template
 	resourceFunc := false
 	if _, err := os.Stat(filepath.Join(folder, rName+".go")); os.IsNotExist(err) {
-		t = models.LoadTemplateFromBox(models.FunctionBox, "blueprint.tmpl")
+		funcNames["blueprint.tmpl"] = "main.go"
 	} else {
-		t = models.LoadTemplateFromBox(models.FunctionBox, "resourceBlueprint.tmpl")
 		resourceFunc = true
+		funcNames["resourceBlueprint.tmpl"] = "main.go"
 	}
 
-	// execute template and save to file
 	data := map[string]interface{}{
 		"ResourceName": rName,
 		"Function":     fIdent,
 		"Config":       config,
 	}
-	err = t.Execute(f, data)
-	if err != nil {
-		log.Fatal(err)
+	for tmpl, fn := range funcNames {
+		// create file
+		f, err := os.Create(filepath.Join(funcFolder, fn))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		t := models.LoadTemplateFromBox(models.FunctionBox, tmpl)
+
+		// execute template and save to file
+		err = t.Execute(f, data)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if resourceFunc {
