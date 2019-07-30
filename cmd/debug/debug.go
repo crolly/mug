@@ -45,7 +45,7 @@ var (
 			// start dynamodb-local
 			models.StartLocalDynamoDB()
 			// create tables for resources
-			mc.CreateResourceTables(list, "debug")
+			mc.CreateResourceTables(list, "debug", force)
 
 			// render template.yml
 			t := models.NewTemplate()
@@ -63,12 +63,13 @@ var (
 		},
 	}
 
-	remoteDebugger               bool
+	remoteDebugger, force        bool
 	debugPort, gwPort, debugList string
 )
 
 func init() {
 	DebugCmd.Flags().BoolVarP(&remoteDebugger, "remoteDebugger", "r", false, "indicates whether you want to run a remote debugger (e.g. step through your code with VSCode)")
+	DebugCmd.Flags().BoolVarP(&force, "force overwrite", "f", false, "force overwrite existing tables (might be necessary if you changed you table definition - e.g. new index)")
 	DebugCmd.Flags().StringVarP(&debugPort, "debugPort", "d", "5986", "defines the remote port if remoteDebugger is true")
 	DebugCmd.Flags().StringVarP(&gwPort, "gwPort", "g", "3000", "defines the port of local API Gateway")
 	DebugCmd.Flags().StringVarP(&debugList, "list", "l", "all", "comma separated list of resources/ function groups to debug")

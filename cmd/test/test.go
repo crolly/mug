@@ -44,7 +44,7 @@ var (
 			// start dynamodb-local
 			models.StartLocalDynamoDB()
 			// create tables for resources
-			mc.CreateResourceTables(list, "test")
+			mc.CreateResourceTables(list, "test", force)
 
 			env := []string{"MODE=test"}
 			for _, r := range list {
@@ -55,9 +55,11 @@ var (
 		},
 	}
 
-	list string
+	list  string
+	force bool
 )
 
 func init() {
 	TestCmd.Flags().StringVarP(&list, "list", "l", "all", "comma separated list of resources/ function groups to debug")
+	TestCmd.Flags().BoolVarP(&force, "force overwrite", "f", false, "force overwrite existing tables (might be necessary if you changed you table definition - e.g. new index)")
 }

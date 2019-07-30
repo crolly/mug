@@ -168,7 +168,7 @@ func (m MUGConfig) MakeBuild(list []string, test bool) {
 }
 
 // CreateResourceTables creates the tables in the local DynamoDB named by the given mode
-func (m MUGConfig) CreateResourceTables(list []string, mode string) {
+func (m MUGConfig) CreateResourceTables(list []string, mode string, overwrite bool) {
 	// create service to dynamodb
 	sess := session.Must(session.NewSession(&aws.Config{
 		Endpoint: aws.String("http://localhost:8000"),
@@ -196,7 +196,12 @@ func (m MUGConfig) CreateResourceTables(list []string, mode string) {
 			tableName := m.ProjectName + "-" + r.Ident.Pluralize().Camelize().String() + "-" + mode
 
 			if tables[tableName] {
-				log.Printf("Table %s already exists, skipping creation...", tableName)
+				if overwrite {
+					deleteTable(svc, tableName)
+					createTableForResource(svc, tableName, props)
+				} else {
+					log.Printf("Table %s already exists, skipping creation...", tableName)
+				}
 			} else {
 				createTableForResource(svc, tableName, props)
 			}
@@ -284,4 +289,14 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 	}
 
 	log.Printf("Table %s created: %s", tableName, out)
+}
+
+func deleteTable(svc *dynamodb.DynamoDB, tableName string) {
+	_, err := svc.DeleteTable(&dynamodb.DeleteTableInput{
+		TableName: aws.String(tableName),
+	})
+
+	if err != nil {
+		log.Fatalf("Error deleting table %s: %s", tableName, err)
+	}
 }
