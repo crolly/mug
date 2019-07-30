@@ -44,7 +44,7 @@ var (
 				"write": writeUnits,
 			}
 			options := map[string]interface{}{
-				"id":         !noID,
+				"id":         generateID,
 				"dates":      dates,
 				"softDelete": softDelete,
 				"keySchema":  keySchema,
@@ -75,17 +75,17 @@ var (
 	}
 
 	attributes, keySchema, billingMode string
-	noID, dates, softDelete            bool
+	generateID, dates, softDelete      bool
 	readUnits, writeUnits              int64
 )
 
 func init() {
 	AddCmd.AddCommand(resourceCmd)
 	resourceCmd.Flags().StringVarP(&attributes, "attributes", "a", "", "attributes of the resource")
-	resourceCmd.Flags().BoolVarP(&noID, "noID", "n", false, "disable automatic generation of id attribute with type uuid")
+	resourceCmd.Flags().BoolVarP(&generateID, "generateID", "g", false, "automatic generation of id attribute with uuid")
 	resourceCmd.Flags().BoolVarP(&dates, "addDates", "d", false, "automatically add createdAt and updatedAt attributes")
 	resourceCmd.Flags().BoolVarP(&softDelete, "softDelete", "s", false, "automatically add deletedAt attribute")
-	resourceCmd.Flags().StringVarP(&keySchema, "keySchema", "k", "id:HASH", "Key Schema definition for the DynamoDB Table Resource (only applied if noID flag is set to true")
+	resourceCmd.Flags().StringVarP(&keySchema, "keySchema", "k", "id:HASH", "Key Schema definition for the DynamoDB Table Resource (not compatible with generateID)")
 	resourceCmd.Flags().StringVarP(&billingMode, "billingMode", "b", "provisioned", "Choose between 'provisioned' for ProvisionedThroughput (default) or 'ondemand'")
 	resourceCmd.Flags().Int64VarP(&readUnits, "readUnits", "r", 1, "Set the ReadCapacityUnits if billingMode is set to ProvisionedThroughput")
 	resourceCmd.Flags().Int64VarP(&writeUnits, "writeUnits", "w", 1, "Set the WriteCapacityUnits if billingMode is set to ProvisionedThroughput")
