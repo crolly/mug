@@ -14,8 +14,8 @@ import (
 func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Pass the call to the model with params found in the path
 	{{ if .Model.CompositeKey -}}
-	hashKey := request.PathParameters["hash"]
-	rangeKey := request.PathParameters["range"]
+	hashKey := request.PathParameters["{{index .Model.KeySchema "HASH"}}"]
+	rangeKey := request.PathParameters["{{index .Model.KeySchema "RANGE"}}"]
 	fmt.Printf("Path vars: %s, %s", hashKey, rangeKey)
 	{{.Model.Ident.Camelize}}, err := {{.Model.Ident.Singularize.ToLower}}.Read(hashKey, rangeKey)
 	{{ else -}}

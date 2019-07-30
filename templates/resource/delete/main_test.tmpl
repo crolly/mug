@@ -17,8 +17,8 @@ func TestDelete{{.Model.Ident.Singularize.Pascalize}}(t *testing.T) {
 	resp, err := DeleteHandler(events.APIGatewayProxyRequest{
 		PathParameters: map[string]string{
 			{{ if .Model.CompositeKey -}}
-			"hash": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
-			"range": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "RANGE")}},
+			"{{index .Model.KeySchema "HASH"}}": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
+			"{{index .Model.KeySchema "RANGE"}}": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "RANGE")}},
 			{{ else -}}
 			"{{index .Model.KeySchema "HASH"}}": {{First .Model.Ident.Singularize.ToLower}}.{{Pascalize (index .Model.KeySchema "HASH")}},
 			{{ end -}}
