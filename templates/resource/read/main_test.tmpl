@@ -42,8 +42,8 @@ func Test{{.Model.Ident.Singularize.Pascalize}}DoesNotExist(t *testing.T) {
 	req := events.APIGatewayProxyRequest{
 		PathParameters: map[string]string{
 			{{ if .Model.CompositeKey -}}
-			"hash": "not-existing-hash-value",
-			"range": "not-existing-range-value",
+			"{{index .Model.KeySchema "HASH"}}": "not-existing-hash-value",
+			"{{index .Model.KeySchema "RANGE"}}": "not-existing-range-value",
 			{{ else -}}
 			"{{index .Model.KeySchema "HASH"}}": "not-existing",
 			{{ end -}}
