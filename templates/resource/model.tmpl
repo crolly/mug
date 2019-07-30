@@ -47,6 +47,16 @@ func Unmarshal(body string) ({{.Model.Type}}, error) {
 	return {{.Model.Ident.Singularize.Camelize}}, err
 }
 
+// Marshal returns the JSON string for a slice of {{.Model.Ident.Pluralize.Pascalize}}
+func Marshal({{.Model.Ident.Pluralize.Camelize}} []{{.Model.Type}}) string {
+	jsonItem, err := json.Marshal({{.Model.Ident.Pluralize.Camelize}})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(jsonItem)
+}
+
 // Marshal return the JSON string for the {{.Model.Type}}
 func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Marshal() string {
 	jsonItem, err := json.Marshal({{.Model.Ident.Singularize.Camelize}})

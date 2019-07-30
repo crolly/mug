@@ -18,16 +18,13 @@ func ListHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 		panic(fmt.Sprintf("Failed to find {{.Model.Ident.Pluralize}}, %v", err))
 	}
 
-	// Log and return result
-	jsonItems, _ := json.Marshal({{.Model.Ident.Pluralize}})
-	stringItems := string(jsonItems)
-	fmt.Println("Found items: ", stringItems)
+	// Return result
 	return events.APIGatewayProxyResponse{
 		Headers: map[string]string{
 			"Content-Type":                "application/json",
 			"Access-Control-Allow-Origin": "*",
 		},
-		Body:       stringItems,
+		Body:       {{.Model.Ident.Singularize.ToLower}}.Marshal({{.Model.Ident.Pluralize}}),
 		StatusCode: 200,
 	}, nil
 }
