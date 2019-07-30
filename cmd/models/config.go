@@ -205,13 +205,9 @@ func (m MUGConfig) CreateResourceTables(list []string, mode string) {
 }
 
 func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Properties) {
-	// get attributes
-	attributes := []*dynamodb.AttributeDefinition{}
-	for _, a := range props.AttributeDefinitions {
-		attributes = append(attributes, &dynamodb.AttributeDefinition{
-			AttributeName: aws.String(flect.New(a.AttributeName).Underscore().String()),
-			AttributeType: aws.String(a.AttributeType),
-		})
+	// create the table input for the resource
+	input := &dynamodb.CreateTableInput{
+		TableName: aws.String(tableName),
 	}
 
 	// get keySchema
@@ -220,6 +216,15 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 		keySchema = append(keySchema, &dynamodb.KeySchemaElement{
 			AttributeName: aws.String(flect.New(k.AttributeName).Underscore().String()),
 			KeyType:       aws.String(k.KeyType),
+		})
+	}
+
+	// get attributes
+	attributes := []*dynamodb.AttributeDefinition{}
+	for _, a := range props.AttributeDefinitions {
+		attributes = append(attributes, &dynamodb.AttributeDefinition{
+			AttributeName: aws.String(flect.New(a.AttributeName).Underscore().String()),
+			AttributeType: aws.String(a.AttributeType),
 		})
 	}
 
@@ -255,13 +260,22 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 		})
 	}
 
-	// create the table input for the resource
-	input := &dynamodb.CreateTableInput{
-		TableName:             aws.String(tableName),
-		AttributeDefinitions:  attributes,
-		KeySchema:             keySchema,
-		ProvisionedThroughput: throughput,
-		LocalSecondaryIndexes: lsi,
+	// append properties to input
+	if len(keySchema) > 0 {
+		input.KeySchema = keySchema
+	} else {
+		log.Fatal("KeySchema has to be provided")
+	}
+	if len(attributes) == len(keySchema)+len(lsi) {
+		input.AttributeDefinitions = attributes
+	} else {
+		log.Fatal("Number of attributes defined invalid. Did you add your Local Secondary Index to the Attribute Definition?")
+	}
+	if len(lsi) > 0 {
+		input.LocalSecondaryIndexes = lsi
+	}
+	if throughput != nil {
+		input.ProvisionedThroughput = throughput
 	}
 
 	out, err := svc.CreateTable(input)
