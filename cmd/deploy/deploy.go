@@ -43,7 +43,7 @@ var (
 				// start dynamodb-local
 				models.StartLocalDynamoDB()
 				// create tables for resources
-				mc.CreateResourceTables(list, "test")
+				mc.CreateResourceTables(list, "test", force)
 			}
 
 			// build binaries
@@ -60,7 +60,7 @@ var (
 	}
 
 	name, buildList, stage, profile string
-	noUpdate, noTest                bool
+	noUpdate, noTest, force         bool
 )
 
 func init() {
@@ -70,4 +70,5 @@ func init() {
 	DeployCmd.Flags().StringVarP(&buildList, "list", "l", "all", "comma separated list of resources/ function groups to debug")
 	DeployCmd.Flags().StringVarP(&stage, "stage", "s", "dev", "define deployment stage")
 	DeployCmd.Flags().StringVarP(&profile, "profile", "p", "", "define deployment profile")
+	DeployCmd.Flags().BoolVarP(&force, "force overwrite", "f", false, "force overwrite existing tables (might be necessary if you changed you table definition - e.g. new index)")
 }
