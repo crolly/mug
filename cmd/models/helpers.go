@@ -144,7 +144,7 @@ func RemoveFiles(pPath, aName, fName string) {
 	}
 
 	// add mocks folder
-	folders := []string{folder, filepath.Join(pPath, "mocks", aName)}
+	folders := []string{folder, filepath.Join(pPath, "mocks", aName+"Mocks")}
 
 	for _, folder := range folders {
 		err := os.RemoveAll(folder)
