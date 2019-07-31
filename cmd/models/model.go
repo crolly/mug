@@ -377,7 +377,7 @@ func (m Model) String() string {
 	if len(m.Nested) > 0 {
 		sb.WriteString("\n")
 		for _, n := range m.Nested {
-			sb.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\"`\n", n.Ident.Pascalize(), n.Type, n.Ident.Underscore()))
+			sb.WriteString(fmt.Sprintf("\t%s %s `json:\"%s\" dynamo:\"%s\"`\n", n.Ident.Pascalize(), n.Type, n.Ident.Underscore(), n.Ident.Underscore()))
 		}
 		sb.WriteString("}\n")
 		sb.WriteString("\n")
@@ -395,5 +395,5 @@ func (m Model) String() string {
 
 // String returns the string representation of an attribute
 func (a Attribute) String() string {
-	return fmt.Sprintf("\t%s %s `json:\"%s\"`", a.Ident.Pascalize(), a.GoType, a.Ident.Underscore())
+	return fmt.Sprintf("\t%s %s `json:\"%s\" dynamo:\"%s\"`", a.Ident.Pascalize(), a.GoType, a.Ident.Underscore(), a.Ident.Underscore())
 }
