@@ -29,7 +29,7 @@ func connectWithResource(resource string) dynamo.Table {
 	conf := &aws.Config{}
 
 	tableName, mode := getTableNameAndMode(resource)
-	if len(mode) > 0 
+	if len(mode) > 0 { 
 		conf = &aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
 			Region:   aws.String("eu-central-1"),
@@ -98,34 +98,30 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 
 // Read gets the {{.Model.Type}} from DynamoDB
 
-func Read({{ Underscore (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ Underscore (index .Model.KeySchema "RANGE") }}{{ end }} string) ({{.Model.Type}}, error) {
+func Read({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ (index .Model.KeySchema "RANGE") }}{{ end }} string) ({{.Model.Type}}, error) {
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
-	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ Underscore (index .Model.KeySchema "HASH") }})
+	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ (index .Model.KeySchema "HASH") }}).
 		{{ if .Model.CompositeKey -}}
-		.Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{ Underscore (index .Model.KeySchema "RANGE") }})
-		{{- end -}}
-		.One(&room)
+		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{ (index .Model.KeySchema "RANGE") }}).
+		{{- end }}
+		One(&{{.Model.Ident.Camelize}})
 
 	// check whether actual object is found
 	if len({{.Model.Ident.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}) == 0 {
 		// nothing found
-		{{ if .Model.CompositeKey -}}
-		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}} " + {{ Underscore (index .Model.KeySchema "HASH") }} + " and {{index .Model.KeySchema "RANGE"}} " + {{ Underscore (index .Model.KeySchema "RANGE") }}
-		{{- else -}}
-		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}}: " + id
-		{{- end }}
+		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}} " + {{ (index .Model.KeySchema "HASH") }} {{ if .Model.CompositeKey }}+ " and {{index .Model.KeySchema "RANGE"}} " + {{ (index .Model.KeySchema "RANGE") }}{{ end }}
 		return {{.Model.Ident.Camelize}}, errors.New(msg)
 	}
 
-	return room, nil
+	return {{.Model.Ident.Camelize}}, nil
 }
 
 // Delete erases the {{.Model.Type}} from DynamoDB
-func Delete({{ Underscore (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ Underscore (index .Model.KeySchema "RANGE") }}{{ end }} string) error {
+func Delete({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ (index .Model.KeySchema "RANGE") }}{{ end }} string) error {
     {{.Model.Ident.Singularize.Camelize}} := {{.Model.Type}}{
-		{{Pascalize (index .Model.KeySchema "HASH") }}: {{ Underscore (index .Model.KeySchema "HASH") }},
+		{{Pascalize (index .Model.KeySchema "HASH") }}: {{ (index .Model.KeySchema "HASH") }},
 		{{ if .Model.CompositeKey -}}
-		{{Pascalize (index .Model.KeySchema "RANGE") }}: {{ Underscore (index .Model.KeySchema "RANGE") }},
+		{{Pascalize (index .Model.KeySchema "RANGE") }}: {{ (index .Model.KeySchema "RANGE") }},
 		{{ end -}}
 	}
 
@@ -149,7 +145,7 @@ func batch{{.Model.Ident.Pluralize.Pascalize}}({{.Model.Ident.Pluralize.Camelize
 		tmp[i] = {{.Model.Ident.Singularize.Camelize}}
 	}
 
-	return batch(tmp)
+	return batch(tmp, batchSize)
 }
 
 func batch(in []interface{}, batchSize int) (out [][]interface{}) {
