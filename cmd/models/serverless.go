@@ -285,7 +285,9 @@ type LocalIndex struct {
 
 // GlobalIndex ...
 type GlobalIndex struct {
-	LocalIndex
+	IndexName             string                 `yaml:"IndexName"`
+	KeySchema             []KeySchema            `yaml:"KeySchema"`
+	Projection            Projection             `yaml:"Projection"`
 	ProvisionedThroughput *ProvisionedThroughput `yaml:"ProvisionedTroughput,omitempty"`
 }
 

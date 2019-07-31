@@ -239,8 +239,8 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 
 	// get throughput
 	throughput := &dynamodb.ProvisionedThroughput{
-		ReadCapacityUnits:  aws.Int64(10),
-		WriteCapacityUnits: aws.Int64(10),
+		ReadCapacityUnits:  aws.Int64(1),
+		WriteCapacityUnits: aws.Int64(1),
 	}
 	if props.ProvisionedThroughput != nil {
 		throughput = &dynamodb.ProvisionedThroughput{
@@ -271,20 +271,32 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 
 	gsi := []*dynamodb.GlobalSecondaryIndex{}
 	for _, i := range props.GlobalSecondaryIndexes {
-		keySchema = []*dynamodb.KeySchemaElement{}
+		keySchema := []*dynamodb.KeySchemaElement{}
 		for _, k := range i.KeySchema {
 			keySchema = append(keySchema, &dynamodb.KeySchemaElement{
 				AttributeName: aws.String(flect.New(k.AttributeName).Underscore().String()),
 				KeyType:       aws.String(k.KeyType),
 			})
 		}
-		gsi = append(gsi, &dynamodb.GlobalSecondaryIndex{
+		idx := &dynamodb.GlobalSecondaryIndex{
 			IndexName: aws.String(i.IndexName),
 			KeySchema: keySchema,
 			Projection: &dynamodb.Projection{
 				ProjectionType: aws.String(i.Projection.ProjectionType),
 			},
-		})
+		}
+		if i.ProvisionedThroughput != nil {
+			idx.ProvisionedThroughput = &dynamodb.ProvisionedThroughput{
+				ReadCapacityUnits:  aws.Int64(i.ProvisionedThroughput.ReadCapacityUnits),
+				WriteCapacityUnits: aws.Int64(i.ProvisionedThroughput.WriteCapacityUnits),
+			}
+		} else {
+			idx.ProvisionedThroughput = &dynamodb.ProvisionedThroughput{
+				ReadCapacityUnits:  aws.Int64(1),
+				WriteCapacityUnits: aws.Int64(1),
+			}
+		}
+		gsi = append(gsi, idx)
 	}
 
 	// append properties to input
@@ -293,7 +305,7 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 	} else {
 		log.Fatal("KeySchema has to be provided")
 	}
-	if len(attributes) == len(keySchema)+len(lsi) {
+	if len(attributes) == len(keySchema)+len(lsi)+len(gsi) {
 		input.AttributeDefinitions = attributes
 	} else {
 		log.Fatal("Number of attributes defined invalid. Did you add your Local Secondary Index to the Attribute Definition?")
