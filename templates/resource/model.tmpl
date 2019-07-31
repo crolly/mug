@@ -6,10 +6,11 @@ import (
 	"fmt"
     "os"
 
+	"github.com/gobuffalo/flect"
+	"github.com/guregu/dynamo"
+
     "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
     {{ range $i := .Model.Imports -}}
     "{{$i}}"
@@ -18,25 +19,39 @@ import (
 
 {{.Model.String}}
 
-func connectDB() (*dynamodb.DynamoDB, string) {
-	var sess *session.Session
-	tableName := os.Getenv("{{.Model.Ident.ToUpper}}_TABLE_NAME")
+// Helper functions to connect to the database (change if you like)
+func connect() dynamo.Table {
+	return connectWithResource("{{.Model.Ident.Singularize.Camelize}}")
+}
 
-	if len(tableName) > 0 {
-		sess = session.Must(session.NewSession())
-	} else {
-		sess = session.Must(session.NewSession(&aws.Config{
+func connectWithResource(resource string) dynamo.Table {
+	sess := session.New()
+	conf := &aws.Config{}
+
+	tableName, mode := getTableNameAndMode(resource)
+	if len(mode) > 0 
+		conf = &aws.Config{
 			Endpoint: aws.String("http://dynamodb:8000"),
-			Region:   aws.String("{{.Config.Region}}"),
-		}))
-		mode := os.Getenv("MODE")
+			Region:   aws.String("eu-central-1"),
+		}
+	}
+
+	return dynamo.New(sess, conf).Table(tableName)
+}
+
+func getTableNameAndMode(resource string) (tableName string, mode string) {
+	ident := flect.New(resource)
+	tableName = os.Getenv(ident.Singularize().ToUpper().String() + "_TABLE_NAME")
+
+	if len(tableName) == 0 {
+		mode = os.Getenv("MODE")
 		if len(mode) == 0 {
 			mode = "test"
 		}
-		tableName = "{{.Config.ProjectName}}-{{.Model.Ident.Pluralize.ToLower}}-" + mode
+		tableName = "dojo-api-" + ident.Pluralize().Camelize().String() + "-" + mode
 	}
 
-	return dynamodb.New(sess), tableName
+	return tableName, mode
 }
 
 // Unmarshal returns a new {{.Model.Type}} from a string
@@ -69,114 +84,48 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Marshal() string {
 
 // Put writes the {{.Model.Type}} to the database
 func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Put() error {
-	svc, tableName := connectDB()
-	// Marshall the Item into a Map DynamoDB can deal with
-	av, err := dynamodbattribute.MarshalMap({{.Model.Ident.Singularize.Camelize}})
-	if err != nil {
-		fmt.Println("Got error marshalling map:", err.Error())
-		return err
-	}
-
-	// Create Item in table and return
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String(tableName),
-	}
-
-	_, err = svc.PutItem(input)
-
-	return err
+	return connect().Put({{.Model.Ident.Singularize.Camelize}}).Run()
 }
 
 // Delete removes the {{.Model.Type}} from the database
-func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
-	svc, tableName := connectDB()
-
-	// Perform the delete
-	input := &dynamodb.DeleteItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"{{ Underscore (index .Model.KeySchema "HASH") }}": {
-				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}),
-			},
-			{{ if .Model.CompositeKey -}}
-			"{{ Underscore (index .Model.KeySchema "RANGE") }}": {
-				S: aws.String({{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "RANGE") }}),
-			},
-			{{ end -}}
-		},
-		TableName: aws.String(tableName),
-	}
-
-	_, err := svc.DeleteItem(input)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-	return nil
+func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {{
+	return connect().Delete("{{ Underscore (index .Model.KeySchema "HASH") }}", {{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}).
+		{{ if .Model.CompositeKey -}}
+		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "RANGE") }}).
+		{{- end -}}
+		Run()
 }
 
 // Read gets the {{.Model.Type}} from DynamoDB
-{{ if .Model.CompositeKey -}}
-func Read(hashKey, rangeKey string) ({{.Model.Type}}, error) {
-{{ else -}}
-func Read(id string) ({{.Model.Type}}, error) {
-{{ end -}}
-    svc, tableName := connectDB()
-	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 
-	// Perform the query
-	fmt.Println("Trying to read from table: ", tableName)
-	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"{{ Underscore (index .Model.KeySchema "HASH") }}": {
-				S: aws.String({{if .Model.CompositeKey}}hashKey{{else}}id{{end}}),
-			},
-			{{ if .Model.CompositeKey -}}
-			"{{ Underscore (index .Model.KeySchema "RANGE") }}": {
-				S: aws.String(rangeKey),
-			},
-			{{ end -}}
-		},
-	})
-	if err != nil {
-		fmt.Println(err.Error())
-		return {{.Model.Ident.Camelize}}, err
-	}
-
-	// Unmarshall the result in to an Item
-	err = dynamodbattribute.UnmarshalMap(result.Item, &{{.Model.Ident.Camelize}})
-	if err != nil {
-		fmt.Println(err.Error())
-		return {{.Model.Ident.Camelize}}, err
-	}
+func Read({{ Underscore (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ Underscore (index .Model.KeySchema "RANGE") }}{{ end }} string) ({{.Model.Type}}, error) {
+	var {{.Model.Ident.Camelize}} {{.Model.Type}}
+	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ Underscore (index .Model.KeySchema "HASH") }})
+		{{ if .Model.CompositeKey -}}
+		.Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{ Underscore (index .Model.KeySchema "RANGE") }})
+		{{- end -}}
+		.One(&room)
 
 	// check whether actual object is found
 	if len({{.Model.Ident.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}) == 0 {
 		// nothing found
 		{{ if .Model.CompositeKey -}}
-		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}} " + hashKey + " and {{index .Model.KeySchema "RANGE"}} " + rangeKey
+		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}} " + {{ Underscore (index .Model.KeySchema "HASH") }} + " and {{index .Model.KeySchema "RANGE"}} " + {{ Underscore (index .Model.KeySchema "RANGE") }}
 		{{- else -}}
 		msg := "Not able to find {{.Model.Ident.Camelize}} with {{index .Model.KeySchema "HASH"}}: " + id
 		{{- end }}
 		return {{.Model.Ident.Camelize}}, errors.New(msg)
 	}
 
-	return {{.Model.Ident.Camelize}}, nil
+	return room, nil
 }
 
 // Delete erases the {{.Model.Type}} from DynamoDB
-{{ if .Model.CompositeKey -}}
-func Delete(hashKey, rangeKey string) error {
-{{ else -}}
-func Delete(id string) error {
-{{ end -}}
+func Delete({{ Underscore (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ Underscore (index .Model.KeySchema "RANGE") }}{{ end }} string) error {
     {{.Model.Ident.Singularize.Camelize}} := {{.Model.Type}}{
+		{{Pascalize (index .Model.KeySchema "HASH") }}: {{ Underscore (index .Model.KeySchema "HASH") }},
 		{{ if .Model.CompositeKey -}}
-		{{Pascalize (index .Model.KeySchema "HASH") }}: hashKey,
-		{{Pascalize (index .Model.KeySchema "RANGE") }}: rangeKey,
-		{{ else -}}
-		{{Pascalize (index .Model.KeySchema "HASH") }}: id,
+		{{Pascalize (index .Model.KeySchema "RANGE") }}: {{ Underscore (index .Model.KeySchema "RANGE") }},
 		{{ end -}}
 	}
 
@@ -185,44 +134,30 @@ func Delete(id string) error {
 
 // List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB
 func List() ([]{{.Model.Type}}, error){
-    return scanResults(&dynamodb.ScanInput{})
+	var {{ .Model.Ident.Pluralize.Camelize }} []{{.Model.Type}}
+	err := connect().Scan().All(&{{ .Model.Ident.Pluralize.Camelize }})
+    
+	return {{ .Model.Ident.Pluralize.Camelize }}, err
 }
 
-func scanResults(input *dynamodb.ScanInput) ([]{{.Model.Type}}, error) {
-	svc, tableName := connectDB()
-	input.TableName = aws.String(tableName)
-
-	result, err := svc.Scan(input)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
+// Helper function for batch operations (change if you like)
+// consider the batch limits though (see https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+func batch{{.Model.Ident.Pluralize.Pascalize}}({{.Model.Ident.Pluralize.Camelize}} []{{.Model.Type}}, batchSize int) [][]interface{} {
+	// clone initial slice
+	tmp := make([]interface{}, len({{.Model.Ident.Pluralize.Camelize}}))
+	for i, {{.Model.Ident.Singularize.Camelize}} := range {{.Model.Ident.Pluralize.Camelize}} {
+		tmp[i] = {{.Model.Ident.Singularize.Camelize}}
 	}
 
-	items := []{{.Model.Type}}{}
-	tmp := []{{.Model.Type}}{}
+	return batch(tmp)
+}
 
-	for result.LastEvaluatedKey != nil {
-		dynamodbattribute.UnmarshalListOfMaps(result.Items, &tmp)
-		if err != nil {
-			fmt.Println(err.Error())
-			return nil, err
-		}
-		items = append(items, tmp...)
-
-		input.ExclusiveStartKey = result.LastEvaluatedKey
-		result, err = svc.Scan(input)
-		if err != nil {
-			fmt.Println(err.Error())
-			return nil, err
-		}
+func batch(in []interface{}, batchSize int) (out [][]interface{}) {
+	// split in batches
+	for batchSize < len(in) {
+		in, out = in[batchSize:], append(out, in[0:batchSize:batchSize])
 	}
+	out = append(out, in)
 
-	dynamodbattribute.UnmarshalListOfMaps(result.Items, &tmp)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-	items = append(items, tmp...)
-
-	return items, nil
+	return out
 }
