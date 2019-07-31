@@ -11,18 +11,18 @@ import (
 // {{.Function.Pascalize}}Handler function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
-	jsonItem, err := json.MarshalIndent(map[string]string{"msg": "{{.Function.Pascalize}} invoked successfully"}, "", "  ")
+	jsonItem, err := json.Marshal(map[string]string{"msg": "{{.Function.Pascalize}} invoked successfully"})
     if err != nil {
         fmt.Println("Error occured")
         return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil 
     }
-	stringItem := string(jsonItem)
+
 	return events.APIGatewayProxyResponse{
 		Headers: map[string]string{
 			"Content-Type":                "application/json",
 			"Access-Control-Allow-Origin": "*",
 		},
-		Body:       stringItem,
+		Body:       string(jsonItem),
 		StatusCode: 200,
 	}, nil
 }

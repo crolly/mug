@@ -192,7 +192,11 @@ func (m MUGConfig) CreateResourceTables(list []string, mode string, overwrite bo
 		if Contains(list, n) {
 			sc := m.ReadServerlessConfig(n)
 			rName := r.Ident.Pascalize().String() + "DynamoDbTable"
-			props := sc.Resources.Resources[rName].Properties
+			res := sc.Resources.Resources[rName]
+			if res == nil {
+				log.Fatalf("Resourse %s not valid. Please check your serverless.yml or your command.", rName)
+			}
+			props := res.Properties
 			tableName := m.ProjectName + "-" + r.Ident.Pluralize().Camelize().String() + "-" + mode
 
 			if tables[tableName] {
