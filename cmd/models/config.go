@@ -269,6 +269,24 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 		})
 	}
 
+	gsi := []*dynamodb.GlobalSecondaryIndex{}
+	for _, i := range props.GlobalSecondaryIndexes {
+		keySchema = []*dynamodb.KeySchemaElement{}
+		for _, k := range i.KeySchema {
+			keySchema = append(keySchema, &dynamodb.KeySchemaElement{
+				AttributeName: aws.String(flect.New(k.AttributeName).Underscore().String()),
+				KeyType:       aws.String(k.KeyType),
+			})
+		}
+		gsi = append(gsi, &dynamodb.GlobalSecondaryIndex{
+			IndexName: aws.String(i.IndexName),
+			KeySchema: keySchema,
+			Projection: &dynamodb.Projection{
+				ProjectionType: aws.String(i.Projection.ProjectionType),
+			},
+		})
+	}
+
 	// append properties to input
 	if len(keySchema) > 0 {
 		input.KeySchema = keySchema
@@ -282,6 +300,9 @@ func createTableForResource(svc *dynamodb.DynamoDB, tableName string, props Prop
 	}
 	if len(lsi) > 0 {
 		input.LocalSecondaryIndexes = lsi
+	}
+	if len(gsi) > 0 {
+		input.GlobalSecondaryIndexes = gsi
 	}
 	if throughput != nil {
 		input.ProvisionedThroughput = throughput
