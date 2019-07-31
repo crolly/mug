@@ -102,7 +102,7 @@ func Read({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ 
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
 	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ (index .Model.KeySchema "HASH") }}).
 		{{ if .Model.CompositeKey -}}
-		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{ (index .Model.KeySchema "RANGE") }}).
+		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", dynamo.Equal, {{ (index .Model.KeySchema "RANGE") }}).
 		{{- end }}
 		One(&{{.Model.Ident.Camelize}})
 
