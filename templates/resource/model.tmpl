@@ -3,7 +3,6 @@ package {{.Model.Ident.Singularize.ToLower}}
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
     "os"
 
 	"github.com/gobuffalo/flect"
@@ -97,7 +96,6 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 }
 
 // Read gets the {{.Model.Type}} from DynamoDB
-
 func Read({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ (index .Model.KeySchema "RANGE") }}{{ end }} string) ({{.Model.Type}}, error) {
 	var {{.Model.Ident.Camelize}} {{.Model.Type}}
 	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ (index .Model.KeySchema "HASH") }}).
@@ -113,7 +111,7 @@ func Read({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ 
 		return {{.Model.Ident.Camelize}}, errors.New(msg)
 	}
 
-	return {{.Model.Ident.Camelize}}, nil
+	return {{.Model.Ident.Camelize}}, err
 }
 
 // Delete erases the {{.Model.Type}} from DynamoDB
