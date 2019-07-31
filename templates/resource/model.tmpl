@@ -88,7 +88,7 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Put() error {
 }
 
 // Delete removes the {{.Model.Type}} from the database
-func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {{
+func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 	return connect().Delete("{{ Underscore (index .Model.KeySchema "HASH") }}", {{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "HASH") }}).
 		{{ if .Model.CompositeKey -}}
 		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", {{.Model.Ident.Singularize.Camelize}}.{{ Pascalize (index .Model.KeySchema "RANGE") }}).
