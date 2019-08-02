@@ -47,7 +47,7 @@ var (
 			env := []string{"MODE=test"}
 			t := "go test -cover -p 1"
 			if profile {
-				models.RunCmdWithEnv(env, "/bin/sh", "-c", t+" -coverprofile=cover.out")
+				models.RunCmdWithEnv(env, "/bin/sh", "-c", t+" -coverprofile=cover.out ./functions/...")
 				models.RunCmdWithEnv(env, "/bin/sh", "-c", "go tool cover -html=cover.out")
 			} else {
 				for _, r := range list {
