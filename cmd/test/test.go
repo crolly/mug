@@ -21,15 +21,13 @@
 package test
 
 import (
-	"fmt"
-
 	"github.com/crolly/mug/cmd/models"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	// TestCmd represents the debug command
+	// TestCmd represents the test command
 	TestCmd = &cobra.Command{
 		Use:   "test",
 		Short: "Run go tests for your project",
@@ -47,19 +45,24 @@ var (
 			mc.CreateResourceTables(list, "test", force)
 
 			env := []string{"MODE=test"}
-			for _, r := range list {
-				t := "go test ./functions/" + r + "/... -cover"
-				fmt.Println(t)
-				models.RunCmdWithEnv(env, "/bin/sh", "-c", t)
+			t := "go test -cover -p 1"
+			if profile {
+				models.RunCmdWithEnv(env, "/bin/sh", "-c", t+" -coverprofile=cover.out")
+				models.RunCmdWithEnv(env, "/bin/sh", "-c", "go tool cover -html=cover.out")
+			} else {
+				for _, r := range list {
+					models.RunCmdWithEnv(env, "/bin/sh", "-c", t+" ./functions/"+r+"/...")
+				}
 			}
 		},
 	}
 
-	list  string
-	force bool
+	list           string
+	force, profile bool
 )
 
 func init() {
 	TestCmd.Flags().StringVarP(&list, "list", "l", "all", "comma separated list of resources/ function groups to debug")
 	TestCmd.Flags().BoolVarP(&force, "force overwrite", "f", false, "force overwrite existing tables (might be necessary if you changed you table definition - e.g. new index)")
+	TestCmd.Flags().BoolVarP(&profile, "profile coverage", "p", false, "show the code coverage profile (not compatibale with list flag)")
 }
