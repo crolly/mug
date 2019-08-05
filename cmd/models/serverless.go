@@ -394,7 +394,7 @@ func (s *ServerlessConfig) Write(projectPath, mn string) {
 }
 
 // SetResourceWithModel sets a Resource to the ServerlessConfig
-func (s *ServerlessConfig) SetResourceWithModel(r *NewResource, m Model) {
+func (s *ServerlessConfig) SetResourceWithModel(r *Resource, m Model) {
 	tableName := r.Ident.Pluralize().String() + "-${opt:stage, self:provider.stage}"
 	rd := &ResourceDefinition{
 		Type:           "AWS::DynamoDB::Table",

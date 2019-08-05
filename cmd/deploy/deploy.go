@@ -54,7 +54,7 @@ var (
 				sls = sls + " --aws-profile " + profile
 			}
 			for _, r := range list {
-				models.RunCmd("MODE=test /bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";"+sls)
+				models.RunCmd("/bin/sh", "-c", "cd "+filepath.Join(mc.ProjectPath, "functions", r)+";"+sls)
 			}
 		},
 	}

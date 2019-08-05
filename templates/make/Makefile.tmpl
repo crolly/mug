@@ -8,7 +8,7 @@ functions/{{.Resource}}/debug/%: functions/{{.Resource}}/%/main.go
 		env GOARCH=amd64 GOOS=linux go build -gcflags='-N -l' -o $@ $<
 
 test:
-	go test ./functions/{{$.Resource}}/... -cover
+	go test ./functions/{{$.Resource}}/... -cover -p 1
 
 build: vendor | $(bins)
 

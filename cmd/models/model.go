@@ -321,7 +321,7 @@ func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
 	}
 
 	// update mug.config.json
-	r := &NewResource{
+	r := &Resource{
 		Ident:      flect.New(m.Name),
 		Attributes: attributeDefinitions,
 	}
@@ -350,6 +350,8 @@ func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
 	sc.SetResourceWithModel(r, m)
 	sc.SetFunctions(fns)
 
+	m.WriteOAS(mc)
+
 	return mc, sc
 }
 
@@ -364,6 +366,16 @@ func (m Model) Write(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// WriteOAS writes the OpenAPISpecification for this model
+func (m Model) WriteOAS(mc MUGConfig) {
+	s := GetOAS(mc.ProjectPath)
+	s.setTitle(mc.ProjectName)
+
+	s.addComponent(m)
+
+	s.Write(mc.ProjectPath)
 }
 
 // String prints a representation of a model

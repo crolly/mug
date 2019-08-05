@@ -68,7 +68,8 @@ var (
 			renderTemplates(mc, m)
 
 			// write modelName.json, mug.config.json and serverless.yml for resource
-			m.Write(mc.ProjectPath)
+			// m.Write(mc.ProjectPath)
+			m.WriteOAS(mc, sc)
 			mc.Write()
 			sc.Write(mc.ProjectPath, modelName)
 		},

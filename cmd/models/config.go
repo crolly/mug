@@ -22,11 +22,11 @@ type MUGConfig struct {
 	ProjectPath string
 	ImportPath  string
 	Region      string
-	Resources   map[string]*NewResource
+	Resources   map[string]*Resource
 }
 
-// NewResource ...
-type NewResource struct {
+// Resource ...
+type Resource struct {
 	Ident      flect.Ident
 	Attributes map[string]AttributeDefinition
 }
@@ -59,7 +59,7 @@ func ReadMUGConfig() MUGConfig {
 
 	// make sure map exists
 	if len(config.Resources) == 0 {
-		config.Resources = make(map[string]*NewResource)
+		config.Resources = make(map[string]*Resource)
 	}
 
 	return config
