@@ -347,7 +347,7 @@ func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
 	}
 
 	sc := mc.NewServerlessConfig()
-	sc.SetResourceWithModel(r, m)
+	sc.SetResourceWithModel(r, m, mc.ProjectName)
 	sc.SetFunctions(fns)
 
 	return mc, sc
