@@ -15,7 +15,13 @@ import (
 // TemplateConfig ...
 type TemplateConfig struct {
 	Transform string                 `yaml:"Transform"`
+	Globals   GlobalConfig           `yaml:"Globals"`
 	Resources map[string]SAMFunction `yaml:"Resources"`
+}
+
+// GlobalConfig ...
+type GlobalConfig struct {
+	Function SAMFnProp `yaml:"Function"`
 }
 
 // SAMFunction ...
@@ -26,10 +32,11 @@ type SAMFunction struct {
 
 // SAMFnProp ...
 type SAMFnProp struct {
-	Runtime string              `yaml:"Runtime"`
-	Handler string              `yaml:"Handler"`
-	CodeURI string              `yaml:"CodeUri"`
-	Events  map[string]SAMEvent `yaml:"Events"`
+	Runtime     string              `yaml:"Runtime"`
+	Handler     string              `yaml:"Handler"`
+	CodeURI     string              `yaml:"CodeUri"`
+	Events      map[string]SAMEvent `yaml:"Events"`
+	Environment FnEnvironment       `yaml:"Environment"`
 }
 
 // SAMEvent ...
@@ -44,10 +51,24 @@ type SAMProp struct {
 	Method string `yaml:"Method"`
 }
 
+// FnEnvironment ...
+type FnEnvironment struct {
+	Variables map[string]string `yaml:"Variables"`
+}
+
 // NewTemplate returns a new TemplateConfig
 func NewTemplate() TemplateConfig {
 	return TemplateConfig{
 		Transform: "AWS::Serverless-2016-10-31",
+		Globals: GlobalConfig{
+			Function: SAMFnProp{
+				Environment: FnEnvironment{
+					Variables: map[string]string{
+						"MODE": "debug",
+					},
+				},
+			},
+		},
 	}
 }
 
