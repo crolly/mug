@@ -97,7 +97,7 @@ func ({{.Model.Ident.Singularize.Camelize}} {{.Model.Type}}) Delete() error {
 
 // Read gets the {{.Model.Type}} from DynamoDB
 func Read({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {{ (index .Model.KeySchema "RANGE") }}{{ end }} string) ({{.Model.Type}}, error) {
-	var {{.Model.Ident.Camelize}} {{.Model.Type}}
+	{{.Model.Ident.Camelize}} := {{.Model.Type}}{}
 	err := connect().Get("{{ Underscore (index .Model.KeySchema "HASH") }}", {{ (index .Model.KeySchema "HASH") }}).
 		{{ if .Model.CompositeKey -}}
 		Range("{{ Underscore (index .Model.KeySchema "RANGE") }}", dynamo.Equal, {{ (index .Model.KeySchema "RANGE") }}).
@@ -128,7 +128,7 @@ func Delete({{ (index .Model.KeySchema "HASH") }}{{ if .Model.CompositeKey }}, {
 
 // List returns the {{.Model.Ident.Pluralize.Capitalize}} from DynamoDB
 func List() ([]{{.Model.Type}}, error){
-	var {{ .Model.Ident.Pluralize.Camelize }} []{{.Model.Type}}
+	{{ .Model.Ident.Pluralize.Camelize }} := []{{.Model.Type}}{}
 	err := connect().Scan().All(&{{ .Model.Ident.Pluralize.Camelize }})
     
 	return {{ .Model.Ident.Pluralize.Camelize }}, err
