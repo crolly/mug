@@ -350,7 +350,14 @@ func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
 	sc.SetResourceWithModel(r, m)
 	sc.SetFunctions(fns)
 
-	m.WriteOAS(mc)
+	s := GetOAS(mc.ProjectPath)
+	s.setTitle(mc.ProjectName)
+	s.addComponent(m)
+	for _, f := range sc.Functions {
+		s.addPath(f, m.Ident)
+	}
+
+	s.Write(mc.ProjectPath)
 
 	return mc, sc
 }
@@ -366,16 +373,6 @@ func (m Model) Write(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-// WriteOAS writes the OpenAPISpecification for this model
-func (m Model) WriteOAS(mc MUGConfig) {
-	s := GetOAS(mc.ProjectPath)
-	s.setTitle(mc.ProjectName)
-
-	s.addComponent(m)
-
-	s.Write(mc.ProjectPath)
 }
 
 // String prints a representation of a model

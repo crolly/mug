@@ -99,11 +99,11 @@ type ServerlessFunction struct {
 	Environments        map[string]string `yaml:"environment,omitempty"`
 	Tags                map[string]string `yaml:",omitempty"`
 	Layers              []string          `yaml:",omitempty"`
-	Events              []Events
+	Events              []Event
 }
 
-// Events ...
-type Events struct {
+// Event ...
+type Event struct {
 	HTTP            *HTTPEvent      `yaml:"http,omitempty"`
 	WebSocket       *WebSocketEvent `yaml:"websocket,omitempty"`
 	S3              *S3Event        `yaml:"s3,omitempty"`
@@ -473,8 +473,8 @@ func (s *ServerlessConfig) AddFunction(fn *Function) {
 				"./**",
 			},
 		},
-		Events: []Events{
-			Events{
+		Events: []Event{
+			Event{
 				HTTP: &HTTPEvent{
 					Path:   fn.Path,
 					Method: fn.Method,
