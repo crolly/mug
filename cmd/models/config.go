@@ -151,7 +151,7 @@ func (m MUGConfig) make(list []string, path, target string, test bool) {
 		// run test if flag indicates so
 		if test {
 			log.Println("Run tests")
-			RunCmd("make test")
+			RunCmd("make", "test")
 		}
 		// and run the build
 		RunCmd("make", target)
