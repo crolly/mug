@@ -32,10 +32,10 @@ type SAMFunction struct {
 
 // SAMFnProp ...
 type SAMFnProp struct {
-	Runtime     string              `yaml:"Runtime"`
-	Handler     string              `yaml:"Handler"`
-	CodeURI     string              `yaml:"CodeUri"`
-	Events      map[string]SAMEvent `yaml:"Events"`
+	Runtime     string              `yaml:"Runtime,omitempty"`
+	Handler     string              `yaml:"Handler,omitempty"`
+	CodeURI     string              `yaml:"CodeUri,omitempty"`
+	Events      map[string]SAMEvent `yaml:"Events,omitempty"`
 	Environment FnEnvironment       `yaml:"Environment"`
 }
 
