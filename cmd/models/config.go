@@ -150,6 +150,7 @@ func (m MUGConfig) make(list []string, path, target string, test bool) {
 		m.renderMakefile(t, r)
 		// run test if flag indicates so
 		if test {
+			log.Println("Run tests")
 			RunCmd("make test")
 		}
 		// and run the build
