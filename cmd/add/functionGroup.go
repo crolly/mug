@@ -49,7 +49,7 @@ var (
 			}
 
 			// create new function group
-			sc := mc.NewServerlessConfig()
+			sc := mc.NewServerlessConfig(groupName)
 
 			// save to folder
 			sc.Write(mc.ProjectPath, groupName)
