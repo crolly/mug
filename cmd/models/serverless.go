@@ -20,6 +20,8 @@ type ServerlessConfig struct {
 	Functions map[string]*ServerlessFunction `yaml:",omitempty"`
 	Layers    map[string]Layer               `yaml:",omitempty"`
 	Resources Resources                      `yaml:",omitempty"`
+	Plugins   []string                       `yaml:",omitempty"`
+	Custom    DomainConfig                   `yaml:",omitempty"`
 }
 
 // Service ...
@@ -301,6 +303,21 @@ type Projection struct {
 type TTLSpecification struct {
 	AttributeName string `yaml:"AttributeName"`
 	Enabled       bool   `yaml:"Enabled"`
+}
+
+// DomainConfig ...
+type DomainConfig struct {
+	Stage        string
+	Domains      map[string]string  `yaml:",omitempty"`
+	CustomDomain CustomDomainConfig `yaml:"customDoman"`
+}
+
+// CustomDomainConfig ...
+type CustomDomainConfig struct {
+	BasePath            string `yaml:"basePath"`
+	DomanName           string `yaml:"domainName"`
+	Stage               string
+	CreateRoute53Record bool `yaml:"createRoute53Record"`
 }
 
 // NewDefaultServerlessConfig return a default ServerlessConfig object

@@ -79,9 +79,9 @@ func (m MUGConfig) Write() {
 
 // NewServerlessConfig return a new ServerlessConfig with the attributes from the MUGConfig
 // NewFromResourceConfig returns a ServerlessConfig from a provided ResourceConfig
-func (m MUGConfig) NewServerlessConfig() ServerlessConfig {
+func (m MUGConfig) NewServerlessConfig(resource string) ServerlessConfig {
 	s := NewDefaultServerlessConfig()
-	s.Service = Service{Name: m.ProjectName}
+	s.Service = Service{Name: m.ProjectName + "-" + resource}
 	s.Provider.Region = m.Region
 
 	return s
@@ -98,7 +98,7 @@ func (m MUGConfig) ReadServerlessConfig(rn string) ServerlessConfig {
 		}
 	} else if os.IsNotExist(err) {
 		// file doesn't exist return default ServerlessConfig
-		sc = m.NewServerlessConfig()
+		sc = m.NewServerlessConfig(rn)
 
 	}
 

@@ -346,7 +346,7 @@ func (m Model) GetConfigs() (MUGConfig, ServerlessConfig) {
 		&Function{Name: "list" + "_" + plural, Handler: "list", Path: plural, Method: "get"},
 	}
 
-	sc := mc.NewServerlessConfig()
+	sc := mc.NewServerlessConfig(m.Name)
 	sc.SetResourceWithModel(r, m, mc.ProjectName)
 	sc.SetFunctions(fns)
 
