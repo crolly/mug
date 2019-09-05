@@ -9,6 +9,14 @@ import (
 	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
 )
 
+var headers = map[string]string{
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
+	"Access-Control-Expose-Headers":    "Access-Control-Allow-Origin",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods":     "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+}
+
 // UpdateHandler handles the PUT request and updates a {{.Model.Ident.Camelize}} in the database returning the item on success
 func UpdateHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Log body and pass to the model
@@ -17,23 +25,20 @@ func UpdateHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProx
 	if err != nil {
 		fmt.Println("Got error unmarshaling request")
 		fmt.Println(err.Error())
-		return events.APIGatewayProxyResponse{Body: "Error", StatusCode: 500}, nil
+		return events.APIGatewayProxyResponse{Headers: headers, Body: err.Error(), StatusCode: 400}, nil
 	}
 
 	err = {{.Model.Ident.Camelize}}.Put()
 	if err != nil {
 		fmt.Println("Got error unmarshaling request")
 		fmt.Println(err.Error())
-		return events.APIGatewayProxyResponse{Body: "Error", StatusCode: 500}, nil
+		return events.APIGatewayProxyResponse{Headers: headers, Body: err.Error(), StatusCode: 400}, nil
 	}	
 
 	// Log and return result
 	fmt.Println("Updated item:  ", {{.Model.Ident.Camelize}})
 	return events.APIGatewayProxyResponse{
-		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
-		},
+		Headers: 		headers,
 		Body:       {{.Model.Ident.Camelize}}.Marshal(),
 		StatusCode: 200,
 	}, nil

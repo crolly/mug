@@ -10,6 +10,14 @@ import (
 	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
 )
 
+var headers = map[string]string{
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
+	"Access-Control-Expose-Headers":    "Access-Control-Allow-Origin",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods":     "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+}
+
 // ReadHandler handles the GET request to retrieve a {{.Model.Ident.Camelize}} from the database returning it on success
 func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Pass the call to the model with params found in the path
@@ -25,10 +33,7 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	{{ end -}}
 	if err != nil {
 		return events.APIGatewayProxyResponse{
-			Headers: map[string]string{
-				"Content-Type":                "application/json",
-				"Access-Control-Allow-Origin": "*",
-			},
+			Headers: 		headers,
 			Body:       err.Error(),
 			StatusCode: 404,
 		}, nil
@@ -38,16 +43,13 @@ func ReadHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	// Make sure the {{.Model.Ident.Camelize}} isn't empty
 	if uuid.Must(uuid.FromString({{.Model.Ident.Camelize}}.ID)) == uuid.Nil {
 		fmt.Println("Could not find {{.Model.Ident.Camelize}}")
-		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500}, nil
+		return events.APIGatewayProxyResponse{Headers: headers, Body: request.Body, StatusCode: 400}, nil
 	}
 	{{- end }}
 
 	// Return result
 	return events.APIGatewayProxyResponse{
-		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
-		},
+		Headers: 		headers,
 		Body:       {{.Model.Ident.Camelize}}.Marshal(),
 		StatusCode: 200,
 	}, nil

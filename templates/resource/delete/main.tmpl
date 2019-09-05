@@ -9,6 +9,14 @@ import (
 	"{{.Config.ImportPath}}/functions/{{.Model.Ident.Singularize.ToLower}}"
 )
 
+var headers = map[string]string{
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
+	"Access-Control-Expose-Headers":    "Access-Control-Allow-Origin",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods":     "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+}
+
 // DeleteHandler handles the DELETE request and delete the {{.Model.Ident.Camelize}} by given id
 func DeleteHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Pass the call to the model with params found in the path
@@ -23,15 +31,13 @@ func DeleteHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProx
 	err := {{.Model.Ident.Singularize.ToLower}}.Delete({{index .Model.KeySchema "HASH"}})
 	{{ end -}}
 	if err != nil {
-		panic(fmt.Sprintf("Failed to find {{.Model.Ident.Camelize}}, %v", err))
+		msg := fmt.Sprintf("Failed to find {{.Model.Ident.Camelize}}, %v\n", err.Error())
+		return events.APIGatewayProxyResponse{Headers: headers, Body: msg, StatusCode: 400}, nil
 	}
 
 	msg := "Deleted {{.Model.Ident.Camelize}} \n"
 	return events.APIGatewayProxyResponse{
-		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
-		},
+		Headers: 		headers,
 		Body:       msg,
 		StatusCode: 200,
 	}, nil
