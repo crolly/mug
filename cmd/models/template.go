@@ -5,7 +5,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+
+	"github.com/kr/pretty"
 
 	"gopkg.in/yaml.v2"
 
@@ -81,8 +84,30 @@ func (t *TemplateConfig) AddFunctionsFromServerlessConfig(s ServerlessConfig, r 
 
 	// add environments
 	for key, val := range s.Provider.Environments {
-		t.Globals.Function.Environment.Variables[key] = val
+		// get value in case it's stored in secret
+		if strings.HasPrefix(val, "${file") {
+			re := regexp.MustCompile(`\$\{file\((.*?)\):(.*?)\}`)
+			reFound := re.FindAllStringSubmatch(val, 3)[0]
+			fileName := reFound[1]
+			envKey := reFound[2]
+			f, err := ioutil.ReadFile(filepath.Join(s.ProjectPath, "functions", r, fileName))
+			if err != nil {
+				panic(err.Error())
+			}
+
+			envs := map[string]string{}
+			err = yaml.Unmarshal(f, envs)
+			if err != nil {
+				panic(err.Error())
+			}
+
+			t.Globals.Function.Environment.Variables[envKey] = envs[envKey]
+		} else {
+			t.Globals.Function.Environment.Variables[key] = val
+		}
 	}
+
+	pretty.Println(t.Globals.Function.Environment.Variables)
 
 	for n, f := range s.Functions {
 		fName := flect.New(n).Camelize().String() + "Function"

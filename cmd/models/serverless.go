@@ -14,14 +14,15 @@ import (
 
 // ServerlessConfig ...
 type ServerlessConfig struct {
-	Service   Service
-	Provider  Provider
-	Package   Package
-	Functions map[string]*ServerlessFunction `yaml:",omitempty"`
-	Layers    map[string]Layer               `yaml:",omitempty"`
-	Resources Resources                      `yaml:",omitempty"`
-	Plugins   []string                       `yaml:",omitempty"`
-	Custom    DomainConfig                   `yaml:",omitempty"`
+	ProjectPath string `yaml:"-"`
+	Service     Service
+	Provider    Provider
+	Package     Package
+	Functions   map[string]*ServerlessFunction `yaml:",omitempty"`
+	Layers      map[string]Layer               `yaml:",omitempty"`
+	Resources   Resources                      `yaml:",omitempty"`
+	Plugins     []string                       `yaml:",omitempty"`
+	Custom      DomainConfig                   `yaml:",omitempty"`
 }
 
 // Service ...
