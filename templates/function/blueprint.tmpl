@@ -8,20 +8,25 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+var headers = map[string]string{
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
+	"Access-Control-Expose-Headers":    "Access-Control-Allow-Origin",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods":     "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+}
+
 // {{.Function.Pascalize}}Handler function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
 	jsonItem, err := json.Marshal(map[string]string{"msg": "{{.Function.Pascalize}} invoked successfully"})
     if err != nil {
         fmt.Println("Error occured")
-        return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil 
+        return events.APIGatewayProxyResponse{Headers: headers, Body: err.Error(), StatusCode: 400}, nil 
     }
 
 	return events.APIGatewayProxyResponse{
-		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
-		},
+		Headers: 		headers,
 		Body:       string(jsonItem),
 		StatusCode: 200,
 	}, nil

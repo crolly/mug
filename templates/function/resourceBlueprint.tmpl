@@ -10,19 +10,24 @@ import (
 	"{{.Config.ImportPath}}/functions/{{.ResourceName}}"
 )
 
+var headers = map[string]string{
+	"Content-Type":                     "application/json",
+	"Access-Control-Allow-Origin":      "*",
+	"Access-Control-Expose-Headers":    "Access-Control-Allow-Origin",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods":     "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+}
+
 // {{.Function.Pascalize}}Handler function description
 func {{.Function.Pascalize}}Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   	// Log and return result
 	values, err := {{.ResourceName}}.{{.Function.Pascalize}}()
 	if err != nil {
-		panic(fmt.Sprintf("Failed to perform {{.Function.Pascalize}}(), %v", err))
+		return events.APIGatewayProxyResponse{Headers: headers, Body: err.Error(), StatusCode: 400}, nil
 	}
 
 	return events.APIGatewayProxyResponse{
-		Headers: map[string]string{
-			"Content-Type":                "application/json",
-			"Access-Control-Allow-Origin": "*",
-		},
+		Headers: 		headers,
 		Body:       {{.ResourceName}}.Marshal(values),
 		StatusCode: 200,
 	}, nil
