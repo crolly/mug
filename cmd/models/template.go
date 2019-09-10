@@ -36,7 +36,7 @@ type SAMFnProp struct {
 	Handler     string              `yaml:"Handler,omitempty"`
 	CodeURI     string              `yaml:"CodeUri,omitempty"`
 	Events      map[string]SAMEvent `yaml:"Events,omitempty"`
-	Environment FnEnvironment       `yaml:"Environment"`
+	Environment FnEnvironment       `yaml:"Environment,omitempty"`
 }
 
 // SAMEvent ...
@@ -77,6 +77,11 @@ func NewTemplate() TemplateConfig {
 func (t *TemplateConfig) AddFunctionsFromServerlessConfig(s ServerlessConfig, r string) {
 	if len(t.Resources) == 0 {
 		t.Resources = map[string]SAMFunction{}
+	}
+
+	// add environments
+	for key, val := range s.Provider.Environments {
+		t.Globals.Function.Environment.Variables[key] = val
 	}
 
 	for n, f := range s.Functions {
