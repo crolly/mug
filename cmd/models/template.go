@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kr/pretty"
-
 	"gopkg.in/yaml.v2"
 
 	"github.com/gobuffalo/flect"
@@ -106,8 +104,6 @@ func (t *TemplateConfig) AddFunctionsFromServerlessConfig(s ServerlessConfig, r 
 			t.Globals.Function.Environment.Variables[key] = val
 		}
 	}
-
-	pretty.Println(t.Globals.Function.Environment.Variables)
 
 	for n, f := range s.Functions {
 		fName := flect.New(n).Camelize().String() + "Function"
